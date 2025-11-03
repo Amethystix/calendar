@@ -13,13 +13,13 @@ export default {
     {
       file: 'dist/index.js',
       format: 'cjs',
-      sourcemap: true,
+      sourcemap: false,
       exports: 'named',
     },
     {
       file: 'dist/index.esm.js',
       format: 'esm',
-      sourcemap: true,
+      sourcemap: false,
       exports: 'named',
     },
   ],
@@ -60,5 +60,5 @@ export default {
       template: 'treemap', // 使用树状图显示
     }),
   ],
-  external: ['react', 'react-dom', 'react/jsx-runtime'],
+  external: ['react', 'react-dom', 'react/jsx-runtime', 'lucide-react'],
 };

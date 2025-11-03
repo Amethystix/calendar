@@ -1,5 +1,5 @@
 import { useRef, useCallback, useState, useMemo } from 'react';
-import throttle from 'lodash/throttle';
+import { throttle } from '@/utils/throttle';
 import {
   MonthDragState,
   UnifiedDragRef,

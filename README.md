@@ -20,20 +20,27 @@ A flexible and feature-rich calendar component library for React applications wi
 ## 📦 Installation
 
 ```bash
-npm install dayflow
+npm install @dayflow/core lucide-react
 # or
-yarn add dayflow
+yarn add @dayflow/core lucide-react
 # or
-pnpm add dayflow
+pnpm add @dayflow/core lucide-react
 ```
+
+### Peer Dependencies
+
+DayFlow requires the following peer dependencies:
+- `react` >= 18.0.0
+- `react-dom` >= 18.0.0
+- `lucide-react` >= 0.400.0
 
 ## 🚀 Quick Start
 
 ```tsx
-import { useCalendarApp, DayFlowCalendar } from 'dayflow';
-import { createMonthView, createWeekView, createDayView } from 'dayflow';
+import { useCalendarApp, DayFlowCalendar } from '@dayflow/core';
+import { createMonthView, createWeekView, createDayView } from '@dayflow/core';
 // Import styles
-import 'dayflow/dist/styles.css';
+import '@dayflow/core/dist/styles.css';
 
 function App() {
   const calendar = useCalendarApp({
