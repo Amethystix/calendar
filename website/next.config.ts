@@ -7,7 +7,11 @@ const withNextra = nextra({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'export',
+  basePath: process.env.BASE_PATH || '',
+  images: {
+    unoptimized: true, // Required for static export
+  },
 };
 
 export default withNextra(nextConfig);

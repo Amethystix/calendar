@@ -41,9 +41,16 @@ jobs:
         env:
           BASE_PATH: /DayFlow
 
-      - name: Disable Jekyll
+      - name: Disable Jekyll and verify output
         run: |
-          touch website/out/.nojekyll
+          ls -la website/
+          if [ -d "website/out" ]; then
+            touch website/out/.nojekyll
+            echo "Created .nojekyll in website/out"
+          else
+            echo "Error: website/out directory not found!"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
