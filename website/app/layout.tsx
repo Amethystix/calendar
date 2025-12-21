@@ -3,6 +3,7 @@ import { Head } from 'nextra/components';
 import 'nextra-theme-docs/style.css';
 import "./globals.css";
 import '@dayflow/core/dist/styles.css';
+import { withBasePath } from '@/utils/basePath';
 
 const basePath = process.env.BASE_PATH || '';
 
@@ -11,10 +12,10 @@ export const metadata: Metadata = {
   description: "Ship a polished calendar without rebuilding the basics",
   icons: {
     icon: [
-      { url: `${basePath}/logo.svg`, type: 'image/svg+xml' },
+      { url: withBasePath('/logo.svg'), type: 'image/svg+xml' },
     ],
-    shortcut: [`${basePath}/logo.png`],
-    apple: [`${basePath}/logo.png`],
+    shortcut: [withBasePath('/logo.png')],
+    apple: [withBasePath('/logo.png')],
   },
 };
 

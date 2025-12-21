@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import clsx from 'clsx';
+import { withBasePath } from '@/utils/basePath';
 
 type BrandLogoProps = {
   className?: string;
@@ -17,7 +18,7 @@ export function BrandLogo({ className, showText = true }: BrandLogoProps) {
       )}
     >
       <Image
-        src={`${basePath}/logo.png`}
+        src={withBasePath('/logo.png')}
         alt="DayFlow logo"
         width={28}
         height={28}
