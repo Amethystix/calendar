@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { CalendarApp } from './CalendarApp';
-import { CalendarAppConfig, UseCalendarAppReturn, ViewType } from '@/types';
-import { Event } from '@/types';
+import { CalendarAppConfig, UseCalendarAppReturn, ViewType, CalendarType } from '../types';
+import { Event } from '../types';
 
 export function useCalendarApp(
   config: CalendarAppConfig
@@ -82,6 +82,18 @@ export function useCalendarApp(
     const originalSetVisibleMonth = app.setVisibleMonth;
     app.setVisibleMonth = (date: Date) => {
       originalSetVisibleMonth(date);
+      triggerUpdate();
+    };
+
+    const originalReorderCalendars = app.reorderCalendars;
+    app.reorderCalendars = (fromIndex: number, toIndex: number) => {
+      originalReorderCalendars(fromIndex, toIndex);
+      triggerUpdate();
+    };
+
+    const originalUpdateCalendar = app.updateCalendar;
+    app.updateCalendar = (id: string, updates: Partial<CalendarType>) => {
+      originalUpdateCalendar(id, updates);
       triggerUpdate();
     };
 

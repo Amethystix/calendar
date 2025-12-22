@@ -1,6 +1,6 @@
 // Calendar Registry - Manages calendar types and color resolution
 
-import { CalendarType, ThemeMode, CalendarColors } from '@/types/calendarTypes';
+import { CalendarType, ThemeMode, CalendarColors } from '../types/calendarTypes';
 
 /**
  * Default calendar types
@@ -259,6 +259,26 @@ export class CalendarRegistry {
   }
 
   /**
+   * Reorder calendars
+   * @param fromIndex - Source index
+   * @param toIndex - Destination index
+   */
+  reorder(fromIndex: number, toIndex: number): void {
+    const entries = Array.from(this.calendars.entries());
+    if (fromIndex < 0 || fromIndex >= entries.length || toIndex < 0 || toIndex >= entries.length) {
+      return;
+    }
+
+    const [removed] = entries.splice(fromIndex, 1);
+    entries.splice(toIndex, 0, removed);
+
+    this.calendars.clear();
+    entries.forEach(([key, value]) => {
+      this.calendars.set(key, value);
+    });
+  }
+
+  /**
    * Update visibility of a specific calendar type
    */
   setVisibility(calendarId: string, visible: boolean): void {
@@ -280,6 +300,19 @@ export class CalendarRegistry {
         ...calendar,
         isVisible: visible,
       });
+    });
+  }
+
+  /**
+   * Update calendar properties
+   */
+  updateCalendar(calendarId: string, updates: Partial<CalendarType>): void {
+    const calendar = this.calendars.get(calendarId);
+    if (!calendar) return;
+
+    this.calendars.set(calendarId, {
+      ...calendar,
+      ...updates,
     });
   }
 

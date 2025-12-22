@@ -1,7 +1,7 @@
 // Core type definitions
 import React from 'react';
 import { Event } from './event';
-import { ViewSwitcherMode } from '@/components/common/ViewHeader';
+import { ViewSwitcherMode } from '../components/common/ViewHeader';
 import { CalendarType, ThemeConfig, ThemeMode } from './calendarTypes';
 
 /**
@@ -47,10 +47,11 @@ export interface CalendarCallbacks {
   onDateChange?: (date: Date) => void;
   onRender?: () => void;
   onVisibleMonthChange?: (date: Date) => void;
+  onCalendarUpdate?: (calendar: CalendarType) => void;
 }
 
 /**
- * Sidebar 渲染所需的 props
+ * Sidebar render props
  */
 export interface CalendarSidebarRenderProps {
   app: CalendarApp;
@@ -62,7 +63,7 @@ export interface CalendarSidebarRenderProps {
 }
 
 /**
- * Sidebar 配置
+ * Sidebar config
  */
 export interface SidebarConfig {
   enabled?: boolean;
@@ -131,8 +132,10 @@ export interface CalendarApp {
   getEvents: () => Event[];
   getAllEvents: () => Event[];
   getCalendars: () => CalendarType[];
+  reorderCalendars: (fromIndex: number, toIndex: number) => void;
   setCalendarVisibility: (calendarId: string, visible: boolean) => void;
   setAllCalendarsVisibility: (visible: boolean) => void;
+  updateCalendar: (id: string, updates: Partial<CalendarType>) => void;
   setVisibleMonth: (date: Date) => void;
   getVisibleMonth: () => Date;
 

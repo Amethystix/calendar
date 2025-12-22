@@ -9,15 +9,15 @@ import {
   CalendarCallbacks,
   SidebarConfig,
   CalendarType,
-} from '@/types';
-import { Event } from '@/types';
+} from '../types';
+import { Event } from '../types';
 import {
   CalendarRegistry,
   setDefaultCalendarRegistry,
 } from './calendarRegistry';
-import { logger } from '@/utils/logger';
-import { normalizeCssWidth } from '@/utils/styleUtils';
-import { ThemeMode } from '@/types/calendarTypes';
+import { logger } from '../utils/logger';
+import { normalizeCssWidth } from '../utils/styleUtils';
+import { ThemeMode } from '../types/calendarTypes';
 
 const DEFAULT_SIDEBAR_WIDTH = '240px';
 
@@ -263,6 +263,11 @@ export class CalendarApp implements ICalendarApp {
     return this.calendarRegistry.getAll();
   };
 
+  reorderCalendars = (fromIndex: number, toIndex: number): void => {
+    this.calendarRegistry.reorder(fromIndex, toIndex);
+    this.callbacks.onRender?.();
+  };
+
   setCalendarVisibility = (calendarId: string, visible: boolean): void => {
     this.calendarRegistry.setVisibility(calendarId, visible);
     this.callbacks.onRender?.();
@@ -270,6 +275,15 @@ export class CalendarApp implements ICalendarApp {
 
   setAllCalendarsVisibility = (visible: boolean): void => {
     this.calendarRegistry.setAllVisibility(visible);
+    this.callbacks.onRender?.();
+  };
+
+  updateCalendar = (id: string, updates: Partial<CalendarType>): void => {
+    this.calendarRegistry.updateCalendar(id, updates);
+    const updatedCalendar = this.calendarRegistry.get(id);
+    if (updatedCalendar) {
+      this.callbacks.onCalendarUpdate?.(updatedCalendar);
+    }
     this.callbacks.onRender?.();
   };
 
