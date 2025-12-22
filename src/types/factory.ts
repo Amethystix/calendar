@@ -8,7 +8,7 @@ import {
   EventDetailContentRenderer,
   EventDetailDialogRenderer,
 } from './eventDetail';
-import { ViewSwitcherMode } from '@/components/common/ViewHeader';
+import { ViewSwitcherMode } from '../components/common/ViewHeader';
 
 /**
  * Common Props interface for view components

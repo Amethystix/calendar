@@ -5,7 +5,7 @@
  * Handles 24-hour format, time rounding, and special cases like midnight crossings.
  */
 
-import { Event } from '@/types';
+import { Event } from '../types';
 import { temporalToDate } from './temporal';
 import { extractHourFromDate } from './dateTimeUtils';
 

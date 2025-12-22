@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { CalendarApp } from '@/core';
-import { Event, CalendarColors } from '@/types';
+import { CalendarApp } from '../core';
+import { Event, CalendarColors } from '../types';
 import { Temporal } from 'temporal-polyfill';
 
 export interface CalendarDropData {

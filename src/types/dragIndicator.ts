@@ -1,5 +1,5 @@
 // Drag-related type definitions
-import { DragConfig } from '@/types';
+import { DragConfig } from '../types';
 import { EventLayout } from './layout';
 import { Event } from './event';
 import {

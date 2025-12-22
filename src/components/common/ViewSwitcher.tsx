@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CalendarApp, ViewType } from '@/types';
+import { CalendarApp, ViewType } from '../../types';
 
 interface ViewSwitcherProps {
   calendar: CalendarApp;

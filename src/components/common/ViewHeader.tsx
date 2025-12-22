@@ -5,9 +5,9 @@ import {
   headerTitle,
   headerSubtitle,
   textGray900,
-} from '@/styles/classNames';
+} from '../../styles/classNames';
 import ViewSwitcher from './ViewSwitcher';
-import { CalendarApp } from '@/types';
+import { CalendarApp } from '../../types';
 
 export type ViewHeaderType = 'day' | 'week' | 'month' | 'year';
 export type ViewSwitcherMode = 'buttons' | 'select';

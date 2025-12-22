@@ -1,7 +1,7 @@
 // Week/Day view specific implementation
 import { useCallback } from 'react';
-import { ViewType, UseWeekDayDragParams, UseWeekDayDragReturn } from '@/types';
-import { getDateByDayIndex } from '@/utils';
+import { ViewType, UseWeekDayDragParams, UseWeekDayDragReturn } from '../../types';
+import { getDateByDayIndex } from '../../utils';
 
 export const useWeekDayDrag = (
   params: UseWeekDayDragParams

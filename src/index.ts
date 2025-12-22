@@ -62,6 +62,8 @@ export type {
   SidebarConfig,
   UseCalendarAppReturn,
   CalendarApp as ICalendarApp,
+  CalendarAppConfig,
+  CalendarCallbacks,
 } from './types/core';
 
 export type { Event } from './types/event';

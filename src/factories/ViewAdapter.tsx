@@ -5,8 +5,8 @@ import {
   BaseViewProps,
   EventsService,
   DragService,
-} from '@/types';
-import { Event } from '@/types';
+} from '../types';
+import { Event } from '../types';
 
 export const ViewAdapter: React.FC<ViewAdapterProps> = ({
   originalComponent: OriginalComponent,

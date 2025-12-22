@@ -1,4 +1,4 @@
-import { useDrag } from '@/hooks/drag';
+import { useDrag } from '../hooks/drag';
 import {
   CalendarPlugin,
   CalendarApp,
@@ -7,8 +7,8 @@ import {
   DragHookReturn,
   DragPluginConfig,
   DragService,
-} from '@/types';
-import { logger } from '@/utils/logger';
+} from '../types';
+import { logger } from '../utils/logger';
 
 // Create drag plugin
 export function createDragPlugin(
@@ -61,9 +61,9 @@ export function useDragForView(
     );
 
     return {
-      handleMoveStart: () => {}, // Disable move
-      handleCreateStart: () => {}, // Disable create
-      handleResizeStart: () => {}, // Disable resize
+      handleMoveStart: () => { }, // Disable move
+      handleCreateStart: () => { }, // Disable create
+      handleResizeStart: () => { }, // Disable resize
       handleCreateAllDayEvent: undefined,
       dragState: result.dragState,
       isDragging: false, // Never in dragging state
@@ -82,11 +82,11 @@ export function useDragForView(
 
   return {
     handleMoveStart:
-      isSupported && config.enableDrag ? result.handleMoveStart : () => {},
+      isSupported && config.enableDrag ? result.handleMoveStart : () => { },
     handleCreateStart:
-      isSupported && config.enableCreate ? result.handleCreateStart : () => {},
+      isSupported && config.enableCreate ? result.handleCreateStart : () => { },
     handleResizeStart:
-      isSupported && config.enableResize ? result.handleResizeStart : () => {},
+      isSupported && config.enableResize ? result.handleResizeStart : () => { },
     handleCreateAllDayEvent:
       isSupported && config.enableAllDayCreate
         ? result.handleCreateAllDayEvent

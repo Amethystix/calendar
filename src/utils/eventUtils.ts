@@ -9,7 +9,7 @@
  */
 
 import { Temporal } from 'temporal-polyfill';
-import { Event } from '@/types';
+import { Event } from '../types';
 import { temporalToDate } from './temporal';
 
 // ============================================================================

@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { WeeksData } from '@/types';
-import { generateWeekData, generateWeekRange, monthNames } from '@/utils';
+import { WeeksData } from '../../types';
+import { generateWeekData, generateWeekRange, monthNames } from '../../utils';
 import {
   UseVirtualMonthScrollProps,
   UseVirtualMonthScrollReturn,
   VIRTUAL_MONTH_SCROLL_CONFIG,
   VirtualWeekItem,
   WeekDataCache,
-} from '@/types/monthView';
+} from '../../types/monthView';
 
 // Responsive configuration Hook
 export const useResponsiveMonthConfig = () => {
@@ -418,13 +418,13 @@ export const useVirtualMonthScroll = ({
       if (targetWeekStart < firstWeek.startDate) {
         weeksDiff = Math.ceil(
           (firstWeek.startDate.getTime() - targetWeekStart.getTime()) /
-            (7 * 24 * 60 * 60 * 1000)
+          (7 * 24 * 60 * 60 * 1000)
         );
         needsPastData = true;
       } else if (targetWeekStart > lastWeek.startDate) {
         weeksDiff = Math.ceil(
           (targetWeekStart.getTime() - lastWeek.startDate.getTime()) /
-            (7 * 24 * 60 * 60 * 1000)
+          (7 * 24 * 60 * 60 * 1000)
         );
         needsFutureData = true;
       }

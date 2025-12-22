@@ -5,10 +5,10 @@ import {
   Event,
   EventsService,
   EventsPluginConfig,
-} from '@/types';
-import { recalculateEventDays } from '@/utils';
-import { temporalToDate } from '@/utils/temporal';
-import { logger } from '@/utils/logger';
+} from '../types';
+import { recalculateEventDays } from '../utils';
+import { temporalToDate } from '../utils/temporal';
+import { logger } from '../utils/logger';
 
 export const defaultEventsConfig: EventsPluginConfig = {
   enableAutoRecalculate: true,

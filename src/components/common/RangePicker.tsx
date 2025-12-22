@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import ReactDOM from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
-import { isPlainDate } from '@/utils/temporal';
+import { isPlainDate } from '../../utils/temporal';
 import {
   mergeFormatTemplate,
   buildParseRegExp,
@@ -16,7 +16,7 @@ import {
   normalizeToZoned,
   formatTemporal,
   pad,
-} from '@/utils/rangePicker';
+} from '../../utils/rangePicker';
 import { MoveRight, ChevronsRight, ChevronRight, ChevronLeft, ChevronsLeft } from 'lucide-react';
 
 type ZonedRange = [Temporal.ZonedDateTime, Temporal.ZonedDateTime];

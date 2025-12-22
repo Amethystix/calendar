@@ -54,7 +54,7 @@ export function LiveDemo() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent px-8 py-12 text-center dark:border-slate-800 dark:from-blue-500/15 my-16">
+      <section className="rounded-3xl border border-slate-200 bg-linear-to-br from-blue-500/10 via-blue-500/5 to-transparent px-8 py-12 text-center dark:border-slate-800 dark:from-blue-500/15 my-16">
         <h2 className="text-3xl font-semibold">Build faster with DayFlow</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
           Install the package, drop in the views you need, and customize the

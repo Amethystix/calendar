@@ -5,7 +5,7 @@
  * All color functions return actual color values (not CSS classes) for inline styles.
  */
 
-import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
+import { getDefaultCalendarRegistry } from '../core/calendarRegistry';
 
 // ============================================================================
 // Color Tools

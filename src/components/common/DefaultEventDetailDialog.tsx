@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
-import { EventDetailDialogProps } from '@/types/eventDetail';
-import { isPlainDate } from '@/utils/temporal';
-import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
+import { EventDetailDialogProps } from '../../types/eventDetail';
+import { isPlainDate } from '../../utils/temporal';
+import { getDefaultCalendarRegistry } from '../../core/calendarRegistry';
 import ColorPicker, { ColorOption } from './ColorPicker';
 import RangePicker from './RangePicker';
 

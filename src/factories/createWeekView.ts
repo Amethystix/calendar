@@ -2,13 +2,13 @@
 import React from 'react';
 import {
   WeekViewConfig,
-  ViewFactory,
   ViewAdapterProps,
+  ViewFactory,
   CalendarView,
   ViewType,
-} from '@/types';
+} from '../types';
 import { ViewAdapter } from './ViewAdapter';
-import WeekView from '@/views/WeekView';
+import WeekView from '../views/WeekView';
 
 // Default Week view configuration
 const defaultWeekViewConfig: WeekViewConfig = {

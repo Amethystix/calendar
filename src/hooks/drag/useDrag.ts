@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useDragProps, useDragReturn, ViewType } from '@/types';
-import { defaultDragConfig } from '@/core/config';
+import { useDragProps, useDragReturn, ViewType } from '../../types';
+import { defaultDragConfig } from '../../core/config';
 import { useDragCommon } from './useDragCommon';
 import { useDragState } from './useDragState';
 import { useDragManager } from './useDragManager';

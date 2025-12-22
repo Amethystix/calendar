@@ -7,16 +7,15 @@ import {
   useDragProps,
   ViewType,
   UseDragManagerReturn,
-} from '@/types';
-import DragIndicatorComponent from '@/components/weekView/DragIndicator/DragIndicatorComponent';
-import MonthDragIndicatorComponent from '@/components/monthView/MonthDragIndicator';
+} from '../../types';
+import DragIndicatorComponent from '../../components/weekView/DragIndicator/DragIndicatorComponent';
+import MonthDragIndicatorComponent from '../../components/monthView/MonthDragIndicator';
 import {
   getSelectedBgColor,
   getEventTextColor,
   formatTime,
-  isMultiDayEvent,
-} from '@/utils';
-import { dateToZonedDateTime } from '@/utils/temporal';
+} from '../../utils';
+import { dateToZonedDateTime } from '../../utils/temporal';
 
 export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
   const {

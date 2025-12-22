@@ -3,13 +3,13 @@ import {
   EventDetailContentRenderer,
   EventDetailDialogRenderer,
   UseCalendarAppReturn,
-} from '@/types';
-import DefaultCalendarSidebar from '@/components/sidebar/DefaultCalendarSidebar';
-import DefaultEventDetailDialog from '@/components/common/DefaultEventDetailDialog';
-import { CalendarSidebarRenderProps } from '@/types';
-import { normalizeCssWidth } from '@/utils/styleUtils';
-import { ThemeProvider } from '@/contexts/ThemeContext';
-import { ThemeMode } from '@/types/calendarTypes';
+} from '../types';
+import DefaultCalendarSidebar from '../components/sidebar/DefaultCalendarSidebar';
+import DefaultEventDetailDialog from '../components/common/DefaultEventDetailDialog';
+import { CalendarSidebarRenderProps } from '../types';
+import { normalizeCssWidth } from '../utils/styleUtils';
+import { ThemeProvider } from '../contexts/ThemeContext';
+import { ThemeMode } from '../types/calendarTypes';
 
 const DEFAULT_SIDEBAR_WIDTH = '240px';
 
@@ -71,8 +71,7 @@ export const DayFlowCalendar: React.FC<DayFlowCalendarProps> = ({
 
   const calendars = useMemo(
     () => app.getCalendars(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [app, sidebarVersion]
+    [app, sidebarVersion, calendar]
   );
 
   const handleToggleCalendarVisibility = useCallback(

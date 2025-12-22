@@ -7,21 +7,21 @@ import {
   WeekDayDragState,
   UseDragHandlersReturn,
   UseDragHandlersParams,
-} from '@/types';
-import { roundToTimeStep, TIME_STEP, getDateByDayIndex } from '@/utils';
+} from '../../types';
+import { roundToTimeStep, TIME_STEP, getDateByDayIndex } from '../../utils';
 import {
   extractHourFromDate,
   createDateWithHour,
   getStartOfDay,
   getEndOfDay,
   getEventEndHour,
-} from '@/utils/helpers';
+} from '../../utils/helpers';
 import { Temporal } from 'temporal-polyfill';
 import {
   temporalToDate,
   dateToZonedDateTime,
   dateToPlainDate,
-} from '@/utils/temporal';
+} from '../../utils/temporal';
 
 export const useDragHandlers = (
   params: UseDragHandlersParams

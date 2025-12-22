@@ -4,7 +4,7 @@
  */
 
 import { Temporal } from 'temporal-polyfill';
-import { Event } from '@/types/event';
+import { Event } from '../types/event';
 
 // ============================================================================
 // Type Guards

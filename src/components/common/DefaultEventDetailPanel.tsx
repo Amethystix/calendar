@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
-import { EventDetailPanelProps } from '@/types/eventDetail';
-import { isPlainDate } from '@/utils/temporal';
-import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
+import { EventDetailPanelProps } from '../../types/eventDetail';
+import { isPlainDate } from '../../utils/temporal';
+import { getDefaultCalendarRegistry } from '../../core/calendarRegistry';
 import ColorPicker, { ColorOption } from './ColorPicker';
 import RangePicker from './RangePicker';
-import { useTheme } from '@/contexts/ThemeContext';
-import { resolveAppliedTheme } from '@/utils/themeUtils';
+import { useTheme } from '../../contexts/ThemeContext';
+import { resolveAppliedTheme } from '../../utils/themeUtils';
 
 /**
  * Default event detail panel component

@@ -1,4 +1,4 @@
-import { UseMonthDragParams, UseMonthDragReturn } from '@/types';
+import { UseMonthDragParams, UseMonthDragReturn } from '../../types';
 
 export const useMonthDrag = (
   params: UseMonthDragParams
