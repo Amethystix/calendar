@@ -40,13 +40,24 @@ const resolveSidebarConfig = (
     };
   }
 
-  const { enabled = true, width, initialCollapsed = false, render } = input;
+  const {
+    enabled = true,
+    width,
+    initialCollapsed = false,
+    render,
+    createCalendarMode,
+    renderCalendarContextMenu,
+    renderCreateCalendarDialog,
+  } = input;
 
   return {
     enabled,
     width: normalizeCssWidth(width, DEFAULT_SIDEBAR_WIDTH),
     initialCollapsed,
     render,
+    createCalendarMode,
+    renderCalendarContextMenu,
+    renderCreateCalendarDialog,
   };
 };
 
@@ -284,6 +295,16 @@ export class CalendarApp implements ICalendarApp {
     if (updatedCalendar) {
       this.callbacks.onCalendarUpdate?.(updatedCalendar);
     }
+    this.callbacks.onRender?.();
+  };
+
+  createCalendar = (calendar: CalendarType): void => {
+    this.calendarRegistry.register(calendar);
+    this.callbacks.onRender?.();
+  };
+
+  deleteCalendar = (id: string): void => {
+    this.calendarRegistry.unregister(id);
     this.callbacks.onRender?.();
   };
 

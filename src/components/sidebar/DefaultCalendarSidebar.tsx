@@ -1,6 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { CalendarSidebarRenderProps, CalendarType } from '../../types';
-import { ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen, Plus, Trash2 } from 'lucide-react';
+import ContextMenu, {
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuLabel,
+  ContextMenuColorPicker,
+} from '../common/ContextMenu';
+import { getCalendarColorsForHex } from '../../core/calendarRegistry';
+import { CreateCalendarDialog } from '../common/CreateCalendarDialog';
 
 import {
   miniCalendarDay,
@@ -12,6 +20,19 @@ import {
   miniCalendarSelected,
 } from '../../styles/classNames';
 import { generateUniKey, weekDays } from '../../utils/helpers';
+
+const COLORS = [
+  '#ef4444', // red
+  '#f97316', // orange
+  '#eab308', // yellow
+  '#22c55e', // green
+  '#06b6d4', // cyan
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#d946ef', // fuchsia
+  '#64748b', // slate
+  '#71717a', // zinc
+];
 
 const getCalendarInitials = (calendar: CalendarType): string => {
   if (calendar.icon) {
@@ -27,11 +48,16 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
   toggleCalendarVisibility,
   isCollapsed,
   setCollapsed,
+  renderCalendarContextMenu,
+  createCalendarMode = 'inline',
+  renderCreateCalendarDialog,
 }) => {
   const currentDate = app.getCurrentDate();
   const visibleMonthDate = app.getVisibleMonth();
   const visibleYear = visibleMonthDate.getFullYear();
   const visibleMonthIndex = visibleMonthDate.getMonth();
+
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Rename state
   const [editingCalendarId, setEditingCalendarId] = useState<string | null>(null);
@@ -252,6 +278,78 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     [app]
   );
 
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    calendarId: string;
+  } | null>(null);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, calendarId: string) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      calendarId,
+    });
+  }, []);
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleDeleteCalendar = useCallback(() => {
+    if (contextMenu) {
+      app.deleteCalendar(contextMenu.calendarId);
+      handleCloseContextMenu();
+    }
+  }, [app, contextMenu, handleCloseContextMenu]);
+
+  const handleColorSelect = useCallback((color: string) => {
+    if (contextMenu) {
+      const { colors, darkColors } = getCalendarColorsForHex(color);
+      app.updateCalendar(contextMenu.calendarId, {
+        colors,
+        darkColors
+      });
+      handleCloseContextMenu();
+    }
+  }, [app, contextMenu, handleCloseContextMenu]);
+
+  const handleCreateCalendar = useCallback(() => {
+    if (createCalendarMode === 'modal') {
+      setShowCreateDialog(true);
+      return;
+    }
+
+    // Inline mode
+    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const { colors, darkColors } = getCalendarColorsForHex(randomColor);
+    const newId = generateUniKey();
+    
+    const newCalendar: CalendarType = {
+      id: newId,
+      name: 'Untitled',
+      colors,
+      darkColors,
+      isVisible: true,
+      isDefault: false,
+    };
+
+    app.createCalendar(newCalendar);
+    setEditingCalendarId(newId);
+    setEditingName('Untitled');
+    
+    // Defer focus to allow render
+    setTimeout(() => {
+        if (editInputRef.current) {
+            editInputRef.current.focus();
+            editInputRef.current.select();
+        }
+    }, 0);
+
+  }, [app, createCalendarMode]);
+
   return (
     <div className="flex h-full flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900">
       <div className="flex items-center px-2 py-2">
@@ -274,6 +372,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
             </span>
             <button
               className="flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-800"
+              onClick={handleCreateCalendar}
             >
               <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" />
             </button>
@@ -298,6 +397,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
                     onDragOver={(e) => handleDragOver(e, calendar.id)}
                     onDragLeave={handleDragLeave}
                     onDrop={() => handleDrop(calendar)}
+                    onContextMenu={(e) => handleContextMenu(e, calendar.id)}
                   >
                     {isDropTarget && dropTarget.position === 'top' && (
                       <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 z-10 pointer-events-none" />
@@ -423,6 +523,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
                   onDragOver={(e) => handleDragOver(e, calendar.id)}
                   onDragLeave={handleDragLeave}
                   onDrop={() => handleDrop(calendar)}
+                  onContextMenu={(e) => handleContextMenu(e, calendar.id)}
                 >
                   {isDropTarget && dropTarget.position === 'top' && (
                     <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 z-10 pointer-events-none" />
@@ -472,6 +573,60 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
             })}
           </ul>
         </div>
+      )}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+        >
+          {renderCalendarContextMenu ? (
+            renderCalendarContextMenu(
+              calendars.find(c => c.id === contextMenu.calendarId)!,
+              handleCloseContextMenu
+            )
+          ) : (
+            <>
+              <ContextMenuLabel>
+                Calendar Options
+              </ContextMenuLabel>
+              <ContextMenuColorPicker
+                selectedColor={
+                  calendars.find(c => c.id === contextMenu.calendarId)?.colors.lineColor
+                }
+                onSelect={handleColorSelect}
+              />
+              <ContextMenuSeparator />
+              <ContextMenuItem
+                icon={<Trash2 className="h-4 w-4" />}
+                onClick={handleDeleteCalendar}
+                danger
+              >
+                Delete Calendar
+              </ContextMenuItem>
+            </>
+          )}
+        </ContextMenu>
+      )}
+
+      {showCreateDialog && (
+        renderCreateCalendarDialog ? (
+          renderCreateCalendarDialog({
+            onClose: () => setShowCreateDialog(false),
+            onCreate: (calendar) => {
+              app.createCalendar(calendar);
+              setShowCreateDialog(false);
+            },
+          })
+        ) : (
+          <CreateCalendarDialog
+            onClose={() => setShowCreateDialog(false)}
+            onCreate={(calendar) => {
+              app.createCalendar(calendar);
+              setShowCreateDialog(false);
+            }}
+          />
+        )
       )}
     </div>
   );

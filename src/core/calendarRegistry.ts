@@ -482,3 +482,31 @@ export function getDefaultCalendarRegistry(): CalendarRegistry {
 export function setDefaultCalendarRegistry(registry: CalendarRegistry): void {
   defaultRegistry = registry;
 }
+
+/**
+ * Get calendar colors for a specific hex color
+ * Tries to match with default calendar types, otherwise generates generic colors
+ */
+export function getCalendarColorsForHex(hex: string): { colors: CalendarColors, darkColors?: CalendarColors } {
+  const match = DEFAULT_CALENDAR_TYPES.find(
+    c => c.colors.lineColor.toLowerCase() === hex.toLowerCase()
+  );
+  if (match) {
+    return { colors: match.colors, darkColors: match.darkColors };
+  }
+
+  return {
+    colors: {
+        eventColor: hex + '1A', // ~10% opacity
+        eventSelectedColor: hex,
+        lineColor: hex,
+        textColor: hex,
+    },
+    darkColors: {
+        eventColor: hex + 'CC', // ~80% opacity
+        eventSelectedColor: hex,
+        lineColor: hex,
+        textColor: '#ffffff',
+    }
+  };
+}

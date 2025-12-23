@@ -50,6 +50,11 @@ export interface CalendarCallbacks {
   onCalendarUpdate?: (calendar: CalendarType) => void;
 }
 
+export interface CreateCalendarDialogProps {
+  onClose: () => void;
+  onCreate: (calendar: CalendarType) => void;
+}
+
 /**
  * Sidebar render props
  */
@@ -60,6 +65,9 @@ export interface CalendarSidebarRenderProps {
   toggleAll: (visible: boolean) => void;
   isCollapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
+  renderCalendarContextMenu?: (calendar: CalendarType, onClose: () => void) => React.ReactNode;
+  createCalendarMode?: 'inline' | 'modal';
+  renderCreateCalendarDialog?: (props: CreateCalendarDialogProps) => React.ReactNode;
 }
 
 /**
@@ -70,6 +78,9 @@ export interface SidebarConfig {
   width?: number | string;
   initialCollapsed?: boolean;
   render?: (props: CalendarSidebarRenderProps) => React.ReactNode;
+  renderCalendarContextMenu?: (calendar: CalendarType, onClose: () => void) => React.ReactNode;
+  createCalendarMode?: 'inline' | 'modal';
+  renderCreateCalendarDialog?: (props: CreateCalendarDialogProps) => React.ReactNode;
 }
 
 /**
@@ -136,6 +147,8 @@ export interface CalendarApp {
   setCalendarVisibility: (calendarId: string, visible: boolean) => void;
   setAllCalendarsVisibility: (visible: boolean) => void;
   updateCalendar: (id: string, updates: Partial<CalendarType>) => void;
+  createCalendar: (calendar: CalendarType) => void;
+  deleteCalendar: (id: string) => void;
   setVisibleMonth: (date: Date) => void;
   getVisibleMonth: () => Date;
 
@@ -178,6 +191,7 @@ export interface UseCalendarAppReturn {
   goToNext: () => void;
   selectDate: (date: Date) => void;
   getCalendars: () => CalendarType[];
+  createCalendar: (calendar: CalendarType) => void;
   setCalendarVisibility: (calendarId: string, visible: boolean) => void;
   setAllCalendarsVisibility: (visible: boolean) => void;
   getAllEvents: () => Event[];

@@ -97,6 +97,18 @@ export function useCalendarApp(
       triggerUpdate();
     };
 
+    const originalCreateCalendar = app.createCalendar;
+    app.createCalendar = (calendar: CalendarType) => {
+      originalCreateCalendar(calendar);
+      triggerUpdate();
+    };
+
+    const originalDeleteCalendar = app.deleteCalendar;
+    app.deleteCalendar = (id: string) => {
+      originalDeleteCalendar(id);
+      triggerUpdate();
+    };
+
     return () => {
       // Cleanup work, if needed
     };
@@ -194,6 +206,7 @@ export function useCalendarApp(
     goToNext,
     selectDate,
     getCalendars: () => app.getCalendars(),
+    createCalendar: (calendar: CalendarType) => app.createCalendar(calendar),
     setCalendarVisibility,
     setAllCalendarsVisibility,
     getAllEvents: () => app.getAllEvents(),

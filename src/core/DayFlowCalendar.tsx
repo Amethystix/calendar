@@ -117,6 +117,9 @@ export const DayFlowCalendar: React.FC<DayFlowCalendarProps> = ({
     toggleAll: handleToggleAllCalendars,
     isCollapsed,
     setCollapsed: setIsCollapsed,
+    renderCalendarContextMenu: sidebarConfig.renderCalendarContextMenu,
+    createCalendarMode: sidebarConfig.createCalendarMode,
+    renderCreateCalendarDialog: sidebarConfig.renderCreateCalendarDialog,
   };
 
   const renderSidebarContent = () => {
