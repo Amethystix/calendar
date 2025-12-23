@@ -6,9 +6,10 @@ interface ContextMenuProps {
   y: number;
   onClose: () => void;
   children: React.ReactNode;
+  className?: string;
 }
 
-const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, children }) => {
+const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, children, className }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, children }) =>
   return createPortal(
     <div
       ref={menuRef}
-      className="fixed z-50 min-w-[180px] overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-slate-800 py-1"
+      className={`fixed z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-200 bg-white p-1 text-slate-950 shadow-md dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50 animate-in fade-in-0 zoom-in-95 duration-100 ease-out ${className || ''}`}
       style={style}
       onContextMenu={(e) => e.preventDefault()}
     >
@@ -64,10 +65,10 @@ export const ContextMenuItem: React.FC<{
 }> = ({ onClick, children, icon, danger }) => {
   return (
     <div
-      className={`flex cursor-pointer items-center px-3 py-2 text-sm transition-colors ${
+      className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-800 dark:focus:text-slate-50 hover:bg-slate-100 dark:hover:bg-slate-800 ${
         danger
-          ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
-          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-700'
+          ? 'text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400'
+          : 'text-slate-900 dark:text-slate-50'
       }`}
       onClick={(e) => {
         e.stopPropagation();
@@ -81,11 +82,11 @@ export const ContextMenuItem: React.FC<{
 };
 
 export const ContextMenuSeparator: React.FC = () => (
-  <div className="my-1 h-px bg-gray-200 dark:bg-slate-700" />
+  <div className="-mx-1 my-1 h-px bg-slate-200 dark:bg-slate-800" />
 );
 
 export const ContextMenuLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400">
+  <div className="px-2 py-1.5 text-sm font-semibold text-slate-950 dark:text-slate-50">
     {children}
   </div>
 );
@@ -106,24 +107,38 @@ const COLORS = [
 export const ContextMenuColorPicker: React.FC<{
   selectedColor?: string;
   onSelect: (color: string) => void;
-}> = ({ selectedColor, onSelect }) => {
+  onCustomColor?: () => void;
+}> = ({ selectedColor, onSelect, onCustomColor }) => {
   return (
-    <div className="grid grid-cols-5 gap-2 p-3">
-      {COLORS.map((color) => (
-        <button
-          key={color}
-          type="button"
-          className={`h-5 w-5 rounded-full border border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 dark:focus:ring-offset-slate-800 ${
-            selectedColor?.toLowerCase() === color.toLowerCase() ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-slate-800' : ''
-          }`}
-          style={{ backgroundColor: color }}
+    <div className="p-2">
+      <div className="grid grid-cols-5 gap-2 p-1">
+        {COLORS.map((color) => (
+          <button
+            key={color}
+            type="button"
+            className={`h-5 w-5 rounded-full border border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 dark:focus:ring-offset-slate-800 ${
+              selectedColor?.toLowerCase() === color.toLowerCase() ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-slate-800' : ''
+            }`}
+            style={{ backgroundColor: color }}
+            onClick={(e) => {
+               e.stopPropagation();
+               onSelect(color);
+            }}
+            title={color}
+          />
+        ))}
+      </div>
+      {onCustomColor && (
+        <div 
+          className="mt-1 flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
           onClick={(e) => {
-             e.stopPropagation();
-             onSelect(color);
+            e.stopPropagation();
+            onCustomColor();
           }}
-          title={color}
-        />
-      ))}
+        >
+          Custom Color...
+        </div>
+      )}
     </div>
   );
 };

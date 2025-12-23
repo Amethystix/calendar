@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { CalendarSidebarRenderProps, CalendarType } from '../../types';
 import { ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen, Plus, Trash2 } from 'lucide-react';
 import ContextMenu, {
@@ -9,6 +10,7 @@ import ContextMenu, {
 } from '../common/ContextMenu';
 import { getCalendarColorsForHex } from '../../core/calendarRegistry';
 import { CreateCalendarDialog } from '../common/CreateCalendarDialog';
+import { SketchPicker } from 'react-color';
 
 import {
   miniCalendarDay,
@@ -285,6 +287,14 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     calendarId: string;
   } | null>(null);
 
+  const [customColorPicker, setCustomColorPicker] = useState<{
+    x: number;
+    y: number;
+    calendarId: string;
+    initialColor: string;
+    currentColor: string;
+  } | null>(null);
+
   const handleContextMenu = useCallback((e: React.MouseEvent, calendarId: string) => {
     e.preventDefault();
     setContextMenu({
@@ -316,6 +326,22 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     }
   }, [app, contextMenu, handleCloseContextMenu]);
 
+  const handleCustomColor = useCallback(() => {
+    if (contextMenu) {
+      const calendar = calendars.find(c => c.id === contextMenu.calendarId);
+      if (calendar) {
+        setCustomColorPicker({
+          x: contextMenu.x,
+          y: contextMenu.y,
+          calendarId: contextMenu.calendarId,
+          initialColor: calendar.colors.lineColor,
+          currentColor: calendar.colors.lineColor,
+        });
+      }
+      handleCloseContextMenu();
+    }
+  }, [contextMenu, calendars, handleCloseContextMenu]);
+
   const handleCreateCalendar = useCallback(() => {
     if (createCalendarMode === 'modal') {
       setShowCreateDialog(true);
@@ -326,7 +352,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
     const { colors, darkColors } = getCalendarColorsForHex(randomColor);
     const newId = generateUniKey();
-    
+
     const newCalendar: CalendarType = {
       id: newId,
       name: 'Untitled',
@@ -339,13 +365,13 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     app.createCalendar(newCalendar);
     setEditingCalendarId(newId);
     setEditingName('Untitled');
-    
+
     // Defer focus to allow render
     setTimeout(() => {
-        if (editInputRef.current) {
-            editInputRef.current.focus();
-            editInputRef.current.select();
-        }
+      if (editInputRef.current) {
+        editInputRef.current.focus();
+        editInputRef.current.select();
+      }
     }, 0);
 
   }, [app, createCalendarMode]);
@@ -579,6 +605,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={handleCloseContextMenu}
+          className="w-56"
         >
           {renderCalendarContextMenu ? (
             renderCalendarContextMenu(
@@ -595,6 +622,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
                   calendars.find(c => c.id === contextMenu.calendarId)?.colors.lineColor
                 }
                 onSelect={handleColorSelect}
+                onCustomColor={handleCustomColor}
               />
               <ContextMenuSeparator />
               <ContextMenuItem
@@ -627,6 +655,38 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
             }}
           />
         )
+      )}
+
+      {customColorPicker && createPortal(
+        <div
+          className="fixed inset-0 z-50"
+          onMouseDown={() => setCustomColorPicker(null)}
+        >
+          <div
+            className="absolute rounded-md bg-white shadow-xl border border-gray-200 dark:bg-slate-800 dark:border-gray-700"
+            style={{
+              top: customColorPicker.y,
+              left: customColorPicker.x
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <SketchPicker
+              width='220px'
+              color={customColorPicker.currentColor}
+              onChange={(color) => {
+                setCustomColorPicker(prev => prev ? { ...prev, currentColor: color.hex } : null);
+              }}
+              onChangeComplete={(color) => {
+                const { colors, darkColors } = getCalendarColorsForHex(color.hex);
+                app.updateCalendar(customColorPicker.calendarId, {
+                  colors,
+                  darkColors
+                });
+              }}
+            />
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
