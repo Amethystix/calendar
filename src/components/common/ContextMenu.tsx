@@ -65,9 +65,9 @@ export const ContextMenuItem: React.FC<{
 }> = ({ onClick, children, icon, danger }) => {
   return (
     <div
-      className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-800 dark:focus:text-slate-50 hover:bg-slate-100 dark:hover:bg-slate-800 ${danger
-          ? 'text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400'
-          : 'text-slate-900 dark:text-slate-50'
+      className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-disabled:pointer-events-none data-disabled:opacity-50 dark:focus:bg-slate-800 dark:focus:text-slate-50 hover:bg-slate-100 dark:hover:bg-slate-800 ${danger
+        ? 'text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400'
+        : 'text-slate-900 dark:text-slate-50'
         }`}
       onClick={(e) => {
         e.stopPropagation();
