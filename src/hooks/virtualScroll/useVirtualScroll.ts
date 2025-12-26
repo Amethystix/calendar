@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import {
-  UseVirtualScrollOptions,
+  UseVirtualScrollProps,
   UseVirtualScrollReturn,
   VirtualItem,
 } from '../../types';

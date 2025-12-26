@@ -22,9 +22,10 @@ export const useWeekDayDrag = (
 
       e.preventDefault();
       e.stopPropagation();
-      if (dragRef.current.active) return;
+      if (dragRef.current?.active) return;
 
       const drag = dragRef.current;
+      if (!drag) return;
       Object.assign(drag, {
         active: true,
         mode: 'create',

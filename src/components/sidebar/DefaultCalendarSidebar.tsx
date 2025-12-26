@@ -452,18 +452,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
   const handleMergeConfirm = useCallback(() => {
     if (mergeState) {
       const { sourceId, targetId } = mergeState;
-
-      const allEvents = app.getAllEvents();
-      const sourceEvents = allEvents.filter(e => e.calendarId === sourceId);
-
-      // Move events
-      sourceEvents.forEach(event => {
-        app.updateEvent(event.id, { calendarId: targetId });
-      });
-
-      // Delete source calendar
-      app.deleteCalendar(sourceId);
-
+      app.mergeCalendars(sourceId, targetId);
       setMergeState(null);
     }
   }, [app, mergeState]);
@@ -865,7 +854,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
                       Merge
                     </button>
                     {showMergeDropdown && (
-                      <div className="absolute left-0 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 z-10 max-h-60 overflow-y-auto">
+                      <div className="absolute left-0 top-full mt-1 min-w-full w-max rounded-md border border-gray-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 z-10 max-h-60 overflow-y-auto">
                         {calendars
                           .filter(c => c.id !== deleteState.calendarId)
                           .map(calendar => (
@@ -878,12 +867,11 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
                                 className="mr-2 h-3 w-3 rounded-sm shrink-0"
                                 style={{ backgroundColor: calendar.colors.lineColor }}
                               />
-                              <span className="truncate">{calendar.name || calendar.id}</span>
+                              <span className="whitespace-nowrap">{calendar.name || calendar.id}</span>
                             </div>
                           ))}
                       </div>
-                    )}
-                  </div>
+                    )}                  </div>
                   <div className="flex gap-3">
                     <button
                       type="button"

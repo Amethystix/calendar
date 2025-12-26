@@ -310,6 +310,22 @@ export class CalendarApp implements ICalendarApp {
     this.callbacks.onRender?.();
   };
 
+  mergeCalendars = (sourceId: string, targetId: string): void => {
+    const sourceEvents = this.state.events.filter(e => e.calendarId === sourceId);
+    
+    // Update all events from source calendar to target calendar
+    sourceEvents.forEach(event => {
+      this.updateEvent(event.id, { calendarId: targetId });
+    });
+
+    // Delete source calendar
+    this.deleteCalendar(sourceId);
+
+    // Call callback
+    this.callbacks.onCalendarMerge?.(sourceId, targetId);
+    this.callbacks.onRender?.();
+  };
+
   getSidebarConfig = (): SidebarConfig => {
     return this.sidebarConfig;
   };

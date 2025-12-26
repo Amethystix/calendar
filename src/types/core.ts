@@ -50,6 +50,7 @@ export interface CalendarCallbacks {
   onCalendarUpdate?: (calendar: CalendarType) => void;
   onCalendarCreate?: (calendar: CalendarType) => void;
   onCalendarDelete?: (calendarId: string) => void;
+  onCalendarMerge?: (sourceId: string, targetId: string) => void;
 }
 
 export interface CreateCalendarDialogProps {
@@ -151,6 +152,7 @@ export interface CalendarApp {
   updateCalendar: (id: string, updates: Partial<CalendarType>) => void;
   createCalendar: (calendar: CalendarType) => void;
   deleteCalendar: (id: string) => void;
+  mergeCalendars: (sourceId: string, targetId: string) => void;
   setVisibleMonth: (date: Date) => void;
   getVisibleMonth: () => Date;
 
@@ -194,6 +196,7 @@ export interface UseCalendarAppReturn {
   selectDate: (date: Date) => void;
   getCalendars: () => CalendarType[];
   createCalendar: (calendar: CalendarType) => void;
+  mergeCalendars: (sourceId: string, targetId: string) => void;
   setCalendarVisibility: (calendarId: string, visible: boolean) => void;
   setAllCalendarsVisibility: (visible: boolean) => void;
   getAllEvents: () => Event[];

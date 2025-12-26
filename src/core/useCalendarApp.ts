@@ -109,6 +109,13 @@ export function useCalendarApp(
       triggerUpdate();
     };
 
+    const originalMergeCalendars = app.mergeCalendars;
+    app.mergeCalendars = (sourceId: string, targetId: string) => {
+      originalMergeCalendars(sourceId, targetId);
+      setEvents([...app.getEvents()]);
+      triggerUpdate();
+    };
+
     return () => {
       // Cleanup work, if needed
     };
@@ -207,6 +214,7 @@ export function useCalendarApp(
     selectDate,
     getCalendars: () => app.getCalendars(),
     createCalendar: (calendar: CalendarType) => app.createCalendar(calendar),
+    mergeCalendars: (sourceId: string, targetId: string) => app.mergeCalendars(sourceId, targetId),
     setCalendarVisibility,
     setAllCalendarsVisibility,
     getAllEvents: () => app.getAllEvents(),

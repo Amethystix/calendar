@@ -58,8 +58,8 @@ export interface UseVirtualScrollReturn {
  */
 export interface UseDragStateReturn {
   // Refs
-  dragRef: React.RefObject<UnifiedDragRef>;
-  currentDragRef: React.RefObject<{ x: number; y: number }>;
+  dragRef: React.MutableRefObject<UnifiedDragRef>;
+  currentDragRef: React.MutableRefObject<{ x: number; y: number }>;
 
   // State
   dragState: MonthDragState | WeekDayDragState;

@@ -46,7 +46,7 @@ interface WeekComponentProps {
   weekHeight: number; // Use this instead of item.height to avoid sync issues
   events: Event[];
   dragState: MonthEventDragState;
-  calendarRef: React.RefObject<HTMLDivElement | null>;
+  calendarRef: React.RefObject<HTMLDivElement>;
   onEventUpdate: (updatedEvent: Event) => void;
   onEventDelete: (eventId: string) => void;
   onMoveStart: (

@@ -54,7 +54,7 @@ interface CalendarEventProps {
   layout?: EventLayout;
   isAllDay?: boolean;
   allDayHeight?: number;
-  calendarRef: React.RefObject<HTMLDivElement | null>;
+  calendarRef: React.RefObject<HTMLDivElement>;
   isBeingDragged?: boolean;
   isBeingResized?: boolean;
   isDayView?: boolean;

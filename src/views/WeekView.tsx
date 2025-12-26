@@ -46,7 +46,7 @@ interface WeekViewProps {
   app: CalendarApp; // Required prop, provided by CalendarRenderer
   customDetailPanelContent?: EventDetailContentRenderer; // Custom event detail content
   customEventDetailDialog?: EventDetailDialogRenderer; // Custom event detail dialog
-  calendarRef: React.RefObject<HTMLDivElement | null>; // The DOM reference of the entire calendar passed from CalendarRenderer
+  calendarRef: React.RefObject<HTMLDivElement>; // The DOM reference of the entire calendar passed from CalendarRenderer
   switcherMode?: ViewSwitcherMode;
 }
 
