@@ -300,11 +300,13 @@ export class CalendarApp implements ICalendarApp {
 
   createCalendar = (calendar: CalendarType): void => {
     this.calendarRegistry.register(calendar);
+    this.callbacks.onCalendarCreate?.(calendar);
     this.callbacks.onRender?.();
   };
 
   deleteCalendar = (id: string): void => {
     this.calendarRegistry.unregister(id);
+    this.callbacks.onCalendarDelete?.(id);
     this.callbacks.onRender?.();
   };
 

@@ -48,6 +48,8 @@ export interface CalendarCallbacks {
   onRender?: () => void;
   onVisibleMonthChange?: (date: Date) => void;
   onCalendarUpdate?: (calendar: CalendarType) => void;
+  onCalendarCreate?: (calendar: CalendarType) => void;
+  onCalendarDelete?: (calendarId: string) => void;
 }
 
 export interface CreateCalendarDialogProps {

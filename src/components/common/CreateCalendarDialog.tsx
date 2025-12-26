@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
+import { PhotoshopPicker, ColorResult } from 'react-color';
 import { getCalendarColorsForHex } from '../../core/calendarRegistry';
 import { generateUniKey } from '../../utils/helpers';
 import { CalendarType, CreateCalendarDialogProps } from '../../types';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const COLORS = [
-  '#ef4444', // red
-  '#f97316', // orange
-  '#eab308', // yellow
-  '#22c55e', // green
-  '#06b6d4', // cyan
-  '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#d946ef', // fuchsia
-  '#64748b', // slate
-  '#71717a', // zinc
+  '#ea426b',
+  '#f19a38',
+  '#f7cf46',
+  '#83d754',
+  '#51aaf2',
+  '#b672d0',
+  '#957e5e',
 ];
 
 export const CreateCalendarDialog: React.FC<CreateCalendarDialogProps> = ({
@@ -21,14 +20,19 @@ export const CreateCalendarDialog: React.FC<CreateCalendarDialogProps> = ({
   onCreate,
 }) => {
   const [name, setName] = useState('');
-  const [selectedColor, setSelectedColor] = useState(COLORS[5]); // Default blue
+  const [selectedColor, setSelectedColor] = useState(
+    COLORS[Math.floor(Math.random() * COLORS.length)]
+  );
+  const [showPicker, setShowPicker] = useState(false);
+  const [previousColor, setPreviousColor] = useState('');
+  const { effectiveTheme } = useTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     const { colors, darkColors } = getCalendarColorsForHex(selectedColor);
-    
+
     const newCalendar: CalendarType = {
       id: generateUniKey(),
       name: name.trim(),
@@ -42,44 +46,127 @@ export const CreateCalendarDialog: React.FC<CreateCalendarDialogProps> = ({
     onClose();
   };
 
+  const handleColorChange = (color: ColorResult) => {
+    setSelectedColor(color.hex);
+  };
+
+  const handleOpenPicker = () => {
+    setPreviousColor(selectedColor);
+    setShowPicker(true);
+  };
+
+  const handleAccept = () => {
+    setShowPicker(false);
+  };
+
+  const handleCancel = () => {
+    setSelectedColor(previousColor);
+    setShowPicker(false);
+  };
+
+  const isDark = effectiveTheme === 'dark';
+  const pickerStyles = {
+    default: {
+      picker: {
+        background: isDark ? '#1e293b' : '#ffffff',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        borderRadius: '0.5rem',
+        border: isDark ? '1px solid #4b5563' : '1px solid #e5e7eb',
+      },
+      head: {
+        background: isDark ? '#1e293b' : '#ffffff',
+        borderBottom: isDark ? '1px solid #4b5563' : '1px solid #e5e7eb',
+        boxShadow: 'none',
+      },
+      body: {
+        background: isDark ? '#1e293b' : '#ffffff',
+      },
+      controls: {
+        border: isDark ? '1px solid #4b5563' : '1px solid #e5e7eb',
+      },
+      input: {
+        background: isDark ? '#374151' : '#ffffff',
+        color: isDark ? '#f3f4f6' : '#1f2937',
+        border: isDark ? '1px solid #4b5563' : '1px solid #e5e7eb',
+        boxShadow: 'none',
+      },
+      previews: {
+        border: isDark ? '1px solid #4b5563' : '1px solid #e5e7eb',
+      },
+      actions: {
+        borderTop: isDark ? '1px solid #4b5563' : '1px solid #e5e7eb',
+      }
+    },
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-slate-800">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
           Create New Calendar
         </h2>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">
+            <label className="mb-1 block text-xs text-gray-600 dark:text-gray-300">
               Calendar Name
             </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-blue-400 dark:focus:border-blue-500 transition"
-              placeholder="e.g. Work"
-              autoFocus
-            />
+            <div className="flex items-center gap-3">
+              <div
+                className="h-9 w-9 rounded-md border border-gray-200 shadow-sm dark:border-gray-600"
+                style={{ backgroundColor: selectedColor }}
+              />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                placeholder="e.g. Work"
+                autoFocus
+              />
+            </div>
           </div>
 
           <div className="mb-6">
-            <label className="block text-xs text-gray-600 dark:text-gray-300 mb-2">
+            <label className="mb-2 block text-xs text-gray-600 dark:text-gray-300">
               Color
             </label>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-7 gap-3">
               {COLORS.map((color) => (
                 <button
                   key={color}
                   type="button"
-                  className={`h-6 w-6 rounded-full border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
-                    selectedColor === color ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-800' : ''
+                  className={`h-6 w-6 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:focus:ring-offset-slate-800 ${
+                    selectedColor === color
+                      ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-800'
+                      : ''
                   }`}
                   style={{ backgroundColor: color }}
                   onClick={() => setSelectedColor(color)}
                 />
               ))}
+            </div>
+            
+            <div className="mt-2 relative">
+              <button
+                type="button"
+                onClick={handleOpenPicker}
+                className="flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:bg-slate-100 dark:focus:bg-slate-800"
+              >
+                Custom Color...
+              </button>
+
+              {showPicker && (
+                <div className="absolute left-0 top-full z-50 mt-2">
+                  <PhotoshopPicker
+                    color={selectedColor}
+                    onChange={handleColorChange}
+                    onAccept={handleAccept}
+                    onCancel={handleCancel}
+                    styles={pickerStyles}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

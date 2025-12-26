@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarSidebarRenderProps, CalendarType } from '../../types';
-import { ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen, Plus, Trash2, ArrowRight } from 'lucide-react';
 import ContextMenu, {
   ContextMenuItem,
   ContextMenuSeparator,
@@ -24,16 +24,13 @@ import {
 import { generateUniKey, weekDays } from '../../utils/helpers';
 
 const COLORS = [
-  '#ef4444', // red
-  '#f97316', // orange
-  '#eab308', // yellow
-  '#22c55e', // green
-  '#06b6d4', // cyan
-  '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#d946ef', // fuchsia
-  '#64748b', // slate
-  '#71717a', // zinc
+  '#ea426b',
+  '#f19a38',
+  '#f7cf46',
+  '#83d754',
+  '#51aaf2',
+  '#b672d0',
+  '#957e5e',
 ];
 
 const getCalendarInitials = (calendar: CalendarType): string => {
@@ -42,6 +39,96 @@ const getCalendarInitials = (calendar: CalendarType): string => {
   }
   const name = calendar.name || calendar.id;
   return name.charAt(0).toUpperCase();
+};
+
+const MergeMenuItem = ({
+  calendars,
+  currentCalendarId,
+  onMergeSelect
+}: {
+  calendars: CalendarType[],
+  currentCalendarId: string,
+  onMergeSelect: (targetId: string) => void
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const itemRef = useRef<HTMLDivElement>(null);
+  const submenuRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (itemRef.current) {
+      const rect = itemRef.current.getBoundingClientRect();
+      setPosition({ x: rect.right, y: rect.top });
+    }
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 100);
+  };
+
+  useEffect(() => {
+    const el = submenuRef.current;
+    if (el) {
+      const stopPropagation = (e: MouseEvent) => e.stopPropagation();
+      el.addEventListener('mousedown', stopPropagation);
+      return () => {
+        el.removeEventListener('mousedown', stopPropagation);
+      };
+    }
+  }, [isHovered]);
+
+  const availableCalendars = calendars.filter(c => c.id !== currentCalendarId);
+
+  if (availableCalendars.length === 0) return null;
+
+  return (
+    <>
+      <div
+        ref={itemRef}
+        className="relative flex cursor-default select-none items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-50"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <span>Merge</span>
+        <ChevronRight className="h-4 w-4" />
+      </div>
+      {isHovered && createPortal(
+        <div
+          ref={submenuRef}
+          className="fixed z-60 min-w-48 overflow-hidden rounded-md border border-slate-200 bg-white p-1 shadow-md dark:border-slate-800 dark:bg-slate-950 animate-in fade-in-0 zoom-in-95 duration-100"
+          style={{ top: position.y, left: position.x }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {availableCalendars.map(calendar => (
+            <div
+              key={calendar.id}
+              className="flex items-center cursor-pointer rounded-sm px-2 py-1.5 text-sm text-slate-900 hover:bg-slate-100 dark:text-slate-50 dark:hover:bg-slate-800"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMergeSelect(calendar.id);
+              }}
+            >
+              <div
+                className="mr-2 h-3 w-3 rounded-sm shrink-0"
+                style={{ backgroundColor: calendar.colors.lineColor }}
+              />
+              <span className="truncate">
+                {calendar.name || calendar.id}
+              </span>
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
+    </>
+  );
 };
 
 const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
@@ -295,6 +382,16 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     currentColor: string;
   } | null>(null);
 
+  // Merge Calendar State
+  const [mergeState, setMergeState] = useState<{ sourceId: string; targetId: string } | null>(null);
+
+  // Delete Calendar State
+  const [deleteState, setDeleteState] = useState<{
+    calendarId: string;
+    step: 'initial' | 'confirm_delete';
+  } | null>(null);
+  const [showMergeDropdown, setShowMergeDropdown] = useState(false);
+
   const handleContextMenu = useCallback((e: React.MouseEvent, calendarId: string) => {
     e.preventDefault();
     setContextMenu({
@@ -310,10 +407,10 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
 
   const handleDeleteCalendar = useCallback(() => {
     if (contextMenu) {
-      app.deleteCalendar(contextMenu.calendarId);
+      setDeleteState({ calendarId: contextMenu.calendarId, step: 'initial' });
       handleCloseContextMenu();
     }
-  }, [app, contextMenu, handleCloseContextMenu]);
+  }, [contextMenu, handleCloseContextMenu]);
 
   const handleColorSelect = useCallback((color: string) => {
     if (contextMenu) {
@@ -341,6 +438,53 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
       handleCloseContextMenu();
     }
   }, [contextMenu, calendars, handleCloseContextMenu]);
+
+  const handleMergeSelect = useCallback((targetId: string) => {
+    if (contextMenu) {
+      setMergeState({
+        sourceId: contextMenu.calendarId,
+        targetId
+      });
+      handleCloseContextMenu();
+    }
+  }, [contextMenu, handleCloseContextMenu]);
+
+  const handleMergeConfirm = useCallback(() => {
+    if (mergeState) {
+      const { sourceId, targetId } = mergeState;
+
+      const allEvents = app.getAllEvents();
+      const sourceEvents = allEvents.filter(e => e.calendarId === sourceId);
+
+      // Move events
+      sourceEvents.forEach(event => {
+        app.updateEvent(event.id, { calendarId: targetId });
+      });
+
+      // Delete source calendar
+      app.deleteCalendar(sourceId);
+
+      setMergeState(null);
+    }
+  }, [app, mergeState]);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deleteState) {
+      app.deleteCalendar(deleteState.calendarId);
+      setDeleteState(null);
+    }
+  }, [app, deleteState]);
+
+  const handleDeleteMergeSelect = useCallback((targetId: string) => {
+    if (deleteState) {
+      setMergeState({
+        sourceId: deleteState.calendarId,
+        targetId
+      });
+      setDeleteState(null);
+      setShowMergeDropdown(false);
+    }
+  }, [deleteState]);
 
   const handleCreateCalendar = useCallback(() => {
     if (createCalendarMode === 'modal') {
@@ -375,6 +519,27 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     }, 0);
 
   }, [app, createCalendarMode]);
+
+  const sourceCalendarName = useMemo(() => {
+    if (mergeState) {
+      return calendars.find(c => c.id === mergeState.sourceId)?.name || 'Unknown';
+    }
+    return '';
+  }, [mergeState, calendars]);
+
+  const targetCalendarName = useMemo(() => {
+    if (mergeState) {
+      return calendars.find(c => c.id === mergeState.targetId)?.name || 'Unknown';
+    }
+    return '';
+  }, [mergeState, calendars]);
+
+  const deleteCalendarName = useMemo(() => {
+    if (deleteState) {
+      return calendars.find(c => c.id === deleteState.calendarId)?.name || 'Unknown';
+    }
+    return '';
+  }, [deleteState, calendars]);
 
   return (
     <div className="flex h-full flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900">
@@ -576,17 +741,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
                           toggleCalendarVisibility(calendar.id, event.target.checked)
                         }
                       />
-                      {/* {showIcon && (
-                        <span
-                          className="mr-2 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
-                          style={{ backgroundColor: calendarColor }}
-                          aria-hidden="true"
-                        >
-                          {getCalendarInitials(calendar)}
-                        </span>
-                      )} */}
                       <span className="flex-1 truncate text-sm text-gray-700 group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white">
-                        {/* {calendar.name || calendar.id} */}
                         &nbsp;
                       </span>
                     </div>
@@ -605,7 +760,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={handleCloseContextMenu}
-          className="w-56"
+          className="w-64 p-2"
         >
           {renderCalendarContextMenu ? (
             renderCalendarContextMenu(
@@ -617,6 +772,17 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
               <ContextMenuLabel>
                 Calendar Options
               </ContextMenuLabel>
+              <MergeMenuItem
+                calendars={calendars}
+                currentCalendarId={contextMenu.calendarId}
+                onMergeSelect={handleMergeSelect}
+              />
+              <ContextMenuItem
+                onClick={handleDeleteCalendar}
+              >
+                Delete
+              </ContextMenuItem>
+              <ContextMenuSeparator />
               <ContextMenuColorPicker
                 selectedColor={
                   calendars.find(c => c.id === contextMenu.calendarId)?.colors.lineColor
@@ -624,14 +790,6 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
                 onSelect={handleColorSelect}
                 onCustomColor={handleCustomColor}
               />
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                icon={<Trash2 className="h-4 w-4" />}
-                onClick={handleDeleteCalendar}
-                danger
-              >
-                Delete Calendar
-              </ContextMenuItem>
             </>
           )}
         </ContextMenu>
@@ -655,6 +813,129 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
             }}
           />
         )
+      )}
+
+      {mergeState && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-800">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Merge &quot;{sourceCalendarName}&quot; with &quot;{targetCalendarName}&quot;?
+            </h2>
+            <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+              Are you sure you want to merge &ldquo;{sourceCalendarName}&rdquo; with &quot;{targetCalendarName}&quot;? Doing so will move all the events from &quot;{sourceCalendarName}&quot; to &quot;{targetCalendarName}&quot; and &quot;{sourceCalendarName}&quot; will be deleted. This cannot be undone.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setMergeState(null)}
+                className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleMergeConfirm}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Merge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteState && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-800">
+            {deleteState.step === 'initial' ? (
+              <>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Delete &quot;{deleteCalendarName}&quot;?
+                </h2>
+                <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                  Do you want to delete &quot;{deleteCalendarName}&quot; or merge its events into another existing calendar?
+                </p>
+                <div className="mt-6 flex justify-between items-center">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowMergeDropdown(!showMergeDropdown)}
+                      className="flex items-center gap-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-slate-700"
+                    >
+                      Merge
+                    </button>
+                    {showMergeDropdown && (
+                      <div className="absolute left-0 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 z-10 max-h-60 overflow-y-auto">
+                        {calendars
+                          .filter(c => c.id !== deleteState.calendarId)
+                          .map(calendar => (
+                            <div
+                              key={calendar.id}
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-700 cursor-pointer"
+                              onClick={() => handleDeleteMergeSelect(calendar.id)}
+                            >
+                              <div
+                                className="mr-2 h-3 w-3 rounded-sm shrink-0"
+                                style={{ backgroundColor: calendar.colors.lineColor }}
+                              />
+                              <span className="truncate">{calendar.name || calendar.id}</span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteState(null);
+                        setShowMergeDropdown(false);
+                      }}
+                      className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteState({ ...deleteState, step: 'confirm_delete' })}
+                      className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Are you sure you want to delete the calendar &ldquo;{deleteCalendarName}&rdquo;?
+                </h2>
+                <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                  If you delete this calendar, all events associated with the calendar will also be deleted.
+                </p>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteState(null);
+                      setShowMergeDropdown(false);
+                    }}
+                    className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDelete}
+                    className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       {customColorPicker && createPortal(
