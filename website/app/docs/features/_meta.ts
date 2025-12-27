@@ -15,8 +15,10 @@ const meta: MetaRecord = {
   },
   'switcher-mode': {
     title: "Switcher Mode"
+  },
+  'create-calendar': {
+    title: "Create Calendar"
   }
-
 }
 
 export default meta

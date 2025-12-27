@@ -3,9 +3,9 @@ import ReactDOM from 'react-dom';
 import {
   EventDetailPanelProps,
   EventDetailContentRenderer,
-} from '@/types/eventDetail';
-import { useTheme } from '@/contexts/ThemeContext';
-import { resolveAppliedTheme } from '@/utils/themeUtils';
+} from '../../types/eventDetail';
+import { useTheme } from '../../contexts/ThemeContext';
+import { resolveAppliedTheme } from '../../utils/themeUtils';
 
 /**
  * Event detail panel wrapper for rendering custom content in the default panel

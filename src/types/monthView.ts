@@ -19,7 +19,7 @@ export interface UseVirtualMonthScrollReturn {
     visibleItems: VirtualWeekItem[];
     displayStartIndex: number; // Index of the first week that should actually be displayed
   };
-  scrollElementRef: React.RefObject<HTMLDivElement | null>;
+  scrollElementRef: React.RefObject<HTMLDivElement>;
   handleScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   scrollToDate: (targetDate: Date, smooth?: boolean) => void;
   handlePreviousMonth: () => void;

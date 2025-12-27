@@ -1,5 +1,5 @@
 import React from 'react';
-import { Event } from '@/types';
+import { Event } from '../../types';
 import {
   getLineColor,
   getSelectedBgColor,
@@ -9,8 +9,8 @@ import {
   formatTime,
   extractHourFromDate,
   getEventEndHour,
-} from '@/utils';
-import { getEventIcon } from '@/components/monthView/util';
+} from '../../utils';
+import { getEventIcon } from '../../components/monthView/util';
 
 export interface MultiDayEventSegment {
   id: string;
@@ -146,7 +146,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
         return (
           <div className="flex items-center min-w-0 w-full pointer-events-auto">
             {segment.isFirstSegment && (
-              <div className="flex-shrink-0 mr-1">
+              <div className="shrink-0 mr-1">
                 <div
                   className="rounded-full p-0.5 text-white flex items-center justify-center"
                   style={{
@@ -168,7 +168,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
 
             {segment.isLastSegment &&
               segment.segmentType !== 'single' && (
-                <div className="flex-shrink-0 ml-1 text-white/80 dark:text-white/90">
+                <div className="shrink-0 ml-1 text-white/80 dark:text-white/90">
                   <div className="w-1.5 h-1.5 rounded-full bg-white/60 dark:bg-white/80"></div>
                 </div>
               )}
@@ -198,7 +198,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
       return (
         <div className="relative flex items-center min-w-0 w-full pointer-events-auto">
           <span
-            className="inline-block w-[3px] h-3 rounded-full flex-shrink-0 mr-1"
+            className="inline-block w-[3px] h-3 rounded-full shrink-0 mr-1"
             style={{ backgroundColor: getLineColor(calendarId) }}
           />
           <div className="flex items-center min-w-0 flex-1">

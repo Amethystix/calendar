@@ -1,7 +1,7 @@
 // Shared utility hook providing common utility functions for drag operations
 import { useCallback, useMemo } from 'react';
-import { useDragProps, ViewType, UseDragCommonReturn } from '@/types';
-import { daysDifference as utilsDaysDifference, addDays as utilsAddDays } from '@/utils';
+import { useDragProps, ViewType, UseDragCommonReturn } from '../../types';
+import { daysDifference as utilsDaysDifference, addDays as utilsAddDays } from '../../utils';
 
 export const useDragCommon = (options: useDragProps): UseDragCommonReturn => {
   const {

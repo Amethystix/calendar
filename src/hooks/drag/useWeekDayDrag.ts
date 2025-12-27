@@ -1,7 +1,7 @@
 // Week/Day view specific implementation
 import { useCallback } from 'react';
-import { ViewType, UseWeekDayDragParams, UseWeekDayDragReturn } from '@/types';
-import { getDateByDayIndex } from '@/utils';
+import { ViewType, UseWeekDayDragParams, UseWeekDayDragReturn } from '../../types';
+import { getDateByDayIndex } from '../../utils';
 
 export const useWeekDayDrag = (
   params: UseWeekDayDragParams
@@ -22,9 +22,10 @@ export const useWeekDayDrag = (
 
       e.preventDefault();
       e.stopPropagation();
-      if (dragRef.current.active) return;
+      if (dragRef.current?.active) return;
 
       const drag = dragRef.current;
+      if (!drag) return;
       Object.assign(drag, {
         active: true,
         mode: 'create',

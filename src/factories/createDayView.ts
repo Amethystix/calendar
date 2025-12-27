@@ -1,14 +1,14 @@
 // Factory function for creating Day view
 import React from 'react';
 import { ViewAdapter } from './ViewAdapter';
-import DayView from '@/views/DayView';
+import DayView from '../views/DayView';
 import {
   CalendarView,
   DayViewConfig,
   ViewAdapterProps,
   ViewFactory,
   ViewType,
-} from '@/types';
+} from '../types';
 
 // Default Day view configuration
 const defaultDayViewConfig: DayViewConfig = {

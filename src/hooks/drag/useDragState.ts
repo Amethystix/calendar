@@ -1,5 +1,5 @@
 import { useRef, useCallback, useState, useMemo } from 'react';
-import { throttle } from '@/utils/throttle';
+import { throttle } from '../../utils/throttle';
 import {
   MonthDragState,
   UnifiedDragRef,
@@ -7,7 +7,7 @@ import {
   ViewType,
   WeekDayDragState,
   UseDragStateReturn,
-} from '@/types';
+} from '../../types';
 
 export const useDragState = (options: useDragProps): UseDragStateReturn => {
   const { viewType, onEventsUpdate } = options;

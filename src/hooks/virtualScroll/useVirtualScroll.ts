@@ -6,10 +6,10 @@ import React, {
   useCallback,
 } from 'react';
 import {
-  VirtualItem,
   UseVirtualScrollProps,
   UseVirtualScrollReturn,
-} from '@/types';
+  VirtualItem,
+} from '../../types';
 
 // Virtual scroll configuration
 export const VIRTUAL_SCROLL_CONFIG = {

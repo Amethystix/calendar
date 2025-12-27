@@ -2,6 +2,7 @@
 
 import { Event } from './event';
 import { EventDetailPosition } from './dragIndicator';
+import { CalendarApp } from '../types';
 
 // Re-export EventDetailPosition for convenience
 export type { EventDetailPosition } from './dragIndicator';
@@ -15,15 +16,15 @@ export interface EventDetailPanelProps {
   /** Panel position information */
   position: EventDetailPosition;
   /** Panel DOM reference */
-  panelRef: React.RefObject<HTMLDivElement | null>;
+  panelRef: React.RefObject<HTMLDivElement>;
   /** Whether the event is all-day */
   isAllDay: boolean;
   /** Event visibility state */
   eventVisibility: 'visible' | 'sticky-top' | 'sticky-bottom';
   /** Calendar container reference */
-  calendarRef: React.RefObject<HTMLDivElement | null>;
+  calendarRef: React.RefObject<HTMLDivElement>;
   /** Selected event element reference */
-  selectedEventElementRef: React.RefObject<HTMLDivElement | null>;
+  selectedEventElementRef: React.RefObject<HTMLDivElement>;
   /** Event update callback */
   onEventUpdate: (updatedEvent: Event) => void;
   /** Event delete callback */
@@ -76,6 +77,7 @@ export interface EventDetailDialogProps {
   onEventDelete: (eventId: string) => void;
   /** Close dialog callback */
   onClose: () => void;
+  app?: CalendarApp;
 }
 
 /**

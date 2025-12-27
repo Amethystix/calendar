@@ -11,7 +11,7 @@ import Link from 'next/link';
     live examples of the default and custom sidebar implementations.
   </div>
   <Link
-    href="/features/sidebar"
+    href="/docs/features/sidebar"
     className="nx-inline-flex nx-items-center nx-justify-center nx-rounded-full nx-bg-blue-500 nx-px-4 nx-py-2 nx-text-sm nx-font-semibold nx-text-white nx-shadow-sm nx-transition hover:nx-bg-blue-400"
   >
     View Sidebar Features →
@@ -37,22 +37,67 @@ import {
   ViewType,
 } from '@dayflow/core';
 
-const calendar = useCalendarApp({
-  views: [createMonthView(), createWeekView(), createDayView()],
-  plugins: [createDragPlugin()],
-  events,
-  calendars,
-  defaultView: ViewType.WEEK,
-  useSidebar: {
-    enabled: true,
-    width: 280, // Optional: tweak the sidebar width in pixels
-  },
-});
+  const sidebarConfig = {
+    createCalendarMode: 'inline' as const,
+    renderCreateCalendarDialog: (props: any) => (
+      <CustomCreateCalendarDialog // <----  you can custom create calendar dialog
+        onClose={props.onClose}
+        onCreate={props.onCreate}
+      />
+    ),
+    renderCalendarContextMenu: (calendar: CalendarType, onClose: () => void) => (
+      appRef.current ? (
+        <CustomContextMenu // <--- you can custom right click context menu
+          calendar={calendar}
+          onClose={onClose}
+          app={appRef.current}
+        />
+      ) : null
+    )
+  } 
+
+  const calendar = useCalendarApp({
+    views: [createDayView(), createWeekView(), createMonthView()],
+    events: events,
+    plugins: [dragPlugin],
+    theme: { mode: 'auto' },
+    useSidebar: sidebarConfig,
+    callbacks: {
+      onCalendarUpdate: async (calendar) => { // <-- get update callback
+        console.log('update calendar:', calendar);
+      },
+      onCalendarDelete: async (calendar) => {
+        console.log('delete calendar:', calendar);
+      },
+      onCalendarCreate: async (calendar) => {
+        // call server api using promise function
+        // await ...
+        console.log('create calendar:', calendar);
+      },
+      onCalendarMerge: async (sourceId, targetId) => {
+        console.log('merge calendar:', sourceId, targetId);
+      },
+    }
+  });
 
 <DayFlowCalendar calendar={calendar} />;
 ```
 
 You can still access every runtime control (`toggleCalendarVisibility`, `toggleAll`, `setCollapsed`) from hooks or plugins — the default sidebar simply wires those actions into a ready-made panel.
+
+## Sidebar Configuration
+
+The sidebar can be configured by passing a `SidebarConfig` object to `useSidebar` in `useCalendarApp`.
+
+| Property                     | Type                                                               | Description                                                                                                                | Default   |
+| ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `enabled`                    | `boolean`                                                          | Whether the sidebar is enabled.                                                                                            | `true`    |
+| `width`                      | `number \| string`                                                 | Width of the sidebar (e.g., `240` or `'20%'`).                                                                             | `'240px'` |
+| `initialCollapsed`           | `boolean`                                                          | Whether the sidebar is collapsed by default.                                                                               | `false`   |
+| `render`                     | `(props: CalendarSidebarRenderProps) => React.ReactNode`           | Full override for the sidebar UI.                                                                                          | -         |
+| `createCalendarMode`         | `'inline' \| 'modal'`                                              | Mode for creating new calendars: `inline` (direct edit in list) or `modal` (pop-up dialog).                                | `'inline'`|
+| `renderCalendarContextMenu`  | `(calendar: CalendarType, onClose: () => void) => React.ReactNode` | Custom renderer for the right-click context menu on calendar items.                                                        | -         |
+| `renderCreateCalendarDialog` | `(props: CreateCalendarDialogProps) => React.ReactNode`            | Custom renderer for the calendar creation dialog (used in `modal` mode).                                                   | -         |
 
 ## Replace the sidebar with your own component
 

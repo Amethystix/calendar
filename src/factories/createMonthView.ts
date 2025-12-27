@@ -6,9 +6,9 @@ import {
   ViewFactory,
   CalendarView,
   ViewType,
-} from '@/types';
+} from '../types';
 import { ViewAdapter } from './ViewAdapter';
-import MonthView from '@/views/MonthView';
+import MonthView from '../views/MonthView';
 
 // Default Month view configuration
 const defaultMonthViewConfig: MonthViewConfig = {

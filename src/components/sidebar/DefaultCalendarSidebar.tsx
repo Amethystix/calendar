@@ -1,25 +1,33 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarSidebarRenderProps, CalendarType } from '@/types';
-import { ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { CalendarSidebarRenderProps, CalendarType } from '../../types';
+import ContextMenu, {
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuLabel,
+  ContextMenuColorPicker,
+} from '../common/ContextMenu';
+import { getCalendarColorsForHex } from '../../core/calendarRegistry';
+import { CreateCalendarDialog } from '../common/CreateCalendarDialog';
+import { SketchPicker } from 'react-color';
+import { generateUniKey } from '../../utils/helpers';
+// common component
+import { SidebarHeader } from './components/SidebarHeader';
+import { CalendarList } from './components/CalendarList';
+import { MiniCalendar } from './components/MiniCalendar';
+import { MergeMenuItem } from './components/MergeMenuItem';
+import { MergeCalendarDialog } from './components/MergeCalendarDialog';
+import { DeleteCalendarDialog } from './components/DeleteCalendarDialog';
 
-import {
-  miniCalendarDay,
-  miniCalendarDayHeader,
-  miniCalendarGrid,
-  miniCalendarCurrentMonth,
-  miniCalendarOtherMonth,
-  miniCalendarToday,
-  miniCalendarSelected,
-} from '@/styles/classNames';
-import { generateUniKey, weekDays } from '@/utils/helpers';
-
-const getCalendarInitials = (calendar: CalendarType): string => {
-  if (calendar.icon) {
-    return calendar.icon;
-  }
-  const name = calendar.name || calendar.id;
-  return name.charAt(0).toUpperCase();
-};
+const COLORS = [
+  '#ea426b',
+  '#f19a38',
+  '#f7cf46',
+  '#83d754',
+  '#51aaf2',
+  '#b672d0',
+  '#957e5e',
+];
 
 const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
   app,
@@ -27,36 +35,19 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
   toggleCalendarVisibility,
   isCollapsed,
   setCollapsed,
+  renderCalendarContextMenu,
+  createCalendarMode = 'inline',
+  renderCreateCalendarDialog,
 }) => {
   const currentDate = app.getCurrentDate();
   const visibleMonthDate = app.getVisibleMonth();
   const visibleYear = visibleMonthDate.getFullYear();
   const visibleMonthIndex = visibleMonthDate.getMonth();
 
-  // Drag state
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedCalendarId, setDraggedCalendarId] = useState<string | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingCalendarId, setEditingCalendarId] = useState<string | null>(null);
 
-  const handleDragStart = useCallback((calendar: CalendarType, e: React.DragEvent) => {
-    setIsDragging(true);
-    setDraggedCalendarId(calendar.id);
-
-    // Store calendar data for drop handling
-    const dragData = {
-      calendarId: calendar.id,
-      calendarName: calendar.name,
-      calendarColors: calendar.colors,
-      calendarIcon: calendar.icon,
-    };
-    e.dataTransfer.setData('application/x-dayflow-calendar', JSON.stringify(dragData));
-    e.dataTransfer.effectAllowed = 'copy';
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    setIsDragging(false);
-    setDraggedCalendarId(null);
-  }, []);
-
+  // Visible Month State
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
     return new Date(visibleYear, visibleMonthIndex, 1);
   });
@@ -72,49 +63,6 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
       return new Date(visibleYear, visibleMonthIndex, 1);
     });
   }, [visibleYear, visibleMonthIndex]);
-
-  const todayKey = useMemo(() => new Date().toDateString(), []);
-  const currentDateKey = currentDate.toDateString();
-
-  const weekdayLabels = useMemo(() => weekDays.map(day => day.charAt(0)), []);
-
-  const miniCalendarDays = useMemo(() => {
-    const year = visibleMonth.getFullYear();
-    const month = visibleMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const startOffset = (firstDay.getDay() + 6) % 7; // Monday as first day
-    const totalCells = 42;
-    const days: Array<{
-      date: number;
-      fullDate: Date;
-      isCurrentMonth: boolean;
-      isToday: boolean;
-      isSelected: boolean;
-    }> = [];
-
-    for (let cell = 0; cell < totalCells; cell++) {
-      const cellDate = new Date(year, month, cell - startOffset + 1);
-      const cellDateString = cellDate.toDateString();
-      days.push({
-        date: cellDate.getDate(),
-        fullDate: cellDate,
-        isCurrentMonth: cellDate.getMonth() === month,
-        isToday: cellDateString === todayKey,
-        isSelected: cellDateString === currentDateKey,
-      });
-    }
-
-    return days;
-  }, [visibleMonth, currentDateKey, todayKey]);
-
-  const monthLabel = useMemo(
-    () =>
-      visibleMonth.toLocaleDateString(undefined, {
-        month: 'long',
-        year: 'numeric',
-      }),
-    [visibleMonth]
-  );
 
   const handleMonthChange = useCallback(
     (offset: number) => {
@@ -140,177 +88,293 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     [app]
   );
 
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    calendarId: string;
+  } | null>(null);
+
+  const [customColorPicker, setCustomColorPicker] = useState<{
+    x: number;
+    y: number;
+    calendarId: string;
+    initialColor: string;
+    currentColor: string;
+  } | null>(null);
+
+  // Merge Calendar State
+  const [mergeState, setMergeState] = useState<{ sourceId: string; targetId: string } | null>(null);
+
+  // Delete Calendar State
+  const [deleteState, setDeleteState] = useState<{
+    calendarId: string;
+    step: 'initial' | 'confirm_delete';
+  } | null>(null);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, calendarId: string) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      calendarId,
+    });
+  }, []);
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleDeleteCalendar = useCallback(() => {
+    if (contextMenu) {
+      setDeleteState({ calendarId: contextMenu.calendarId, step: 'initial' });
+      handleCloseContextMenu();
+    }
+  }, [contextMenu, handleCloseContextMenu]);
+
+  const handleColorSelect = useCallback((color: string) => {
+    if (contextMenu) {
+      const { colors, darkColors } = getCalendarColorsForHex(color);
+      app.updateCalendar(contextMenu.calendarId, {
+        colors,
+        darkColors
+      });
+      handleCloseContextMenu();
+    }
+  }, [app, contextMenu, handleCloseContextMenu]);
+
+  const handleCustomColor = useCallback(() => {
+    if (contextMenu) {
+      const calendar = calendars.find(c => c.id === contextMenu.calendarId);
+      if (calendar) {
+        setCustomColorPicker({
+          x: contextMenu.x,
+          y: contextMenu.y,
+          calendarId: contextMenu.calendarId,
+          initialColor: calendar.colors.lineColor,
+          currentColor: calendar.colors.lineColor,
+        });
+      }
+      handleCloseContextMenu();
+    }
+  }, [contextMenu, calendars, handleCloseContextMenu]);
+
+  const handleMergeSelect = useCallback((targetId: string) => {
+    if (contextMenu) {
+      setMergeState({
+        sourceId: contextMenu.calendarId,
+        targetId
+      });
+      handleCloseContextMenu();
+    }
+  }, [contextMenu, handleCloseContextMenu]);
+
+  const handleMergeConfirm = useCallback(() => {
+    if (mergeState) {
+      const { sourceId, targetId } = mergeState;
+      app.mergeCalendars(sourceId, targetId);
+      setMergeState(null);
+    }
+  }, [app, mergeState]);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deleteState) {
+      app.deleteCalendar(deleteState.calendarId);
+      setDeleteState(null);
+    }
+  }, [app, deleteState]);
+
+  const handleDeleteMergeSelect = useCallback((targetId: string) => {
+    if (deleteState) {
+      setMergeState({
+        sourceId: deleteState.calendarId,
+        targetId
+      });
+      setDeleteState(null);
+    }
+  }, [deleteState]);
+
+  const handleCreateCalendar = useCallback(() => {
+    if (createCalendarMode === 'modal') {
+      setShowCreateDialog(true);
+      return;
+    }
+
+    // Inline mode
+    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const { colors, darkColors } = getCalendarColorsForHex(randomColor);
+    const newId = generateUniKey();
+
+    const newCalendar: CalendarType = {
+      id: newId,
+      name: 'Untitled',
+      colors,
+      darkColors,
+      isVisible: true,
+      isDefault: false,
+    };
+
+    app.createCalendar(newCalendar);
+    setEditingCalendarId(newId);
+
+  }, [app, createCalendarMode]);
+
+  const sourceCalendarName = mergeState ? calendars.find(c => c.id === mergeState.sourceId)?.name || 'Unknown' : '';
+  const targetCalendarName = mergeState ? calendars.find(c => c.id === mergeState.targetId)?.name || 'Unknown' : '';
+  const deleteCalendarName = deleteState ? calendars.find(c => c.id === deleteState.calendarId)?.name || 'Unknown' : '';
+
   return (
     <div className="flex h-full flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900">
-      <div className="flex items-center px-2 py-2">
-        <button
-          type="button"
-          aria-label={isCollapsed ? 'Expand calendar sidebar' : 'Collapse calendar sidebar'}
-          className="flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-800"
-          onClick={() => setCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? (
-            <PanelRightClose className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-          ) : (
-            <PanelRightOpen className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-          )}
-        </button>
-        {!isCollapsed && (
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-            Calendars
-          </span>
-        )}
-      </div>
+      <SidebarHeader
+        isCollapsed={isCollapsed}
+        onCollapseToggle={() => setCollapsed(!isCollapsed)}
+        onAddCalendar={handleCreateCalendar}
+      />
 
       {!isCollapsed ? (
         <>
-          <div className="flex-1 overflow-y-auto px-2 pb-3">
-            <ul className="space-y-1">
-              {calendars.map(calendar => {
-                const isVisible = calendar.isVisible !== false;
-                const calendarColor = calendar.colors?.lineColor || '#3b82f6';
-                const showIcon = Boolean(calendar.icon);
-                return (
-                  <li key={calendar.id}>
-                    <div
-                      draggable
-                      onDragStart={(e) => handleDragStart(calendar, e)}
-                      onDragEnd={handleDragEnd}
-                      className={`rounded transition ${
-                        draggedCalendarId === calendar.id ? 'opacity-50' : ''
-                      }`}
-                    >
-                      <label
-                        className="group flex cursor-pointer items-center rounded px-2 py-2 transition hover:bg-gray-100 dark:hover:bg-slate-800"
-                        title={calendar.name}
-                      >
-                        <input
-                          type="checkbox"
-                          className="calendar-checkbox"
-                          style={{
-                            '--checkbox-color': calendarColor,
-                          } as React.CSSProperties}
-                          checked={isVisible}
-                          onChange={event =>
-                            toggleCalendarVisibility(calendar.id, event.target.checked)
-                          }
-                        />
-                        {showIcon && (
-                          <span
-                            className="mr-2 flex h-5 w-5 flex-shrink-0 items-center justify-center text-xs font-semibold text-white"
-                            aria-hidden="true"
-                          >
-                            {getCalendarInitials(calendar)}
-                          </span>
-                        )}
-                        <span className="flex-1 truncate text-sm text-gray-700 group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white">
-                          {calendar.name || calendar.id}
-                        </span>
-                      </label>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-          <div className="border-t border-gray-200 px-3 py-3 dark:border-slate-800">
-            <div className="mb-3 flex items-center justify-between">
-              <button
-                type="button"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
-                onClick={() => handleMonthChange(-1)}
-                aria-label="Previous month"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                {monthLabel}
-              </span>
-              <button
-                type="button"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
-                onClick={() => handleMonthChange(1)}
-                aria-label="Next month"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className={miniCalendarGrid}>
-              {weekdayLabels.map(label => (
-                <div key={generateUniKey()} className={`${miniCalendarDayHeader} text-gray-500 dark:text-gray-400`}>
-                  {label}
-                </div>
-              ))}
-              {miniCalendarDays.map(day => (
-                <button
-                  type="button"
-                  key={generateUniKey()}
-                  className={`
-                    ${miniCalendarDay}
-                    ${day.isCurrentMonth ? miniCalendarCurrentMonth : miniCalendarOtherMonth}
-                    ${day.isToday ? miniCalendarToday : ''}
-                    ${day.isSelected && !day.isToday ? miniCalendarSelected : ''}
-                  `}
-                  onClick={() => handleDateSelect(day.fullDate)}
-                >
-                  {day.date}
-                </button>
-              ))}
-            </div>
-          </div>
+          <CalendarList
+            calendars={calendars}
+            onToggleVisibility={toggleCalendarVisibility}
+            onReorder={app.reorderCalendars}
+            onRename={(id, newName) => app.updateCalendar(id, { name: newName })}
+            onContextMenu={handleContextMenu}
+            editingId={editingCalendarId}
+            setEditingId={setEditingCalendarId}
+            activeContextMenuCalendarId={contextMenu?.calendarId}
+          />
+          <MiniCalendar
+            visibleMonth={visibleMonth}
+            currentDate={currentDate}
+            onMonthChange={handleMonthChange}
+            onDateSelect={handleDateSelect}
+          />
         </>
       ) : (
-        <div className="flex-1 overflow-y-auto px-2 pb-3">
-          <ul className="space-y-1">
-            {calendars.map(calendar => {
-              const isVisible = calendar.isVisible !== false;
-              const calendarColor = calendar.colors?.lineColor || '#3b82f6';
-              const showIcon = Boolean(calendar.icon);
-              return (
-                <li key={calendar.id}>
-                  <div
-                    draggable
-                    onDragStart={(e) => handleDragStart(calendar, e)}
-                    onDragEnd={handleDragEnd}
-                    className={`rounded transition ${
-                      draggedCalendarId === calendar.id ? 'opacity-50' : ''
-                    }`}
-                  >
-                    <label
-                      className="group flex cursor-pointer items-center rounded px-2 py-2 transition hover:bg-gray-100 dark:hover:bg-slate-800"
-                      title={calendar.name}
-                    >
-                      <input
-                        type="checkbox"
-                        className="calendar-checkbox"
-                        style={{
-                          '--checkbox-color': calendarColor,
-                        } as React.CSSProperties}
-                        checked={isVisible}
-                        onChange={event =>
-                          toggleCalendarVisibility(calendar.id, event.target.checked)
-                        }
-                      />
-                      {/* {showIcon && (
-                        <span
-                          className="mr-2 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
-                          style={{ backgroundColor: calendarColor }}
-                          aria-hidden="true"
-                        >
-                          {getCalendarInitials(calendar)}
-                        </span>
-                      )} */}
-                      <span className="flex-1 truncate text-sm text-gray-700 group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white">
-                        {/* {calendar.name || calendar.id} */}
-                        &nbsp;
-                      </span>
-                    </label>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <CalendarList
+          calendars={calendars}
+          onToggleVisibility={toggleCalendarVisibility}
+          onReorder={app.reorderCalendars}
+          onRename={(id, newName) => app.updateCalendar(id, { name: newName })}
+          onContextMenu={handleContextMenu}
+          editingId={editingCalendarId}
+          setEditingId={setEditingCalendarId}
+          activeContextMenuCalendarId={contextMenu?.calendarId}
+        />
+      )}
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+          className="w-64 p-2"
+        >
+          {renderCalendarContextMenu ? (
+            renderCalendarContextMenu(
+              calendars.find(c => c.id === contextMenu.calendarId)!,
+              handleCloseContextMenu
+            )
+          ) : (
+            <>
+              <ContextMenuLabel>
+                Calendar Options
+              </ContextMenuLabel>
+              <MergeMenuItem
+                calendars={calendars}
+                currentCalendarId={contextMenu.calendarId}
+                onMergeSelect={handleMergeSelect}
+              />
+              <ContextMenuItem
+                onClick={handleDeleteCalendar}
+              >
+                Delete
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuColorPicker
+                selectedColor={
+                  calendars.find(c => c.id === contextMenu.calendarId)?.colors.lineColor
+                }
+                onSelect={handleColorSelect}
+                onCustomColor={handleCustomColor}
+              />
+            </>
+          )}
+        </ContextMenu>
+      )}
+
+      {showCreateDialog && (
+        renderCreateCalendarDialog ? (
+          renderCreateCalendarDialog({
+            onClose: () => setShowCreateDialog(false),
+            onCreate: (calendar) => {
+              app.createCalendar(calendar);
+              setShowCreateDialog(false);
+            },
+          })
+        ) : (
+          <CreateCalendarDialog
+            onClose={() => setShowCreateDialog(false)}
+            onCreate={(calendar) => {
+              app.createCalendar(calendar);
+              setShowCreateDialog(false);
+            }}
+          />
+        )
+      )}
+
+      {mergeState && (
+        <MergeCalendarDialog
+          sourceName={sourceCalendarName}
+          targetName={targetCalendarName}
+          onConfirm={handleMergeConfirm}
+          onCancel={() => setMergeState(null)}
+        />
+      )}
+
+      {deleteState && (
+        <DeleteCalendarDialog
+          calendarId={deleteState.calendarId}
+          calendarName={deleteCalendarName}
+          calendars={calendars}
+          step={deleteState.step}
+          onStepChange={(step) => setDeleteState(prev => prev ? { ...prev, step } : null)}
+          onConfirmDelete={handleConfirmDelete}
+          onCancel={() => setDeleteState(null)}
+          onMergeSelect={handleDeleteMergeSelect}
+        />
+      )}
+
+      {customColorPicker && createPortal(
+        <div
+          className="fixed inset-0 z-50"
+          onMouseDown={() => setCustomColorPicker(null)}
+        >
+          <div
+            className="absolute rounded-md bg-white shadow-xl border border-gray-200 dark:bg-slate-800 dark:border-gray-700"
+            style={{
+              top: customColorPicker.y,
+              left: customColorPicker.x
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <SketchPicker
+              width='220px'
+              color={customColorPicker.currentColor}
+              onChange={(color) => {
+                setCustomColorPicker(prev => prev ? { ...prev, currentColor: color.hex } : null);
+              }}
+              onChangeComplete={(color) => {
+                const { colors, darkColors } = getCalendarColorsForHex(color.hex);
+                app.updateCalendar(customColorPicker.calendarId, {
+                  colors,
+                  darkColors
+                });
+              }}
+            />
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

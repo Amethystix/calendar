@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { ThemeMode } from '@/types/calendarTypes';
-import { resolveAppliedTheme } from '@/utils/themeUtils';
+import { ThemeMode } from '../types/calendarTypes';
+import { resolveAppliedTheme } from '../utils/themeUtils';
 
 /**
  * Theme Context Type

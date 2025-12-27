@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronsUpDown, Check } from 'lucide-react';
-import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
+import { getDefaultCalendarRegistry, CalendarRegistry } from '../../core/calendarRegistry';
 
 export interface ColorOption {
   label: string;
@@ -11,6 +11,7 @@ export interface ColorPickerProps {
   options: ColorOption[];
   value: string;
   onChange: (value: string) => void;
+  registry?: CalendarRegistry;
 }
 
 /**
@@ -21,6 +22,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   options,
   value,
   onChange,
+  registry,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -41,8 +43,8 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
 
   // Get the actual color value for a calendar ID
   const getColorForCalendarId = (calendarId: string): string => {
-    const registry = getDefaultCalendarRegistry();
-    const colors = registry.resolveColors(calendarId);
+    const reg = registry || getDefaultCalendarRegistry();
+    const colors = reg.resolveColors(calendarId);
     return colors.lineColor; // Use lineColor as the display color
   };
 
@@ -60,7 +62,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors h-8"
       >
         <span
-          className="w-4 h-4 rounded-sm flex-shrink-0"
+          className="w-4 h-4 rounded-sm shrink-0"
           style={{ backgroundColor: getColorForCalendarId(value) }}
         />
         <ChevronsUpDown className="w-4 h-4 text-gray-600 dark:text-gray-300" />
@@ -79,7 +81,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
                 <Check width={12} height={12} />
               </span> : <div className="mr-2 text-sm w-3 h-3">&nbsp;</div>}
               <span
-                className="w-3 h-3 mr-2 rounded-sm flex-shrink-0"
+                className="w-3 h-3 mr-2 rounded-sm shrink-0"
                 style={{ backgroundColor: getColorForCalendarId(opt.value) }}
               />
               <span className="text-sm whitespace-nowrap">{opt.label}</span>

@@ -7,16 +7,15 @@ import {
   useDragProps,
   ViewType,
   UseDragManagerReturn,
-} from '@/types';
-import DragIndicatorComponent from '@/components/weekView/DragIndicator/DragIndicatorComponent';
-import MonthDragIndicatorComponent from '@/components/monthView/MonthDragIndicator';
+} from '../../types';
+import DragIndicatorComponent from '../../components/weekView/DragIndicator/DragIndicatorComponent';
+import MonthDragIndicatorComponent from '../../components/monthView/MonthDragIndicator';
 import {
   getSelectedBgColor,
   getEventTextColor,
   formatTime,
-  isMultiDayEvent,
-} from '@/utils';
-import { dateToZonedDateTime } from '@/utils/temporal';
+} from '../../utils';
+import { dateToZonedDateTime } from '../../utils/temporal';
 
 export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
   const {
@@ -30,6 +29,7 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
     FIRST_HOUR = 0,
     TIME_COLUMN_WIDTH = 80,
     ALL_DAY_HEIGHT = 60,
+    app,
   } = options;
 
   const isMonthView = viewType === ViewType.MONTH;
@@ -248,8 +248,8 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
 
       // Set color
       if (color) {
-        indicator.style.backgroundColor = getSelectedBgColor(color);
-        indicator.style.color = getEventTextColor(color);
+        indicator.style.backgroundColor = getSelectedBgColor(color, app?.getCalendarRegistry());
+        indicator.style.color = getEventTextColor(color, app?.getCalendarRegistry());
       } else {
         indicator.className +=
           ' bg-blue-50/70 text-blue-900 border border-dashed border-blue-400';

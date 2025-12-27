@@ -6,9 +6,9 @@ import {
   ViewAdapterProps,
   CalendarView,
   ViewType,
-} from '@/types';
+} from '../types';
 import { ViewAdapter } from './ViewAdapter';
-import YearView from '@/views/YearView';
+import YearView from '../views/YearView';
 
 // Default Year view configuration
 const defaultYearViewConfig: YearViewConfig = {

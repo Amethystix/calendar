@@ -34,6 +34,7 @@ interface DemoCalendarProps {
   switcherMode?: SwitcherMode;
   customDetailPanelContent?: EventDetailContentRenderer;
   customEventDetailDialog?: EventDetailDialogRenderer;
+  useEventDetailDialog?: boolean;
   className?: string;
 }
 
@@ -131,9 +132,11 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 const useDemoCalendar = ({
   switcherMode,
   events,
+  useEventDetailDialog = false,
 }: {
   switcherMode?: SwitcherMode;
   events?: Event[];
+  useEventDetailDialog?: boolean;
 }) => {
   const { resolvedTheme } = useTheme();
 
@@ -173,7 +176,8 @@ const useDemoCalendar = ({
     defaultView: ViewType.MONTH,
     initialDate: new Date(),
     switcherMode: switcherMode ?? 'buttons',
-    theme: { mode: themeMode }
+    theme: { mode: themeMode },
+    useEventDetailDialog,
   });
 };
 
@@ -181,9 +185,10 @@ const DemoCalendar: React.FC<DemoCalendarProps> = ({
   switcherMode,
   customDetailPanelContent,
   customEventDetailDialog,
+  useEventDetailDialog = false,
   className = 'h-[520px]',
 }) => {
-  const calendar = useDemoCalendar({ switcherMode });
+  const calendar = useDemoCalendar({ switcherMode, useEventDetailDialog });
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
@@ -313,7 +318,7 @@ export const EventDialogShowcase: React.FC = () => {
         editing, time selection, calendar types, and delete functionality. Click
         any event to see it in action.
       </p>
-      <DemoCalendar className="h-[520px]" />
+      <DemoCalendar className="h-[520px]" useEventDetailDialog={true} />
     </div>
   );
 };

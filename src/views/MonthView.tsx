@@ -31,7 +31,7 @@ interface MonthViewProps {
   app: CalendarApp; // Required prop, provided by CalendarRenderer
   customDetailPanelContent?: EventDetailContentRenderer; // Custom event detail content
   customEventDetailDialog?: EventDetailDialogRenderer; // Custom event detail dialog
-  calendarRef: React.RefObject<HTMLDivElement | null>; // The DOM reference of the entire calendar passed from CalendarRenderer
+  calendarRef: React.RefObject<HTMLDivElement>; // The DOM reference of the entire calendar passed from CalendarRenderer
   switcherMode?: ViewSwitcherMode;
 }
 
@@ -44,6 +44,7 @@ const MonthView: React.FC<MonthViewProps> = ({
 }) => {
   const currentDate = app.getCurrentDate();
   const rawEvents = app.getEvents();
+  const calendarSignature = app.getCalendars().map(c => c.id + c.colors.lineColor).join('-');
   const previousEventsRef = useRef<Event[] | null>(null);
   // Stabilize events reference so week calculations do not rerun on every scroll frame
   const events = useMemo(() => {
@@ -466,6 +467,8 @@ const MonthView: React.FC<MonthViewProps> = ({
               customEventDetailDialog={customEventDetailDialog}
               onCalendarDrop={handleDrop}
               onCalendarDragOver={handleDragOver}
+              calendarSignature={calendarSignature}
+              app={app}
             />
           );
         })}

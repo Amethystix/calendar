@@ -1,8 +1,9 @@
 // Core type definitions
 import React from 'react';
 import { Event } from './event';
-import { ViewSwitcherMode } from '@/components/common/ViewHeader';
+import { ViewSwitcherMode } from '../components/common/ViewHeader';
 import { CalendarType, ThemeConfig, ThemeMode } from './calendarTypes';
+import { CalendarRegistry } from '../core/calendarRegistry';
 
 /**
  * View type enum
@@ -40,17 +41,26 @@ export interface CalendarView {
  * Defines calendar event callback functions
  */
 export interface CalendarCallbacks {
-  onViewChange?: (view: ViewType) => void;
-  onEventCreate?: (event: Event) => void;
-  onEventUpdate?: (event: Event) => void;
-  onEventDelete?: (eventId: string) => void;
-  onDateChange?: (date: Date) => void;
-  onRender?: () => void;
-  onVisibleMonthChange?: (date: Date) => void;
+  onViewChange?: (view: ViewType) => void | Promise<void>;
+  onEventCreate?: (event: Event) => void | Promise<void>;
+  onEventUpdate?: (event: Event) => void | Promise<void>;
+  onEventDelete?: (eventId: string) => void | Promise<void>;
+  onDateChange?: (date: Date) => void | Promise<void>;
+  onRender?: () => void | Promise<void>;
+  onVisibleMonthChange?: (date: Date) => void | Promise<void>;
+  onCalendarUpdate?: (calendar: CalendarType) => void | Promise<void>;
+  onCalendarCreate?: (calendar: CalendarType) => void | Promise<void>;
+  onCalendarDelete?: (calendarId: string) => void | Promise<void>;
+  onCalendarMerge?: (sourceId: string, targetId: string) => void | Promise<void>;
+}
+
+export interface CreateCalendarDialogProps {
+  onClose: () => void;
+  onCreate: (calendar: CalendarType) => void;
 }
 
 /**
- * Sidebar 渲染所需的 props
+ * Sidebar render props
  */
 export interface CalendarSidebarRenderProps {
   app: CalendarApp;
@@ -59,16 +69,22 @@ export interface CalendarSidebarRenderProps {
   toggleAll: (visible: boolean) => void;
   isCollapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
+  renderCalendarContextMenu?: (calendar: CalendarType, onClose: () => void) => React.ReactNode;
+  createCalendarMode?: 'inline' | 'modal';
+  renderCreateCalendarDialog?: (props: CreateCalendarDialogProps) => React.ReactNode;
 }
 
 /**
- * Sidebar 配置
+ * Sidebar config
  */
 export interface SidebarConfig {
   enabled?: boolean;
   width?: number | string;
   initialCollapsed?: boolean;
   render?: (props: CalendarSidebarRenderProps) => React.ReactNode;
+  renderCalendarContextMenu?: (calendar: CalendarType, onClose: () => void) => React.ReactNode;
+  createCalendarMode?: 'inline' | 'modal';
+  renderCreateCalendarDialog?: (props: CreateCalendarDialogProps) => React.ReactNode;
 }
 
 /**
@@ -131,8 +147,13 @@ export interface CalendarApp {
   getEvents: () => Event[];
   getAllEvents: () => Event[];
   getCalendars: () => CalendarType[];
+  reorderCalendars: (fromIndex: number, toIndex: number) => void;
   setCalendarVisibility: (calendarId: string, visible: boolean) => void;
   setAllCalendarsVisibility: (visible: boolean) => void;
+  updateCalendar: (id: string, updates: Partial<CalendarType>) => void;
+  createCalendar: (calendar: CalendarType) => void;
+  deleteCalendar: (id: string) => void;
+  mergeCalendars: (sourceId: string, targetId: string) => void;
   setVisibleMonth: (date: Date) => void;
   getVisibleMonth: () => Date;
 
@@ -146,7 +167,13 @@ export interface CalendarApp {
   // Sidebar
   getSidebarConfig: () => SidebarConfig;
 
-  // Event Detail Dialog
+  // Trigger render callback
+  triggerRender: () => void;
+
+  // Get CalendarRegistry instance
+  getCalendarRegistry: () => CalendarRegistry;
+
+  // Get whether to use event detail dialog
   getUseEventDetailDialog: () => boolean;
 
   // Theme management
@@ -175,6 +202,8 @@ export interface UseCalendarAppReturn {
   goToNext: () => void;
   selectDate: (date: Date) => void;
   getCalendars: () => CalendarType[];
+  createCalendar: (calendar: CalendarType) => void;
+  mergeCalendars: (sourceId: string, targetId: string) => void;
   setCalendarVisibility: (calendarId: string, visible: boolean) => void;
   setAllCalendarsVisibility: (visible: boolean) => void;
   getAllEvents: () => Event[];

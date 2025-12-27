@@ -9,15 +9,15 @@ import {
   CalendarCallbacks,
   SidebarConfig,
   CalendarType,
-} from '@/types';
-import { Event } from '@/types';
+} from '../types';
+import { Event } from '../types';
 import {
   CalendarRegistry,
   setDefaultCalendarRegistry,
 } from './calendarRegistry';
-import { logger } from '@/utils/logger';
-import { normalizeCssWidth } from '@/utils/styleUtils';
-import { ThemeMode } from '@/types/calendarTypes';
+import { logger } from '../utils/logger';
+import { normalizeCssWidth } from '../utils/styleUtils';
+import { ThemeMode } from '../types/calendarTypes';
 
 const DEFAULT_SIDEBAR_WIDTH = '240px';
 
@@ -40,13 +40,24 @@ const resolveSidebarConfig = (
     };
   }
 
-  const { enabled = true, width, initialCollapsed = false, render } = input;
+  const {
+    enabled = true,
+    width,
+    initialCollapsed = false,
+    render,
+    createCalendarMode,
+    renderCalendarContextMenu,
+    renderCreateCalendarDialog,
+  } = input;
 
   return {
     enabled,
     width: normalizeCssWidth(width, DEFAULT_SIDEBAR_WIDTH),
     initialCollapsed,
     render,
+    createCalendarMode,
+    renderCalendarContextMenu,
+    renderCreateCalendarDialog,
   };
 };
 
@@ -263,6 +274,11 @@ export class CalendarApp implements ICalendarApp {
     return this.calendarRegistry.getAll();
   };
 
+  reorderCalendars = (fromIndex: number, toIndex: number): void => {
+    this.calendarRegistry.reorder(fromIndex, toIndex);
+    this.callbacks.onRender?.();
+  };
+
   setCalendarVisibility = (calendarId: string, visible: boolean): void => {
     this.calendarRegistry.setVisibility(calendarId, visible);
     this.callbacks.onRender?.();
@@ -270,6 +286,43 @@ export class CalendarApp implements ICalendarApp {
 
   setAllCalendarsVisibility = (visible: boolean): void => {
     this.calendarRegistry.setAllVisibility(visible);
+    this.callbacks.onRender?.();
+  };
+
+  updateCalendar = (id: string, updates: Partial<CalendarType>): void => {
+    this.calendarRegistry.updateCalendar(id, updates);
+    const updatedCalendar = this.calendarRegistry.get(id);
+    if (updatedCalendar) {
+      this.callbacks.onCalendarUpdate?.(updatedCalendar);
+    }
+    this.callbacks.onRender?.();
+  };
+
+  createCalendar = (calendar: CalendarType): void => {
+    this.calendarRegistry.register(calendar);
+    this.callbacks.onCalendarCreate?.(calendar);
+    this.callbacks.onRender?.();
+  };
+
+  deleteCalendar = (id: string): void => {
+    this.calendarRegistry.unregister(id);
+    this.callbacks.onCalendarDelete?.(id);
+    this.callbacks.onRender?.();
+  };
+
+  mergeCalendars = (sourceId: string, targetId: string): void => {
+    const sourceEvents = this.state.events.filter(e => e.calendarId === sourceId);
+    
+    // Update all events from source calendar to target calendar
+    sourceEvents.forEach(event => {
+      this.updateEvent(event.id, { calendarId: targetId });
+    });
+
+    // Delete source calendar
+    this.deleteCalendar(sourceId);
+
+    // Call callback
+    this.callbacks.onCalendarMerge?.(sourceId, targetId);
     this.callbacks.onRender?.();
   };
 

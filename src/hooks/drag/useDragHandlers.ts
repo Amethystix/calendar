@@ -7,21 +7,21 @@ import {
   WeekDayDragState,
   UseDragHandlersReturn,
   UseDragHandlersParams,
-} from '@/types';
-import { roundToTimeStep, TIME_STEP, getDateByDayIndex } from '@/utils';
+} from '../../types';
+import { roundToTimeStep, TIME_STEP, getDateByDayIndex } from '../../utils';
 import {
   extractHourFromDate,
   createDateWithHour,
   getStartOfDay,
   getEndOfDay,
   getEventEndHour,
-} from '@/utils/helpers';
+} from '../../utils/helpers';
 import { Temporal } from 'temporal-polyfill';
 import {
   temporalToDate,
   dateToZonedDateTime,
   dateToPlainDate,
-} from '@/utils/temporal';
+} from '../../utils/temporal';
 
 export const useDragHandlers = (
   params: UseDragHandlersParams
@@ -99,11 +99,11 @@ export const useDragHandlers = (
     (e: MouseEvent) => {
       e.preventDefault();
 
-      const drag = dragRef.current;
-      if (!drag.active) return;
-
-      // Set cursor based on drag mode and direction
-      if (drag.mode === 'resize') {
+          const drag = dragRef.current;
+          if (!drag || !drag.active) return;
+      
+          // Set cursor based on drag mode and direction
+          if (drag.mode === 'resize') {
         if (drag.allDay) {
           // AllDay event resize (horizontal)
           document.body.style.cursor = 'ew-resize';
@@ -243,7 +243,7 @@ export const useDragHandlers = (
   const handleUniversalDragEnd = useCallback(() => {
     document.body.style.cursor = 'default';
     const drag = dragRef.current;
-    if (!drag.active || drag.mode !== 'move' || !drag.eventId) return;
+    if (!drag || !drag.active || drag.mode !== 'move' || !drag.eventId) return;
 
     let finalStartHour = drag.startHour;
     let finalEndHour = drag.endHour;
@@ -366,11 +366,11 @@ export const useDragHandlers = (
     (e: MouseEvent) => {
       e.preventDefault();
 
-      const drag = dragRef.current;
-      if (!drag.active) return;
-
-      // Set cursor based on drag mode and direction
-      if (drag.mode === 'resize') {
+          const drag = dragRef.current;
+          if (!drag || !drag.active) return;
+      
+          // Set cursor based on drag mode and direction
+          if (drag.mode === 'resize') {
         if (isMonthView || drag.allDay) {
           // MonthView or AllDay event resize (horizontal)
           document.body.style.cursor = 'ew-resize';
@@ -820,7 +820,7 @@ export const useDragHandlers = (
     (e: MouseEvent) => {
       document.body.style.cursor = 'default';
       const drag = dragRef.current;
-      if (!drag.active) return;
+      if (!drag || !drag.active) return;
 
       if (isMonthView) {
         // Month view drag end logic
@@ -1059,7 +1059,7 @@ export const useDragHandlers = (
     (e: React.MouseEvent, ...args: (Date | number)[]) => {
       e.preventDefault();
       e.stopPropagation();
-      if (dragRef.current.active) return;
+      if (dragRef.current?.active) return;
 
       if (isMonthView) {
         // Month view create event
@@ -1094,6 +1094,7 @@ export const useDragHandlers = (
         // Week/Day view create event
         const [dayIndex, startHour] = args as [number, number];
         const drag = dragRef.current;
+        if (!drag) return;
         const roundedStart = roundToTimeStep(startHour);
 
         Object.assign(drag, {
@@ -1152,9 +1153,10 @@ export const useDragHandlers = (
     (e: React.MouseEvent, event: Event) => {
       e.preventDefault();
       e.stopPropagation();
-      if (dragRef.current.active) return;
+      if (dragRef.current?.active) return;
 
       const drag = dragRef.current;
+      if (!drag) return;
       const sourceElement = e.currentTarget as HTMLElement;
 
       if (isMonthView) {
@@ -1322,9 +1324,10 @@ export const useDragHandlers = (
     (e: React.MouseEvent, event: Event, direction: string) => {
       e.preventDefault();
       e.stopPropagation();
-      if (dragRef.current.active) return;
+      if (dragRef.current?.active) return;
 
       const drag = dragRef.current;
+      if (!drag) return;
 
       if (isMonthView) {
         // Month view resize start

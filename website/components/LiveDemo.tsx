@@ -6,9 +6,9 @@ import InteractiveCalendar from './InteractiveCalendar';
 
 export function LiveDemo() {
   return (
-    <div className="mx-auto ">
+    <div className="mx-auto px-12">
       <section className="space-y-12 py-8">
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto text-center">
           <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium uppercase tracking-wide text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
             Calendar toolkit for product teams
           </span>
@@ -54,7 +54,7 @@ export function LiveDemo() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent px-8 py-12 text-center dark:border-slate-800 dark:from-blue-500/15 my-16">
+      <section className="rounded-3xl border border-slate-200 bg-linear-to-br from-blue-500/10 via-blue-500/5 to-transparent px-8 py-12 text-center dark:border-slate-800 dark:from-blue-500/15 my-16">
         <h2 className="text-3xl font-semibold">Build faster with DayFlow</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
           Install the package, drop in the views you need, and customize the

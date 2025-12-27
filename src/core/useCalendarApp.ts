@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { CalendarApp } from './CalendarApp';
-import { CalendarAppConfig, UseCalendarAppReturn, ViewType } from '@/types';
-import { Event } from '@/types';
+import { CalendarAppConfig, UseCalendarAppReturn, ViewType, CalendarType } from '../types';
+import { Event } from '../types';
 
 export function useCalendarApp(
   config: CalendarAppConfig
@@ -82,6 +82,37 @@ export function useCalendarApp(
     const originalSetVisibleMonth = app.setVisibleMonth;
     app.setVisibleMonth = (date: Date) => {
       originalSetVisibleMonth(date);
+      triggerUpdate();
+    };
+
+    const originalReorderCalendars = app.reorderCalendars;
+    app.reorderCalendars = (fromIndex: number, toIndex: number) => {
+      originalReorderCalendars(fromIndex, toIndex);
+      triggerUpdate();
+    };
+
+    const originalUpdateCalendar = app.updateCalendar;
+    app.updateCalendar = (id: string, updates: Partial<CalendarType>) => {
+      originalUpdateCalendar(id, updates);
+      triggerUpdate();
+    };
+
+    const originalCreateCalendar = app.createCalendar;
+    app.createCalendar = (calendar: CalendarType) => {
+      originalCreateCalendar(calendar);
+      triggerUpdate();
+    };
+
+    const originalDeleteCalendar = app.deleteCalendar;
+    app.deleteCalendar = (id: string) => {
+      originalDeleteCalendar(id);
+      triggerUpdate();
+    };
+
+    const originalMergeCalendars = app.mergeCalendars;
+    app.mergeCalendars = (sourceId: string, targetId: string) => {
+      originalMergeCalendars(sourceId, targetId);
+      setEvents([...app.getEvents()]);
       triggerUpdate();
     };
 
@@ -182,6 +213,8 @@ export function useCalendarApp(
     goToNext,
     selectDate,
     getCalendars: () => app.getCalendars(),
+    createCalendar: (calendar: CalendarType) => app.createCalendar(calendar),
+    mergeCalendars: (sourceId: string, targetId: string) => app.mergeCalendars(sourceId, targetId),
     setCalendarVisibility,
     setAllCalendarsVisibility,
     getAllEvents: () => app.getAllEvents(),

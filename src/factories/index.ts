@@ -11,7 +11,7 @@ import { createWeekView, weekViewPresets } from './createWeekView';
 
 import { createMonthView, monthViewPresets } from './createMonthView';
 
-// Re-export types from @/types for convenience
+// Re-export types from ../types for convenience
 export type {
   BaseViewProps,
   DayViewProps,
@@ -23,13 +23,13 @@ export type {
   MonthViewConfig,
   ViewFactory,
   ViewAdapterProps,
-} from '@/types';
+} from '../types';
 
 // Convenient view creation function
 export function createStandardViews(config?: {
-  day?: Partial<import('@/types').DayViewConfig>;
-  week?: Partial<import('@/types').WeekViewConfig>;
-  month?: Partial<import('@/types').MonthViewConfig>;
+  day?: Partial<import('../types').DayViewConfig>;
+  week?: Partial<import('../types').WeekViewConfig>;
+  month?: Partial<import('../types').MonthViewConfig>;
 }) {
   return [
     createDayView(config?.day),
