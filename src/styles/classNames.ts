@@ -44,18 +44,23 @@ export const buttonGroup = 'flex items-center';
 /**
  * Navigation button (forward/backward)
  */
-export const navButton = 'p-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded';
+export const navButton = 'p-1 text-gray-600 dark:text-gray-300 hover:bg-primary/10 hover:text-primary rounded transition-colors';
 
 /**
  * Today button
  */
 export const todayButton =
-  'px-4 py-1 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded';
+  'px-4 py-1 text-sm text-primary font-medium hover:bg-primary/10 rounded transition-colors';
 
 /**
  * Icon button size
  */
 export const iconSize = 'h-5 w-5';
+
+/**
+ * Cancel button
+ */
+export const cancelButton = 'rounded-md bg-background border border-border px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--hover)'
 
 // ==================== Grid Styles ====================
 
@@ -73,7 +78,7 @@ export const weekHeaderRow =
 /**
  * Weekday labels
  */
-export const dayLabel = 'text-right text-gray-500 dark:text-gray-400 text-sm py-2 pr-2';
+export const dayLabel = 'text-right text-secondary-foreground text-sm py-2 pr-2';
 
 /**
  * WeekView week title
@@ -151,12 +156,12 @@ export const currentTimeLine = 'absolute left-0 top-0 flex pointer-events-none';
  * Current time label
  */
 export const currentTimeLabel =
-  'ml-2 text-white text-xs font-bold px-1.5 bg-red-500 rounded-sm';
+  'ml-2 text-primary-foreground text-xs font-bold px-1.5 bg-primary rounded-sm';
 
 /**
  * Current time line bar
  */
-export const currentTimeLineBar = 'h-0.5 w-full bg-red-600 relative';
+export const currentTimeLineBar = 'h-0.5 w-full bg-primary relative';
 
 // ==================== All-Day Event Area ====================
 
@@ -315,13 +320,13 @@ export const miniCalendarOtherMonth = 'text-gray-400 dark:text-gray-600';
 /**
  * Mini calendar today
  */
-export const miniCalendarToday = 'bg-blue-500 rounded-full text-white';
+export const miniCalendarToday = 'bg-primary rounded-full text-primary-foreground';
 
 /**
  * Mini calendar selected date
  */
 export const miniCalendarSelected =
-  'bg-red-100 text-red-600 rounded-full font-medium';
+  'bg-secondary text-secondary-foreground rounded-full font-medium';
 
 // ==================== Utility Styles ====================
 

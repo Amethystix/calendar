@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { generateUniKey, weekDays } from '../../../utils/helpers';
+import { generateUniKey, weekDays } from '../../utils/helpers';
 import {
   miniCalendarDay,
   miniCalendarDayHeader,
@@ -9,11 +9,12 @@ import {
   miniCalendarOtherMonth,
   miniCalendarToday,
   miniCalendarSelected,
-} from '../../../styles/classNames';
+} from '../../styles/classNames';
 
 interface MiniCalendarProps {
   visibleMonth: Date;
   currentDate: Date;
+  showHeader?: boolean;
   onMonthChange: (offset: number) => void;
   onDateSelect: (date: Date) => void;
 }
@@ -21,6 +22,7 @@ interface MiniCalendarProps {
 export const MiniCalendar: React.FC<MiniCalendarProps> = ({
   visibleMonth,
   currentDate,
+  showHeader = false,
   onMonthChange,
   onDateSelect,
 }) => {
@@ -68,42 +70,48 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({
   }, [visibleMonth, currentDateKey, todayKey]);
 
   return (
-    <div className="border-t border-gray-200 px-3 py-3 dark:border-slate-800">
-      <div className="mb-3 flex items-center justify-between">
-        <button
-          type="button"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
-          onClick={() => onMonthChange(-1)}
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-          {monthLabel}
-        </span>
-        <button
-          type="button"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
-          onClick={() => onMonthChange(1)}
-          aria-label="Next month"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
+    <div className="px-3 py-3">
+      {
+        showHeader ? <div className="mb-3 flex items-center justify-between">
+          <button
+            type="button"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
+            onClick={() => onMonthChange(-1)}
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+            {monthLabel}
+          </span>
+          <button
+            type="button"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
+            onClick={() => onMonthChange(1)}
+            aria-label="Next month"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div> : ''
+      }
       <div className={miniCalendarGrid}>
-        {weekdayLabels.map(label => (
-          <div key={generateUniKey()} className={`${miniCalendarDayHeader} text-gray-500 dark:text-gray-400`}>
+        {weekdayLabels.map((label, index) => (
+          <div key={`weekday-${index}`} className={`${miniCalendarDayHeader} text-gray-500 dark:text-gray-400`}>
             {label}
           </div>
         ))}
         {miniCalendarDays.map(day => (
           <button
             type="button"
-            key={generateUniKey()}
+            key={day.fullDate.getTime()}
             className={`
               ${miniCalendarDay}
-              ${day.isCurrentMonth ? miniCalendarCurrentMonth : miniCalendarOtherMonth}
-              ${day.isToday ? miniCalendarToday : ''}
+              ${day.isToday
+                ? miniCalendarToday
+                : day.isCurrentMonth
+                  ? miniCalendarCurrentMonth
+                  : miniCalendarOtherMonth
+              }
               ${day.isSelected && !day.isToday ? miniCalendarSelected : ''}
             `}
             onClick={() => onDateSelect(day.fullDate)}
