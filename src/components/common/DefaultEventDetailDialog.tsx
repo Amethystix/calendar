@@ -278,7 +278,7 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
             )}
 
             <button
-              className="px-3 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium transition"
+              className="px-3 py-2 bg-destructive border border-border text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium transition"
               onClick={() => {
                 onEventDelete(event.id);
                 onClose();

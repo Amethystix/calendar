@@ -70,7 +70,7 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({
   }, [visibleMonth, currentDateKey, todayKey]);
 
   return (
-    <div className="px-3 py-3 dark:border-slate-800">
+    <div className="px-3 py-3">
       {
         showHeader ? <div className="mb-3 flex items-center justify-between">
           <button

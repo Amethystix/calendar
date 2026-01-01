@@ -27,12 +27,12 @@ export const headerContainer = 'p-2 flex justify-between';
 /**
  * Title text style
  */
-export const headerTitle = 'text-2xl font-semibold text-primary';
+export const headerTitle = 'text-2xl font-semibold text-gray-900 dark:text-gray-100';
 
 /**
  * Subtitle text style
  */
-export const headerSubtitle = 'mt-3 text-secondary';
+export const headerSubtitle = 'mt-3 text-gray-600 dark:text-gray-400';
 
 // ==================== Button Styles ====================
 
@@ -78,7 +78,7 @@ export const weekHeaderRow =
 /**
  * Weekday labels
  */
-export const dayLabel = 'text-right text-secondary text-sm py-2 pr-2';
+export const dayLabel = 'text-right text-secondary-foreground text-sm py-2 pr-2';
 
 /**
  * WeekView week title
@@ -89,7 +89,7 @@ export const weekDayHeader = 'flex border-b border-gray-200 dark:border-gray-700
  * WeekView week title cell
  */
 export const weekDayCell =
-  'flex flex-1 justify-center items-center text-center text-secondary text-sm p-1';
+  'flex flex-1 justify-center items-center text-center text-gray-500 dark:text-gray-400 text-sm p-1';
 
 /**
  * Date number style
@@ -134,7 +134,7 @@ export const timeSlot = 'relative h-[4.5rem] flex';
 /**
  * Time label
  */
-export const timeLabel = 'absolute -top-2.5 right-2 text-[12px] text-secondary';
+export const timeLabel = 'absolute -top-2.5 right-2 text-[12px] text-gray-500 dark:text-gray-400';
 
 /**
  * Time grid row
@@ -174,7 +174,7 @@ export const allDayRow = 'flex items-center border-b border-gray-200 dark:border
  * All-day event label
  */
 export const allDayLabel =
-  'w-20 flex-shrink-0 p-1 text-xs font-medium text-secondary flex justify-end';
+  'w-20 flex-shrink-0 p-1 text-xs font-medium text-gray-500 dark:text-gray-400 flex justify-end';
 
 /**
  * All-day event content area
@@ -300,7 +300,7 @@ export const miniCalendarGrid =
  * Mini calendar weekday title
  */
 export const miniCalendarDayHeader =
-  'text-center text-secondary font-medium py-1 h-6 w-6';
+  'text-center text-gray-500 dark:text-gray-400 font-medium py-1 h-6 w-6';
 
 /**
  * Mini calendar date cell base style
@@ -310,12 +310,12 @@ export const miniCalendarDay = 'text-center py-1 rounded text-xs h-6 w-6';
 /**
  * Mini calendar current month date
  */
-export const miniCalendarCurrentMonth = 'text-primary';
+export const miniCalendarCurrentMonth = 'text-gray-900 dark:text-gray-100';
 
 /**
  * Mini calendar other month date
  */
-export const miniCalendarOtherMonth = 'text-secondary';
+export const miniCalendarOtherMonth = 'text-gray-400 dark:text-gray-600';
 
 /**
  * Mini calendar today
