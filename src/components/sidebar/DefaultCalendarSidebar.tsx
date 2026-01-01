@@ -244,7 +244,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
             activeContextMenuCalendarId={contextMenu?.calendarId}
           />
 
-          <div className='border-t border-gray-200'>
+          <div className='border-t border-gray-200 dark:border-slate-800'>
             <MiniCalendar
               visibleMonth={visibleMonth}
               currentDate={currentDate}
