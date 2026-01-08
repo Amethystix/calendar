@@ -70,6 +70,8 @@ export function TeamCalendar() {
 - `onDateChange(date)` fires whenever the focused date changes (navigation or selection).
 - `onVisibleMonthChange(date)` helps prefetch data as the visible month shifts.
 - `onEventCreate(event)`, `onEventUpdate(event)`, `onEventDelete(id)` mirror CRUD operations—ideal for syncing APIs.
+- `onCalendarCreate(calendar)`, `onCalendarUpdate(calendar)`, `onCalendarDelete(id)` mirror calendar CRUD operations.
+- `onCalendarMerge(sourceId, targetId)` fires when merging two calendars (e.g., merging "Work" into "Personal").
 - `onRender()` executes when the calendar finishes a render pass (useful for instrumentation).
 
 ### defaultView & initialDate
