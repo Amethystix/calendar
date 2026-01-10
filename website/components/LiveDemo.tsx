@@ -13,7 +13,7 @@ export function LiveDemo() {
             Calendar toolkit for product teams
           </span>
           <h1 className="mt-6 text-4xl font-semibold leading-tight sm:text-5xl">
-            Ship a polished calendar without rebuilding the basics.
+            A lightweight and elegant React full calendar component for the web
           </h1>
           <p className="mt-4 text-base text-slate-600 dark:text-slate-400 sm:text-lg">
             DayFlow provides production-ready calendar views, drag-and-drop,

@@ -21,8 +21,13 @@ DayFlow 自带日、周、月、年四种视图。它们在信息密度、交互
 - 支持拖拽创建、移动、调整长度
 - 终日事件与跨日事件自动铺排
 
-```tsx copy
-import { useCalendarApp, DayFlowCalendar, createMonthView, ViewType } from '@dayflow/core';
+```tsx copy {10}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createMonthView,
+  ViewType,
+} from '@dayflow/core';
 
 function MonthOnly() {
   const calendar = useCalendarApp({
@@ -52,8 +57,13 @@ function MonthOnly() {
 - 拖拽创建/移动、拖拽缩放调整时长
 - 双击创建、冲突检测和智能避让
 
-```tsx copy
-import { useCalendarApp, DayFlowCalendar, createWeekView, ViewType } from '@dayflow/core';
+```tsx copy {10}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createWeekView,
+  ViewType,
+} from '@dayflow/core';
 
 function WeekOnly() {
   const calendar = useCalendarApp({
@@ -83,8 +93,13 @@ function WeekOnly() {
 - 内置事件详情面板，可用 `customDetailPanelContent` 自定义
 - 拖拽/缩放操作与周视图保持一致
 
-```tsx copy
-import { useCalendarApp, DayFlowCalendar, createDayView, ViewType } from '@dayflow/core';
+```tsx copy {10}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createDayView,
+  ViewType,
+} from '@dayflow/core';
 
 function DayOnly() {
   const calendar = useCalendarApp({
@@ -113,8 +128,13 @@ function DayOnly() {
 - 桌面 4×3 / 平板 3×4 / 移动 2×6 响应式布局
 - 高亮今日、选中日期，并支持快捷跳转
 
-```tsx copy
-import { useCalendarApp, DayFlowCalendar, createYearView, ViewType } from '@dayflow/core';
+```tsx copy {10}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createYearView,
+  ViewType,
+} from '@dayflow/core';
 
 function YearOnly() {
   const calendar = useCalendarApp({
@@ -131,7 +151,7 @@ function YearOnly() {
 
 想让用户自由切换，就把多个视图注册到 `views` 中，并在 UI 中调用 `calendar.changeView`。
 
-```tsx copy
+```tsx copy {13-18}
 import {
   useCalendarApp,
   DayFlowCalendar,
@@ -144,7 +164,12 @@ import {
 
 function MultiViewCalendar() {
   const calendar = useCalendarApp({
-    views: [createDayView(), createWeekView(), createMonthView(), createYearView()],
+    views: [
+      createDayView(),
+      createWeekView(),
+      createMonthView(),
+      createYearView(),
+    ],
     defaultView: ViewType.MONTH,
     initialDate: new Date(),
     callbacks: {

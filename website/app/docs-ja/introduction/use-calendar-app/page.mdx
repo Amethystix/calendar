@@ -4,7 +4,7 @@
 
 ## クイックスタート
 
-```tsx copy
+```tsx copy {11-16}
 import {
   useCalendarApp,
   DayFlowCalendar,
@@ -28,20 +28,20 @@ export function TeamCalendar() {
 
 ## 主な設定項目
 
-| オプション | 型 | 必須 | デフォルト | 説明 |
-| --- | --- | --- | --- | --- |
-| `views` | `CalendarView[]` | ✅ | — | 表示するビューを登録。`createMonthView()` などのファクトリを使用。 |
-| `plugins` | `CalendarPlugin[]` | ❌ | `[]` | ドラッグ操作やショートカットなどのプラグインをインストール。 |
-| `events` | `Event[]` | ❌ | `[]` | 初期イベント配列。以後は `calendar.addEvent` などで更新。 |
-| `callbacks` | `CalendarCallbacks` | ❌ | `{}` | ビュー変更やイベント CRUD をフックするライフサイクルコールバック。 |
-| `defaultView` | `ViewType` | ❌ | `ViewType.WEEK` | 最初に表示するビュー。`views` に含まれている必要あり。 |
-| `initialDate` | `Date` | ❌ | `new Date()` | フォーカスする基準日。ルーティングの状態などから差し替え可能。 |
-| `switcherMode` | `'buttons' \| 'select'` | ❌ | `'buttons'` | ビルトインビュースイッチャーの表示方法。 |
-| `calendars` | `CalendarType[]` | ❌ | `[]` | カテゴリや色の定義。`calendarId` と連携。 |
-| `defaultCalendar` | `string` | ❌ | 最初の可視カレンダー | 新規イベント作成時の既定カレンダー ID。 |
-| `theme` | `ThemeConfig` | ❌ | `{ mode: 'light' }` | テーマモード（`light`/`dark`/`auto`）やトークン上書き。 |
-| `useSidebar` | `boolean \| SidebarConfig` | ❌ | `false` | サイドバーを有効化し、幅や折りたたみ・カスタムレンダーを制御。 |
-| `useEventDetailDialog` | `boolean` | ❌ | `false` | 詳細表示をモーダルダイアログに切り替える。 |
+| オプション             | 型                         | 必須 | デフォルト           | 説明                                                               |
+| ---------------------- | -------------------------- | ---- | -------------------- | ------------------------------------------------------------------ |
+| `views`                | `CalendarView[]`           | ✅   | —                    | 表示するビューを登録。`createMonthView()` などのファクトリを使用。 |
+| `plugins`              | `CalendarPlugin[]`         | ❌   | `[]`                 | ドラッグ操作やショートカットなどのプラグインをインストール。       |
+| `events`               | `Event[]`                  | ❌   | `[]`                 | 初期イベント配列。以後は `calendar.addEvent` などで更新。          |
+| `callbacks`            | `CalendarCallbacks`        | ❌   | `{}`                 | ビュー変更やイベント CRUD をフックするライフサイクルコールバック。 |
+| `defaultView`          | `ViewType`                 | ❌   | `ViewType.WEEK`      | 最初に表示するビュー。`views` に含まれている必要あり。             |
+| `initialDate`          | `Date`                     | ❌   | `new Date()`         | フォーカスする基準日。ルーティングの状態などから差し替え可能。     |
+| `switcherMode`         | `'buttons' \| 'select'`    | ❌   | `'buttons'`          | ビルトインビュースイッチャーの表示方法。                           |
+| `calendars`            | `CalendarType[]`           | ❌   | `[]`                 | カテゴリや色の定義。`calendarId` と連携。                          |
+| `defaultCalendar`      | `string`                   | ❌   | 最初の可視カレンダー | 新規イベント作成時の既定カレンダー ID。                            |
+| `theme`                | `ThemeConfig`              | ❌   | `{ mode: 'light' }`  | テーマモード（`light`/`dark`/`auto`）やトークン上書き。            |
+| `useSidebar`           | `boolean \| SidebarConfig` | ❌   | `false`              | サイドバーを有効化し、幅や折りたたみ・カスタムレンダーを制御。     |
+| `useEventDetailDialog` | `boolean`                  | ❌   | `false`              | 詳細表示をモーダルダイアログに切り替える。                         |
 
 ## それぞれのポイント
 
@@ -82,13 +82,15 @@ const calendar = useCalendarApp({
 
 ### Callbacks
 
-| コールバック | 役割 |
-| --- | --- |
-| `onViewChange(view)` | ビュー切り替え後に発火。アナリティクスや URL 同期に便利。 |
-| `onDateChange(date)` | 選択日が変わったときに発火。日付連動のサイドバーなどに。 |
-| `onVisibleMonthChange(date)` | 表示月が変わったタイミングで呼ばれる。先読み API 呼び出しに。 |
-| `onEventCreate / Update / Delete` | イベント CRUD を捕捉。バックエンドと同期。 |
-| `onRender()` | レンダリング完了時に 1 度だけ発火。計測用。 |
+| コールバック                                             | 役割                                                           |
+| -------------------------------------------------------- | -------------------------------------------------------------- |
+| `onViewChange(view)`                                     | ビュー切り替え後に発火。アナリティクスや URL 同期に便利。      |
+| `onDateChange(date)`                                     | 選択日が変わったときに発火。日付連動のサイドバーなどに。       |
+| `onVisibleMonthChange(date)`                             | 表示月が変わったタイミングで呼ばれる。先読み API 呼び出しに。  |
+| `onEventCreate / onEventUpdate / onEventDelete`          | イベント CRUD を捕捉。バックエンドと同期。                     |
+| `onCalendarCreate / onCalendarUpdate / onCalendarDelete` | カレンダーの追加・更新・削除を捕捉。                           |
+| `onCalendarMerge(sourceId, targetId)`                    | カレンダーのマージ操作を捕捉（例：「仕事」を「個人」に統合）。 |
+| `onRender()`                                             | レンダリング完了時に 1 度だけ発火。計測用。                    |
 
 ### switcherMode
 

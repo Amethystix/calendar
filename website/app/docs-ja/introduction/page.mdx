@@ -1,20 +1,36 @@
+import { Tabs } from 'nextra/components';
+
 # はじめに
 
 DayFlow は「すぐに触れるカレンダー体験」を目指して設計された React コンポーネントスイートです。このページでは、最小構成で導入するための流れと、次に読むべきドキュメントをまとめました。
 
-## セットアップの流れ
+## インストールと初期化
 
-### DayFlow をインストール
+開始する前に、[yarn](https://github.com/yarnpkg/yarn/) または [pnpm](https://pnpm.io/) または [bun](https://bun.sh/) をインストールする必要がある場合があります。
 
-馴染みのあるパッケージマネージャーでコアパッケージとアイコンセットを追加します。
-
-```bash copy
-npm install @dayflow/core lucide-react
-# or
-yarn add @dayflow/core lucide-react
-# or
-pnpm add @dayflow/core lucide-react
-```
+{/* prettier-ignore */}
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tabs.Tab>
+    ```bash copy
+    npm install @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    pnpm add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    yarn add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    bun add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+</Tabs>
 
 ### Tailwind CSS を準備
 
@@ -64,7 +80,11 @@ CSS でまとめて読み込みたい場合は次のように記述できます�
 ```tsx copy
 'use client';
 
-import { useCalendarApp, DayFlowCalendar, createMonthView } from '@dayflow/core';
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createMonthView,
+} from '@dayflow/core';
 import '@dayflow/core/dist/styles.css';
 
 export default function MyCalendar() {

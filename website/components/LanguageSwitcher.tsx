@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Languages } from 'lucide-react';
 import clsx from 'clsx';
 import { useTheme } from 'next-themes';
+import { getBasePath } from '../utils/basePath';
 
 const locales = [
   { code: 'en', name: 'English' },
@@ -50,7 +51,14 @@ export function LanguageSwitcher() {
   useEffect(() => {
     setMounted(true);
     // Detect current locale from pathname
-    const path = window.location.pathname;
+    const basePath = getBasePath();
+    let path = window.location.pathname;
+
+    // Remove basePath if present
+    if (basePath && path.startsWith(basePath)) {
+      path = path.substring(basePath.length);
+    }
+    
     if (path.startsWith('/docs-zh')) {
       setCurrentLocale('zh');
     } else if (path.startsWith('/docs-ja')) {
@@ -61,42 +69,54 @@ export function LanguageSwitcher() {
   }, []);
 
   const switchLanguage = (newLocale: string) => {
-    const path = window.location.pathname;
+    const basePath = getBasePath();
+    let path = window.location.pathname;
+
+    // Remove basePath if present
+    if (basePath && path.startsWith(basePath)) {
+      path = path.substring(basePath.length);
+    }
+
     let newPath = path;
 
     // Handle root path first
-    if (path === '/') {
+    if (path === '/' || path === '') {
       newPath = newLocale === 'zh' ? '/docs-zh/introduction' : newLocale === 'ja' ? '/docs-ja/introduction' : '/docs/introduction';
     } else {
-      // Remove any existing locale prefix to get the base path
-      let basePath = path;
+      // Remove any existing locale prefix to get the content path
+      let contentPath = path;
       if (path.startsWith('/docs-zh')) {
-        basePath = path.substring('/docs-zh'.length) || '/';
+        contentPath = path.substring('/docs-zh'.length) || '/';
       } else if (path.startsWith('/docs-ja')) {
-        basePath = path.substring('/docs-ja'.length) || '/';
+        contentPath = path.substring('/docs-ja'.length) || '/';
       } else if (path.startsWith('/docs')) {
-        basePath = path.substring('/docs'.length) || '/';
+        contentPath = path.substring('/docs'.length) || '/';
       }
 
-      // Ensure basePath starts with /
-      if (!basePath.startsWith('/')) {
-        basePath = '/' + basePath;
+      // Ensure contentPath starts with /
+      if (!contentPath.startsWith('/')) {
+        contentPath = '/' + contentPath;
       }
 
       // Apply the new locale prefix
       if (newLocale === 'zh') {
-        newPath = '/docs-zh' + basePath;
+        newPath = '/docs-zh' + contentPath;
       } else if (newLocale === 'ja') {
-        newPath = '/docs-ja' + basePath;
+        newPath = '/docs-ja' + contentPath;
       } else {
         // English (default)
-        newPath = '/docs' + basePath;
+        newPath = '/docs' + contentPath;
       }
 
-      // Handle the case where basePath is just '/'
-      if (basePath === '/') {
+      // Handle the case where contentPath is just '/'
+      if (contentPath === '/') {
         newPath = newPath.replace(/\/$/, '');
       }
+    }
+
+    // Add basePath back
+    if (basePath) {
+      newPath = basePath + newPath;
     }
 
     // Store preference and navigate

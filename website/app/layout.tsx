@@ -7,7 +7,7 @@ import { withBasePath } from '@/utils/basePath';
 
 export const metadata: Metadata = {
   title: "DayFlow - Calendar toolkit for product teams",
-  description: "Ship a polished calendar without rebuilding the basics",
+  description: "A lightweight and elegant React full calendar component for the web",
   icons: {
     icon: [
       { url: withBasePath('/logo.svg'), type: 'image/svg+xml' },

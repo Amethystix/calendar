@@ -1,11 +1,8 @@
 import type { MetaRecord } from 'nextra'
 
 const meta: MetaRecord = {
-  'custom-detail-dialog': {
-    title: "カスタム詳細ダイアログ"
-  },
-  'custom-detail-panel': {
-    title: "カスタム詳細パネル"
+  'sidebar': {
+    title: "サイドバー"
   },
   'dark-mode': {
     title: "ダークモード"
@@ -13,12 +10,15 @@ const meta: MetaRecord = {
   'event-dialog': {
     title: "イベントダイアログ"
   },
-  'sidebar': {
-    title: "サイドバー"
-  },
   'switcher-mode': {
     title: "スイッチャーモード"
-  }
+  },
+  'custom-detail-dialog': {
+    title: "カスタム詳細ダイアログ"
+  },
+  'custom-detail-panel': {
+    title: "カスタム詳細パネル"
+  },
 }
 
 export default meta

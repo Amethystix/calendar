@@ -1,3 +1,5 @@
+import { Tabs } from 'nextra/components';
+
 # Getting Started
 
 Welcome to Day Flow! This guide will help you get up and running quickly.
@@ -6,15 +8,31 @@ Welcome to Day Flow! This guide will help you get up and running quickly.
 
 ### Install DayFlow
 
-Install the package using your preferred package manager:
+Before all start, you may need install [yarn](https://github.com/yarnpkg/yarn/) or [pnpm](https://pnpm.io/) or [bun](https://bun.sh/).
 
-```bash copy
-npm install @dayflow/core lucide-react
-# or
-yarn add @dayflow/core lucide-react
-# or
-pnpm add @dayflow/core lucide-react
-```
+{/* prettier-ignore */}
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tabs.Tab>
+    ```bash copy
+    npm install @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    pnpm add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    yarn add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    bun add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+</Tabs>
 
 ### Configure Tailwind CSS
 
