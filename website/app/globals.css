@@ -1,3 +1,4 @@
+@import 'tailwindcss';
 @import 'tw-animate-css';
 
 @layer l-base {
@@ -12,11 +13,11 @@
 
 /* Code block container */
 .nextra-code > div:first-child {
-  background-color: hsl(var(--primary) / 0.1);
+  @apply bg-gray-200 dark:bg-zinc-900;
   border: none;
 }
 
 .nextra-code pre {
-  background-color: hsl(var(--primary) / 0.05);
+  @apply bg-gray-100 dark:bg-zinc-800;
   box-shadow: none;
 }

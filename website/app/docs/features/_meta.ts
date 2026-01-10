@@ -1,24 +1,24 @@
 import type { MetaRecord } from 'nextra'
 
 const meta: MetaRecord = {
-  'custom-detail-dialog': {
-    title: "Custom Detail Dialog"
-  },
-  'custom-detail-panel': {
-    title: "Custom Detail Panel"
+  'sidebar': {
+    title: "Sidebar"
   },
   'event-dialog': {
     title: "Event Dialog"
-  },
-  'sidebar': {
-    title: "Sidebar"
   },
   'switcher-mode': {
     title: "Switcher Mode"
   },
   'create-calendar': {
     title: "Create Calendar"
-  }
+  },
+  'custom-detail-dialog': {
+    title: "Custom Detail Dialog"
+  },
+  'custom-detail-panel': {
+    title: "Custom Detail Panel"
+  },
 }
 
 export default meta

@@ -1,20 +1,36 @@
-# 入门指南
+import { Tabs } from 'nextra/components';
 
-DayFlow 是一套围绕“即插即用的日历体验”打造的 React 组件。下面的内容会带你完成最小化集成，并指向后续更深入的章节。
+# 快速上手
 
-## 安装流程
+DayFlow 是一套围绕“即插即用的日历体验”打造的 React 组件。
 
 ### 安装核心包
 
-任选熟悉的包管理器，把核心依赖和图标库一起装好：
+在开始之前，你可能需要安装 [yarn](https://github.com/yarnpkg/yarn/) 或者 [pnpm](https://pnpm.io/zh/) 或者 [bun](https://bun.sh/)。
 
-```bash copy
-npm install @dayflow/core lucide-react
-# or
-yarn add @dayflow/core lucide-react
-# or
-pnpm add @dayflow/core lucide-react
-```
+{/* prettier-ignore */}
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tabs.Tab>
+    ```bash copy
+    npm install @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    pnpm add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    yarn add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    bun add @dayflow/core lucide-react
+    ```
+  </Tabs.Tab>
+</Tabs>
 
 ### 准备 Tailwind CSS
 
@@ -59,7 +75,7 @@ import '@dayflow/core/dist/styles.css';
 @import '@dayflow/core/dist/styles.css';
 ```
 
-## 创建第一个日历
+### 创建第一个日历
 
 `useCalendarApp` 负责初始化状态，`DayFlowCalendar` 负责渲染。一个只包含月视图的最小示例如下：
 
@@ -86,7 +102,7 @@ export default function MyCalendar() {
 }
 ```
 
-## 带事件的示例
+### 带事件的示例
 
 通过内置的 helper（`createEvent`、`createAllDayEvent`…）可以快速生成不同类型的事件。
 

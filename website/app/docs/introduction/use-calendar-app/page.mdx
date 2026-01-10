@@ -4,7 +4,7 @@
 
 ## Quick Start
 
-```tsx copy
+```tsx copy {11-16}
 import {
   useCalendarApp,
   DayFlowCalendar,
@@ -102,6 +102,7 @@ const calendar = useCalendarApp({
 ```
 
 **Theme Modes:**
+
 - `'light'`: Light mode with light backgrounds and dark text (default)
 - `'dark'`: Dark mode with dark backgrounds and light text
 - `'auto'`: Automatically follows system theme preference
@@ -116,7 +117,7 @@ const currentTheme = calendar.app.getTheme();
 calendar.app.setTheme('dark');
 
 // Subscribe to theme changes
-calendar.app.subscribeThemeChange((theme) => {
+calendar.app.subscribeThemeChange(theme => {
   console.log('Theme changed to:', theme);
 });
 ```

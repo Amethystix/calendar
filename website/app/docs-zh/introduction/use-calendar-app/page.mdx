@@ -1,10 +1,10 @@
-# useCalendarApp 详解
+# useCalendarApp Hook
 
 `useCalendarApp(config: CalendarAppConfig)` 是 DayFlow 的“中控台”。通过一个配置对象即可完成视图注册、事件注入、主题/侧边栏/对话框开关，以及与外部系统同步的回调设置。下面依次拆解常用选项与实践技巧。
 
 ## 快速开始
 
-```tsx copy
+```tsx copy {11-16}
 import {
   useCalendarApp,
   DayFlowCalendar,

@@ -1,26 +1,31 @@
-import Link from 'next/link';
-
-<div className="nx-mb-6 nx-flex nx-flex-col nx-gap-3 nx-rounded-xl nx-border nx-border-blue-200 nx-bg-blue-50 nx-p-5 nx-text-sm nx-text-blue-700 dark:nx-border-blue-400/40 dark:nx-bg-blue-500/10 dark:nx-text-blue-200 md:nx-flex-row md:nx-items-center md:nx-justify-between">
-  <div>
-    サンプルが見たい場合は Sidebar Showcase へ。標準 UI とカスタム版を切り替えながら確認できます。
-  </div>
-  <Link
-    href="/docs-ja/features/sidebar"
-    className="nx-inline-flex nx-items-center nx-justify-center nx-rounded-full nx-bg-blue-500 nx-px-4 nx-py-2 nx-text-sm nx-font-semibold nx-text-white nx-shadow-sm nx-transition hover:nx-bg-blue-400"
-  >
-    サイドバーのデモを見る →
-  </Link>
-</div>
+---
+title: Sidebar
+description: Enable the built-in calendar sidebar and replace it with custom layouts.
+---
 
 # サイドバー
 
-DayFlow のサイドバーは、複数カレンダーの切り替えや近日イベント、独自のフィルターなどの「補助操作」をまとめて表示する領域です。標準 UI を使うことも、自作コンポーネントに差し替えることもできます。
+DayFlow のサイドバーは、複数カレンダーの切り替えや近日イベント、独自のフィルターなどの「補助操作」をまとめて表示する領域です。標準 UI を使うことも、自作コンポーネントに差し替えることもできます。[サイドバーのデモを見る](/docs-ja/features/sidebar)
+
+## 設定リファレンス
+
+サイドバーは `useCalendarApp` の `useSidebar` に `SidebarConfig` オブジェクトを渡すことで設定できます。
+
+| プロパティ                   | 型                                                                 | 説明                                                                                                       | デフォルト |
+| ---------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ---------- |
+| `enabled`                    | `boolean`                                                          | サイドバーを有効にするかどうか。                                                                           | `true`     |
+| `width`                      | `number \| string`                                                 | サイドバーの幅（例：`240` または `'20%'`）。                                                               | `'240px'`  |
+| `initialCollapsed`           | `boolean`                                                          | デフォルトでサイドバーを折りたたむかどうか。                                                               | `false`    |
+| `render`                     | `(props: CalendarSidebarRenderProps) => React.ReactNode`           | サイドバー UI を完全にオーバーライドします。                                                               | -          |
+| `createCalendarMode`         | `'inline' \| 'modal'`                                              | 新しいカレンダーを作成するモード：`inline`（リスト内で直接編集）または `modal`（ポップアップダイアログ）。 | `'inline'` |
+| `renderCalendarContextMenu`  | `(calendar: CalendarType, onClose: () => void) => React.ReactNode` | カレンダーアイテムの右クリックメニューをカスタマイズします。                                               | -          |
+| `renderCreateCalendarDialog` | `(props: CreateCalendarDialogProps) => React.ReactNode`            | カレンダー作成ダイアログをカスタマイズします（`modal` モードで使用）。                                     | -          |
 
 ## 標準サイドバーを有効化する
 
 `useSidebar` にオプションを渡すだけで、折りたたみボタンやカレンダーごとの可視状態トグルが揃った UI が表示されます。
 
-```tsx copy
+```tsx copy {17-20}
 import {
   useCalendarApp,
   DayFlowCalendar,
@@ -46,11 +51,9 @@ const calendar = useCalendarApp({
 <DayFlowCalendar calendar={calendar} />;
 ```
 
-カレンダーの表示/非表示を切り替える API (`toggleCalendarVisibility`, `toggleAll`, `setCollapsed` など) は、サイドバーを使わなくてもそのまま呼び出せます。標準サイドバーはそれらを UI に結び付けているだけです。
+## 完全なカスタマイズ
 
-## 独自に描画する
-
-分析カードやチームショートカットなど、完全に独自のレイアウトが欲しい場合は `render` を渡します。レンダー関数にはカレンダー情報とヘルパーが引数で渡されます。
+独自のサイドバーコンポーネントを使用することも可能です。`useSidebar.render` にレンダリング関数を渡すだけで、リアルタイムのカレンダー状態とヘルパーアクションを受け取ることができます。
 
 ```tsx copy
 import type { CalendarSidebarRenderProps } from '@dayflow/core';
@@ -68,30 +71,35 @@ const CustomSidebar = ({
   }
 
   return (
-    <aside>
-      <header>
-        <button onClick={() => toggleAll(true)}>すべて表示</button>
-        <button onClick={() => toggleAll(false)}>すべて非表示</button>
+    <aside className="flex h-full flex-col gap-4 p-4">
+      <header className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">カレンダー一覧</h3>
+        <div className="space-x-2">
+          <button onClick={() => toggleAll(true)}>すべて表示</button>
+          <button onClick={() => toggleAll(false)}>すべて非表示</button>
+        </div>
       </header>
-      <ul>
+      <ul className="space-y-2">
         {calendars.map(calendar => (
-          <li key={calendar.id}>
-            <label>
-              <input
-                type="checkbox"
-                checked={calendar.isVisible}
-                onChange={() =>
-                  toggleCalendarVisibility(calendar.id, !calendar.isVisible)
-                }
-              />
-              {calendar.name}
-            </label>
+          <li key={calendar.id} className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={calendar.isVisible}
+              onChange={() =>
+                toggleCalendarVisibility(calendar.id, !calendar.isVisible)
+              }
+            />
+            <span
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: calendar.colors.eventColor }}
+            />
+            {calendar.name}
           </li>
         ))}
       </ul>
-      <section>
-        {/* app から日付・イベント・選択状態を取得して独自 UI を作れる */}
+      <section className="rounded-xl border border-slate-200 p-3 text-xs">
         <p>選択日: {app.getCurrentDate().toDateString()}</p>
+        <p>イベント総数: {app.getEvents().length}</p>
       </section>
     </aside>
   );
@@ -107,99 +115,12 @@ const calendar = useCalendarApp({
 });
 ```
 
-`render` 内では `app` から現在のイベント一覧や選択日を参照できるため、「次の会議までのカウントダウン」「今週の KPI」など運用チームならではの情報を自在に表示できます。
+`CalendarSidebarRenderProps` は `toggleCalendarVisibility`、`toggleAll`、`isCollapsed`、`setCollapsed`、そして現在の `app` インスタンスを提供するため、カスタムサイドバー内でイベントリストや選択された日付などを簡単に読み取ることができます。
 
-## 次のステップ
+よりインタラクティブな例については [機能: Sidebar](/docs-ja/features/sidebar) を参照してください。
 
-- [機能: Sidebar](/docs-ja/features/sidebar) でドラッグ&ドロップ付きの実例を確認
-- [カレンダータイプ](/docs-ja/features/custom-detail-panel) と組み合わせて色分けを調整
+## 関連ドキュメント
 
-## SidebarConfig のリファレンス
-
-```ts copy
-interface SidebarConfig {
-  enabled?: boolean;
-  width?: number | string;
-  initialCollapsed?: boolean;
-  render?: (props: CalendarSidebarRenderProps) => React.ReactNode;
-}
-
-interface CalendarSidebarRenderProps {
-  app: CalendarApp;
-  calendars: CalendarType[];
-  toggleCalendarVisibility: (calendarId: string, visible: boolean) => void;
-  toggleAll: (visible: boolean) => void;
-  isCollapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
-}
-```
-
-TypeScript プロジェクトであれば、この型情報を import することで補完が効くようになります。
-
-## 応用例：統計やアラートを表示
-
-```tsx copy
-import type { CalendarSidebarRenderProps } from '@dayflow/core';
-import { useEffect, useState } from 'react';
-
-const AnalyticsSidebar = ({
-  app,
-  calendars,
-  toggleCalendarVisibility,
-}: CalendarSidebarRenderProps) => {
-  const [stats, setStats] = useState({ total: 0, upcoming: 0, today: 0 });
-
-  useEffect(() => {
-    const events = app.getEvents();
-    const today = new Date();
-    const todayCount = events.filter(event =>
-      event.start.toDateString?.() === today.toDateString()
-    ).length;
-
-    setStats({
-      total: events.length,
-      upcoming: events.filter(event => event.start > today).length,
-      today: todayCount,
-    });
-  }, [app]);
-
-  return (
-    <aside className="flex h-full flex-col gap-4 p-4">
-      <section>
-        <h3 className="text-sm font-semibold">サマリー</h3>
-        <p className="text-xs text-slate-500">イベント総数: {stats.total}</p>
-        <p className="text-xs text-slate-500">近日イベント: {stats.upcoming}</p>
-        <p className="text-xs text-slate-500">今日: {stats.today}</p>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-semibold">カレンダー</h3>
-        <ul className="space-y-2">
-          {calendars.map(calendar => (
-            <li key={calendar.id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={calendar.isVisible}
-                onChange={() =>
-                  toggleCalendarVisibility(calendar.id, !calendar.isVisible)
-                }
-              />
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: calendar.colors.eventColor }}
-              />
-              {calendar.name}
-            </li>
-          ))}
-        </ul>
-      </section>
-    </aside>
-  );
-};
-```
-
-## デザインのヒント
-
-- **幅の目安**：280〜320 px でラベルとチェックボックスの両方が読みやすい。モバイルでは `initialCollapsed: true` を推奨。
-- **状態の一貫性**：サイドバーで使う色はカレンダータイプと同じトークンを参照すると、ユーザーが直感的に認識できる。
-- **API の再利用**：ドラッグやショートカットで `toggleCalendarVisibility` を呼び出すと、サイドバーとメインビューが常に同期する。
+- [はじめに](/docs-ja/introduction) - 基本的なセットアップ
+- [イベント](/docs-ja/introduction/events) - イベント管理
+- [ビュー](/docs-ja/introduction/views) - カレンダービュー
