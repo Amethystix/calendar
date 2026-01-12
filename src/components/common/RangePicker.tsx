@@ -37,6 +37,7 @@ export interface RangePickerProps {
   autoAdjustOverflow?: boolean;
   getPopupContainer?: () => HTMLElement;
   matchTriggerWidth?: boolean;
+  locale?: string;
 }
 
 const DEFAULT_FORMAT = 'YYYY-MM-DD HH:mm';
@@ -79,12 +80,33 @@ const RangePicker: React.FC<RangePickerProps> = ({
   autoAdjustOverflow = true,
   getPopupContainer,
   matchTriggerWidth = false,
+  locale = 'en-US',
 }) => {
   const isTimeEnabled = useMemo(() => {
     if (showTime === undefined) return true;
     if (typeof showTime === 'object') return true;
     return Boolean(showTime);
   }, [showTime]);
+
+  const monthLabels = useMemo(() => {
+    const labels = [];
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(2024, i, 1);
+      labels.push(date.toLocaleDateString(locale, { month: 'short' }));
+    }
+    return labels;
+  }, [locale]);
+
+  const weekDayLabels = useMemo(() => {
+    const labels = [];
+    const baseDate = new Date(2024, 0, 7); // 2024-01-07 is Sunday
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(baseDate);
+      date.setDate(baseDate.getDate() + i);
+      labels.push(date.toLocaleDateString(locale, { weekday: 'narrow' }));
+    }
+    return labels;
+  }, [locale]);
 
   const effectiveTimeFormat = useMemo(() => {
     if (!isTimeEnabled) {
@@ -911,7 +933,7 @@ const RangePicker: React.FC<RangePickerProps> = ({
                 </button>
               </div>
               <div className="text-sm font-semibold text-slate-700 dark:text-gray-300">
-                {MONTHS[visibleMonth.month - 1]} {visibleMonth.year}
+                {monthLabels[visibleMonth.month - 1]} {visibleMonth.year}
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -933,8 +955,8 @@ const RangePicker: React.FC<RangePickerProps> = ({
               </div>
             </div>
             <div className="grid grid-cols-7 gap-1 px-3 pb-3 pt-2 text-center text-[11px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
-              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                <span key={day}>{day}</span>
+              {weekDayLabels.map((day, index) => (
+                <span key={index}>{day}</span>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-2 px-1 ">

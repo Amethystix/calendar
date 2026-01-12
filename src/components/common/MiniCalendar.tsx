@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { generateUniKey, weekDays } from '../../utils/helpers';
 import {
   miniCalendarDay,
   miniCalendarDayHeader,
@@ -17,6 +16,7 @@ interface MiniCalendarProps {
   showHeader?: boolean;
   onMonthChange: (offset: number) => void;
   onDateSelect: (date: Date) => void;
+  locale?: string;
 }
 
 export const MiniCalendar: React.FC<MiniCalendarProps> = ({
@@ -25,19 +25,31 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({
   showHeader = false,
   onMonthChange,
   onDateSelect,
+  locale = 'en-US',
 }) => {
   const todayKey = useMemo(() => new Date().toDateString(), []);
   const currentDateKey = currentDate.toDateString();
 
-  const weekdayLabels = useMemo(() => weekDays.map(day => day.charAt(0)), []);
+  const weekdayLabels = useMemo(() => {
+    const labels = [];
+    const baseDate = new Date(2024, 0, 1); // 2024-01-01 is Monday
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(baseDate);
+      date.setDate(baseDate.getDate() + i);
+      labels.push(
+        date.toLocaleDateString(locale, { weekday: 'narrow' })
+      );
+    }
+    return labels;
+  }, [locale]);
 
   const monthLabel = useMemo(
     () =>
-      visibleMonth.toLocaleDateString(undefined, {
+      visibleMonth.toLocaleDateString(locale, {
         month: 'long',
         year: 'numeric',
       }),
-    [visibleMonth]
+    [visibleMonth, locale]
   );
 
   const miniCalendarDays = useMemo(() => {

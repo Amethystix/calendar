@@ -18,6 +18,7 @@ import { MiniCalendar } from '../common/MiniCalendar';
 import { MergeMenuItem } from './components/MergeMenuItem';
 import { MergeCalendarDialog } from './components/MergeCalendarDialog';
 import { DeleteCalendarDialog } from './components/DeleteCalendarDialog';
+import { t } from '@/utils/locale';
 
 const COLORS = [
   '#ea426b',
@@ -207,7 +208,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
 
     const newCalendar: CalendarType = {
       id: newId,
-      name: 'Untitled',
+      name: t('untitled', app.state.locale),
       colors,
       darkColors,
       isVisible: true,
@@ -229,6 +230,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
         isCollapsed={isCollapsed}
         onCollapseToggle={() => setCollapsed(!isCollapsed)}
         onAddCalendar={handleCreateCalendar}
+        locale={app.state.locale}
       />
 
       {!isCollapsed ? (
@@ -245,13 +247,14 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           />
 
           <div className='border-t border-gray-200 dark:border-slate-800'>
-            <MiniCalendar
-              visibleMonth={visibleMonth}
-              currentDate={currentDate}
-              showHeader
-              onMonthChange={handleMonthChange}
-              onDateSelect={handleDateSelect}
-            />
+      <MiniCalendar
+        visibleMonth={app.getVisibleMonth()}
+        currentDate={app.getCurrentDate()}
+        showHeader={true}
+        onMonthChange={handleMonthChange}
+        onDateSelect={(date) => app.setCurrentDate(date)}
+        locale={app.state.locale}
+      />
           </div>
         </>
       ) : (
@@ -282,17 +285,18 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           ) : (
             <>
               <ContextMenuLabel>
-                Calendar Options
+                {t('calendarOptions', app.state.locale)}
               </ContextMenuLabel>
               <MergeMenuItem
                 calendars={calendars}
                 currentCalendarId={contextMenu.calendarId}
                 onMergeSelect={handleMergeSelect}
+                locale={app.state.locale}
               />
               <ContextMenuItem
                 onClick={handleDeleteCalendar}
               >
-                Delete
+                {t('delete', app.state.locale)}
               </ContextMenuItem>
               <ContextMenuSeparator />
               <ContextMenuColorPicker
@@ -301,6 +305,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
                 }
                 onSelect={handleColorSelect}
                 onCustomColor={handleCustomColor}
+                locale={app.state.locale}
               />
             </>
           )}
@@ -323,6 +328,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
               app.createCalendar(calendar);
               setShowCreateDialog(false);
             }}
+            locale={app.state.locale}
           />
         )
       )}
@@ -333,6 +339,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           targetName={targetCalendarName}
           onConfirm={handleMergeConfirm}
           onCancel={() => setMergeState(null)}
+          locale={app.state.locale}
         />
       )}
 
@@ -346,6 +353,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           onConfirmDelete={handleConfirmDelete}
           onCancel={() => setDeleteState(null)}
           onMergeSelect={handleDeleteMergeSelect}
+          locale={app.state.locale}
         />
       )}
 

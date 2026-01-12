@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { t } from '@/utils/locale';
 
 interface ContextMenuProps {
   x: number;
@@ -104,7 +105,8 @@ export const ContextMenuColorPicker: React.FC<{
   selectedColor?: string;
   onSelect: (color: string) => void;
   onCustomColor?: () => void;
-}> = ({ selectedColor, onSelect, onCustomColor }) => {
+  locale?: string;
+}> = ({ selectedColor, onSelect, onCustomColor, locale = 'en-US' }) => {
   return (
     <div className="p-2">
       <div className="grid grid-cols-7 gap-2 p-1">
@@ -131,7 +133,7 @@ export const ContextMenuColorPicker: React.FC<{
             onCustomColor();
           }}
         >
-          Custom Color...
+          {t('customColor', locale)}
         </div>
       )}
     </div>
