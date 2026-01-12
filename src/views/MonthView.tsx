@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CalendarApp } from '@/core';
-import { weekDays, extractHourFromDate } from '@/utils';
-import { monthNames } from '@/utils/helpers';
+import { extractHourFromDate } from '@/utils';
+import { getMonthLabels, getWeekDaysLabels } from '@/utils/locale';
 import {
   Event,
   MonthEventDragState,
@@ -246,6 +246,10 @@ const MonthView: React.FC<MonthViewProps> = ({
     },
   });
 
+  const weekDaysLabels = useMemo(() => {
+    return getWeekDaysLabels(app.state.locale, 'short');
+  }, [app.state.locale]);
+
   const {
     currentMonth,
     currentYear,
@@ -261,12 +265,16 @@ const MonthView: React.FC<MonthViewProps> = ({
     currentDate,
     weekHeight,
     onCurrentMonthChange: (monthName: string, year: number) => {
-      const monthIndex = monthNames.indexOf(monthName);
+      const isAsian = app.state.locale.startsWith('zh') || app.state.locale.startsWith('ja');
+      const localizedMonths = getMonthLabels(app.state.locale, isAsian ? 'short' : 'long');
+      const monthIndex = localizedMonths.indexOf(monthName);
+
       if (monthIndex >= 0) {
         app.setVisibleMonth(new Date(year, monthIndex, 1));
       }
     },
     initialWeeksToLoad: 156,
+    locale: app.state.locale
   });
 
   const previousStartIndexRef = useRef(0);
@@ -386,13 +394,19 @@ const MonthView: React.FC<MonthViewProps> = ({
     app.changeView(view);
   };
 
+  // TODO: remove getCustomTitle and using app.currentDate to fixed
+  const getCustomTitle = () => {
+    const isAsianLocale = app.state.locale.startsWith('zh') || app.state.locale.startsWith('ja');
+    return isAsianLocale ? `${currentYear}年${currentMonth}` : `${currentMonth} ${currentYear}`;
+  };
+
   return (
     <div className={monthViewContainer}>
       <ViewHeader
         calendar={app}
         viewType={ViewType.MONTH}
         currentDate={currentDate}
-        customTitle={`${currentMonth} ${currentYear}`}
+        customTitle={getCustomTitle()}
         onPrevious={() => {
           app.goToPrevious();
           handlePreviousMonth();
@@ -410,7 +424,7 @@ const MonthView: React.FC<MonthViewProps> = ({
 
       <div className={weekHeaderRow}>
         <div className={`${weekGrid} px-2`}>
-          {weekDays.map((day, i) => (
+          {weekDaysLabels.map((day, i) => (
             <div key={i} className={dayLabel}>
               {day}
             </div>
