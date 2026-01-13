@@ -78,7 +78,7 @@ const WeekView: React.FC<WeekViewProps> = ({
     () => getWeekStart(currentDate),
     [currentDate]
   );
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [detailPanelEventId, setDetailPanelEventId] = useState<string | null>(
     null
   );
@@ -441,6 +441,7 @@ const WeekView: React.FC<WeekViewProps> = ({
 
   // Timer
   useEffect(() => {
+    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
@@ -544,7 +545,7 @@ const WeekView: React.FC<WeekViewProps> = ({
       <div className={calendarContent} style={{ position: 'relative' }}>
         <div className="relative flex">
           {/* Current time line */}
-          {isCurrentWeek &&
+          {isCurrentWeek && currentTime &&
             (() => {
               const now = currentTime;
               const hours = now.getHours() + now.getMinutes() / 60;

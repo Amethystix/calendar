@@ -78,7 +78,7 @@ const DayView: React.FC<DayViewProps> = ({
   const events = app.getEvents();
   const { t, locale } = useLocale();
 
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [detailPanelEventId, setDetailPanelEventId] = useState<string | null>(
     null
@@ -350,6 +350,7 @@ const DayView: React.FC<DayViewProps> = ({
 
   // Timer
   useEffect(() => {
+    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
@@ -367,7 +368,7 @@ const DayView: React.FC<DayViewProps> = ({
             viewType={ViewType.DAY}
             currentDate={currentDate}
             switcherMode={switcherMode}
-            customSubtitle={currentTime.toLocaleDateString(locale, {
+            customSubtitle={currentDate.toLocaleDateString(locale, {
               weekday: 'long',
             })}
           />
@@ -429,7 +430,7 @@ const DayView: React.FC<DayViewProps> = ({
           <div className={calendarContent} style={{ position: 'relative' }}>
             <div className="relative flex">
               {/* Current time line */}
-              {isToday &&
+              {isToday && currentTime &&
                 (() => {
                   const now = currentTime;
                   const hours = now.getHours() + now.getMinutes() / 60;
