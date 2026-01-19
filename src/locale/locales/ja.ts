@@ -42,6 +42,8 @@ const ja: Locale = {
     create: '作成',
     calendarOptions: 'カレンダーオプション',
     untitled: '無題',
+    search: '検索',
+    noResults: '結果が見つかりません',
   }
 };
 

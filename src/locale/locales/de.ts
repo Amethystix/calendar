@@ -42,6 +42,8 @@ const de: Locale = {
     create: 'Erstellen',
     calendarOptions: 'Kalenderoptionen',
     untitled: 'Unbenannt',
+    search: 'Suchen',
+    noResults: 'Keine Ergebnisse gefunden',
   }
 };
 
