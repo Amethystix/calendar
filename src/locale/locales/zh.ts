@@ -42,6 +42,8 @@ const zh: Locale = {
     create: '创建',
     calendarOptions: '日历选项',
     untitled: '未命名',
+    search: '搜索',
+    noResults: '无结果',
   }
 };
 

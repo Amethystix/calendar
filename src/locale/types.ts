@@ -39,7 +39,9 @@ export type TranslationKey =
   | 'customColor'
   | 'create'
   | 'calendarOptions'
-  | 'untitled';
+  | 'untitled'
+  | 'search'
+  | 'noResults';
 
 export type LocaleDict = Partial<Record<TranslationKey, string>>;
 export type LocaleMessages = Partial<Record<TranslationKey, string>>;

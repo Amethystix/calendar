@@ -42,6 +42,8 @@ const es: Locale = {
     create: 'Crear',
     calendarOptions: 'Opciones de calendario',
     untitled: 'Sin título',
+    search: 'Buscar',
+    noResults: 'No se encontraron resultados',
   }
 };
 

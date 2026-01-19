@@ -42,6 +42,8 @@ const ko: Locale = {
     create: '만들기',
     calendarOptions: '캘린더 옵션',
     untitled: '무제',
+    search: '검색',
+    noResults: '결과 없음',
   }
 };
 
