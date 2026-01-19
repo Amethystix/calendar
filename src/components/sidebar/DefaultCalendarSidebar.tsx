@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarSidebarRenderProps, CalendarType } from '../../types';
+import { CalendarSidebarRenderProps } from '../../types';
 import ContextMenu, {
   ContextMenuItem,
   ContextMenuSeparator,
@@ -8,9 +8,7 @@ import ContextMenu, {
   ContextMenuColorPicker,
 } from '../common/ContextMenu';
 import { getCalendarColorsForHex } from '../../core/calendarRegistry';
-import { CreateCalendarDialog } from '../common/CreateCalendarDialog';
 import { SketchPicker } from 'react-color';
-import { generateUniKey } from '../../utils/helpers';
 // common component
 import { SidebarHeader } from './components/SidebarHeader';
 import { CalendarList } from './components/CalendarList';
@@ -20,16 +18,6 @@ import { MergeCalendarDialog } from './components/MergeCalendarDialog';
 import { DeleteCalendarDialog } from './components/DeleteCalendarDialog';
 import { useLocale } from '@/locale';
 
-const COLORS = [
-  '#ea426b',
-  '#f19a38',
-  '#f7cf46',
-  '#83d754',
-  '#51aaf2',
-  '#b672d0',
-  '#957e5e',
-];
-
 const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
   app,
   calendars,
@@ -37,17 +25,17 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
   isCollapsed,
   setCollapsed,
   renderCalendarContextMenu,
-  createCalendarMode = 'inline',
-  renderCreateCalendarDialog,
+  editingCalendarId: propEditingCalendarId,
+  setEditingCalendarId: propSetEditingCalendarId,
 }) => {
   const { t } = useLocale();
-  const currentDate = app.getCurrentDate();
   const visibleMonthDate = app.getVisibleMonth();
   const visibleYear = visibleMonthDate.getFullYear();
   const visibleMonthIndex = visibleMonthDate.getMonth();
 
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingCalendarId, setEditingCalendarId] = useState<string | null>(null);
+  const [localEditingCalendarId, setLocalEditingCalendarId] = useState<string | null>(null);
+  const editingCalendarId = propEditingCalendarId !== undefined ? propEditingCalendarId : localEditingCalendarId;
+  const setEditingCalendarId = propSetEditingCalendarId || setLocalEditingCalendarId;
 
   // Visible Month State
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
@@ -73,19 +61,6 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
         app.setVisibleMonth(next);
         return next;
       });
-    },
-    [app]
-  );
-
-  const handleDateSelect = useCallback(
-    (date: Date) => {
-      const nextDate = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate()
-      );
-      app.setCurrentDate(nextDate);
-      setVisibleMonth(new Date(nextDate.getFullYear(), nextDate.getMonth(), 1));
     },
     [app]
   );
@@ -196,30 +171,6 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
     }
   }, [deleteState]);
 
-  const handleCreateCalendar = useCallback(() => {
-    if (createCalendarMode === 'modal') {
-      setShowCreateDialog(true);
-      return;
-    }
-
-    // Inline mode
-    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-    const { colors, darkColors } = getCalendarColorsForHex(randomColor);
-    const newId = generateUniKey();
-
-    const newCalendar: CalendarType = {
-      id: newId,
-      name: t('untitled'),
-      colors,
-      darkColors,
-      isVisible: true,
-      isDefault: false,
-    };
-
-    app.createCalendar(newCalendar);
-    setEditingCalendarId(newId);
-
-  }, [app, createCalendarMode]);
 
   const sourceCalendarName = mergeState ? calendars.find(c => c.id === mergeState.sourceId)?.name || 'Unknown' : '';
   const targetCalendarName = mergeState ? calendars.find(c => c.id === mergeState.targetId)?.name || 'Unknown' : '';
@@ -230,7 +181,6 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
       <SidebarHeader
         isCollapsed={isCollapsed}
         onCollapseToggle={() => setCollapsed(!isCollapsed)}
-        onAddCalendar={handleCreateCalendar}
       />
 
       {!isCollapsed ? (
@@ -247,13 +197,13 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           />
 
           <div className='border-t border-gray-200 dark:border-slate-800'>
-      <MiniCalendar
-        visibleMonth={app.getVisibleMonth()}
-        currentDate={app.getCurrentDate()}
-        showHeader={true}
-        onMonthChange={handleMonthChange}
-        onDateSelect={(date) => app.setCurrentDate(date)}
-      />
+            <MiniCalendar
+              visibleMonth={app.getVisibleMonth()}
+              currentDate={app.getCurrentDate()}
+              showHeader={true}
+              onMonthChange={handleMonthChange}
+              onDateSelect={(date) => app.setCurrentDate(date)}
+            />
           </div>
         </>
       ) : (
@@ -309,33 +259,13 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
         </ContextMenu>
       )}
 
-      {showCreateDialog && (
-        renderCreateCalendarDialog ? (
-          renderCreateCalendarDialog({
-            onClose: () => setShowCreateDialog(false),
-            onCreate: (calendar) => {
-              app.createCalendar(calendar);
-              setShowCreateDialog(false);
-            },
-          })
-        ) : (
-          <CreateCalendarDialog
-            onClose={() => setShowCreateDialog(false)}
-            onCreate={(calendar) => {
-              app.createCalendar(calendar);
-              setShowCreateDialog(false);
-            }}
-              />
-        )
-      )}
-
       {mergeState && (
         <MergeCalendarDialog
           sourceName={sourceCalendarName}
           targetName={targetCalendarName}
           onConfirm={handleMergeConfirm}
           onCancel={() => setMergeState(null)}
-          />
+        />
       )}
 
       {deleteState && (
@@ -348,7 +278,7 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           onConfirmDelete={handleConfirmDelete}
           onCancel={() => setDeleteState(null)}
           onMergeSelect={handleDeleteMergeSelect}
-          />
+        />
       )}
 
       {customColorPicker && createPortal(

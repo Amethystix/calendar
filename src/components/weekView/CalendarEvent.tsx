@@ -122,6 +122,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
   app,
 }) => {
   const [isSelected, setIsSelected] = useState(false);
+  const [isPopping, setIsPopping] = useState(false);
   const detailPanelKey =
     isMultiDay && segment
       ? `${event.id}::${segment.id}`
@@ -148,6 +149,8 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
       return {
         opacity: isBeingDragged ? 0.3 : 1,
         zIndex: isEventSelected || showDetailPanel ? 1000 : 1,
+        transform: isPopping ? 'scale(1.15)' : undefined,
+        transition: 'transform 0.1s ease-in-out',
       };
     }
 
@@ -156,6 +159,8 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         height: `${allDayHeight - 4}px`,
         opacity: isBeingDragged ? 0.3 : 1,
         zIndex: isEventSelected || showDetailPanel ? 1000 : 1,
+        transform: isPopping ? 'scale(1.12)' : undefined,
+        transition: 'transform 0.1s ease-in-out',
       };
 
       // Calculate vertical offset (for multi-row all-day events)
@@ -214,6 +219,8 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
       position: 'absolute' as const,
       opacity: isBeingDragged ? 0.3 : 1,
       zIndex: isEventSelected || showDetailPanel ? 1000 : (layout?.zIndex ?? 1),
+      transform: isPopping ? 'scale(1.12)' : undefined,
+      transition: 'transform 0.1s ease-in-out',
     };
 
     if (isEventSelected && showDetailPanel) {
@@ -977,6 +984,19 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
     onDetailPanelToggle,
     detailPanelKey,
   ]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isEventSelected && app?.state.highlightedEventId === event.id) {
+      scrollEventToCenter().then(() => {
+        setIsPopping(true);
+        timer = setTimeout(() => setIsPopping(false), 150);
+      });
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isEventSelected, app?.state.highlightedEventId, event.id]);
 
   const renderDetailPanel = () => {
     if (!showDetailPanel) return null;

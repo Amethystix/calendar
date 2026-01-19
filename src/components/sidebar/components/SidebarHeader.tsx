@@ -5,13 +5,11 @@ import { useLocale } from '@/locale';
 interface SidebarHeaderProps {
   isCollapsed: boolean;
   onCollapseToggle: () => void;
-  onAddCalendar: () => void;
 }
 
 export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
   isCollapsed,
   onCollapseToggle,
-  onAddCalendar,
 }) => {
   const { t } = useLocale();
   return (
@@ -33,12 +31,6 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
             {t('calendars')}
           </span>
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-800"
-            onClick={onAddCalendar}
-          >
-            <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
       )}
     </div>

@@ -61,7 +61,7 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
       <div className="relative inline-block" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-1 text-sm font-medium border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-all duration-200 shadow-sm min-w-30 justify-between"
+          className="flex items-center gap-2 px-3 h-8 text-sm font-medium border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-all duration-200 shadow-sm min-w-30 justify-between"
           aria-expanded={isOpen}
           aria-haspopup="listbox"
         >
@@ -117,11 +117,11 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   }
 
   return (
-    <div className="inline-flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+    <div className="inline-flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
       {registeredViews.map(viewType => (
         <button
           key={viewType}
-          className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${currentView === viewType
+          className={`px-4 h-6 text-sm font-medium rounded-md transition-all duration-200 ${currentView === viewType
             ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
