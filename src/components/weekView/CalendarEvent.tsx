@@ -69,11 +69,11 @@ interface CalendarEventProps {
   selectedEventId?: string | null;
   detailPanelEventId?: string | null;
   onMoveStart?: (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event
   ) => void;
   onResizeStart?: (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event,
     direction: string
   ) => void;
@@ -89,6 +89,8 @@ interface CalendarEventProps {
   /** Multi-day regular event segment information */
   multiDaySegmentInfo?: { startHour: number; endHour: number; isFirst: boolean; isLast: boolean; dayIndex?: number };
   app?: CalendarApp;
+  /** Whether the current view is in mobile mode */
+  isMobile?: boolean;
 }
 
 const CalendarEvent: React.FC<CalendarEventProps> = ({
@@ -120,6 +122,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
   customEventDetailDialog,
   multiDaySegmentInfo,
   app,
+  isMobile = false,
 }) => {
   const [isSelected, setIsSelected] = useState(false);
   const [isPopping, setIsPopping] = useState(false);
@@ -140,6 +143,72 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const selectedEventElementRef = useRef<HTMLDivElement | null>(null);
   const selectedDayIndexRef = useRef<number | null>(null);
+
+  // Long press handling for mobile drag
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!onMoveStart || !isMobile) return;
+    e.stopPropagation();
+
+    // Store initial position to detect movement
+    const touch = e.touches[0];
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+    const currentTarget = e.currentTarget;
+
+    touchStartPosRef.current = { x: clientX, y: clientY };
+
+    longPressTimerRef.current = setTimeout(() => {
+      // Create a compatible event object
+      const syntheticEvent = {
+        preventDefault: () => { },
+        stopPropagation: () => { },
+        currentTarget: currentTarget,
+        touches: [{ clientX, clientY }],
+        cancelable: false,
+      } as unknown as React.TouchEvent<HTMLDivElement>;
+
+      if (multiDaySegmentInfo) {
+        const adjustedEvent = {
+          ...event,
+          day: multiDaySegmentInfo.dayIndex ?? event.day,
+          _segmentInfo: multiDaySegmentInfo
+        };
+        onMoveStart(syntheticEvent, adjustedEvent as Event);
+      } else {
+        onMoveStart(syntheticEvent, event);
+      }
+      longPressTimerRef.current = null;
+
+      // Provide haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500); // 500ms long press
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (longPressTimerRef.current && touchStartPosRef.current) {
+      const dx = Math.abs(e.touches[0].clientX - touchStartPosRef.current.x);
+      const dy = Math.abs(e.touches[0].clientY - touchStartPosRef.current.y);
+      // Cancel if moved more than 10px
+      if (dx > 10 || dy > 10) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+        touchStartPosRef.current = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    touchStartPosRef.current = null;
+  };
 
   const isEventSelected =
     selectedEventId !== undefined ? selectedEventId === event.id : isSelected;
@@ -1126,6 +1195,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         isSelected={isEventSelected}
         onMoveStart={onMoveStart || (() => { })}
         onResizeStart={onResizeStart}
+        isMobile={isMobile}
       />
     );
   };
@@ -1172,17 +1242,23 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
             className={`inline-block w-0.75 h-3 ${mr1} shrink-0 rounded-full`}
           ></span>
           <span
-            className={`truncate ${isEventSelected ? 'text-white' : ''}`}
+            className={`${isMobile ? 'whitespace-nowrap overflow-hidden block' : 'truncate'} ${isEventSelected ? 'text-white' : ''}`}
+            style={isMobile ? {
+              maskImage: 'linear-gradient(to right, black 85%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)'
+            } : undefined}
           >
             {event.title}
           </span>
         </div>
-        <span
-          className={`${textXs} ml-1 shrink-0 ${isEventSelected ? 'text-white' : ''}`}
-          style={!isEventSelected ? { opacity: 0.8 } : undefined}
-        >
-          {startTime}
-        </span>
+        {!isMobile && (
+          <span
+            className={`${textXs} ml-1 shrink-0 ${isEventSelected ? 'text-white' : ''}`}
+            style={!isEventSelected ? { opacity: 0.8 } : undefined}
+          >
+            {startTime}
+          </span>
+        )}
       </div>
     );
   };
@@ -1395,6 +1471,9 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
             onMoveStart(e, event);
           }
         } : undefined}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {renderEvent()}
       </div>

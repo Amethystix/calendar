@@ -136,6 +136,7 @@ export class CalendarApp implements ICalendarApp {
     }
 
     this.state.currentView = view;
+    this.state.highlightedEventId = null;
     this.callbacks.onViewChange?.(view);
   };
 

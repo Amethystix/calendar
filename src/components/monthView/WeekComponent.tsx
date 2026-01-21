@@ -51,12 +51,12 @@ interface WeekComponentProps {
   onEventUpdate: (updatedEvent: Event) => void;
   onEventDelete: (eventId: string) => void;
   onMoveStart: (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event
   ) => void;
   onCreateStart: (e: React.MouseEvent, targetDate: Date) => void;
   onResizeStart: (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event,
     direction: string
   ) => void;
@@ -280,6 +280,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
     currentMonth,
     currentYear,
     newlyCreatedEventId,
+    screenSize,
     isScrolling,
     isDragging,
     item,
@@ -493,6 +494,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
               customDetailPanelContent={customDetailPanelContent}
               customEventDetailDialog={customEventDetailDialog}
               app={app}
+              isMobile={screenSize !== 'desktop'}
             />
           );
         }
@@ -661,6 +663,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
                         customDetailPanelContent={customDetailPanelContent}
                         customEventDetailDialog={customEventDetailDialog}
                         app={app}
+                        isMobile={screenSize !== 'desktop'}
                       />
                     ))}
                   </div>

@@ -72,10 +72,10 @@ export interface DragHookOptions {
  * Drag Hook return value
  */
 export interface DragHookReturn {
-  handleMoveStart: (e: React.MouseEvent, event: Event) => void;
-  handleCreateStart: (e: React.MouseEvent, ...args: (Date | number)[]) => void;
+  handleMoveStart: (e: React.MouseEvent | React.TouchEvent, event: Event) => void;
+  handleCreateStart: (e: React.MouseEvent | React.TouchEvent, ...args: (Date | number)[]) => void;
   handleResizeStart: (
-    e: React.MouseEvent,
+    e: React.MouseEvent | React.TouchEvent,
     event: Event,
     direction: string
   ) => void;

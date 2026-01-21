@@ -39,14 +39,15 @@ interface MultiDayEventProps {
   isResizing?: boolean;
   isSelected?: boolean;
   onMoveStart: (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event
   ) => void;
   onResizeStart?: (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event,
     direction: string
   ) => void;
+  isMobile?: boolean;
 }
 
 const ROW_HEIGHT = 16;
@@ -76,6 +77,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
     isSelected = false,
     onMoveStart,
     onResizeStart,
+    isMobile = false,
   }) => {
     const HORIZONTAL_MARGIN = 2; // 2px spacing on left and right
 
@@ -100,6 +102,57 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
       if (!isResizeHandle) {
         onMoveStart(e, segment.event);
       }
+    };
+
+    // Long press handling
+    const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const touchStartPosRef = React.useRef<{ x: number; y: number } | null>(null);
+
+    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+      if (!onMoveStart || !isMobile) return;
+      e.stopPropagation();
+
+      const touch = e.touches[0];
+      const clientX = touch.clientX;
+      const clientY = touch.clientY;
+      const currentTarget = e.currentTarget;
+
+      touchStartPosRef.current = { x: clientX, y: clientY };
+
+      longPressTimerRef.current = setTimeout(() => {
+        const syntheticEvent = {
+          preventDefault: () => { },
+          stopPropagation: () => { },
+          currentTarget,
+          touches: [{ clientX, clientY }],
+          cancelable: false,
+        } as unknown as React.TouchEvent<HTMLDivElement>;
+
+        onMoveStart(syntheticEvent, segment.event);
+        longPressTimerRef.current = null;
+
+        if (navigator.vibrate) navigator.vibrate(50);
+      }, 500);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+      if (longPressTimerRef.current && touchStartPosRef.current) {
+        const dx = Math.abs(e.touches[0].clientX - touchStartPosRef.current.x);
+        const dy = Math.abs(e.touches[0].clientY - touchStartPosRef.current.y);
+        if (dx > 10 || dy > 10) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+          touchStartPosRef.current = null;
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+      touchStartPosRef.current = null;
     };
 
     const renderResizeHandle = (position: 'left' | 'right') => {
@@ -202,9 +255,15 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
             style={{ backgroundColor: getLineColor(calendarId) }}
           />
           <div className="flex items-center min-w-0 flex-1">
-            <span className="truncate font-medium text-xs">{titleText}</span>
+            <span
+              className={`${isMobile ? 'whitespace-nowrap overflow-hidden block' : 'truncate'} font-medium text-xs`}
+              style={isMobile ? {
+                maskImage: 'linear-gradient(to right, black 85%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)'
+              } : undefined}
+            >{titleText}</span>
           </div>
-          {segment.isFirstSegment && (
+          {segment.isFirstSegment && !isMobile && (
             <span
               className={`${startTimeClass} ${segmentDays === 1 ? 'ml-2' : ''
                 }`}
@@ -250,6 +309,9 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
         }}
         data-segment-days={segmentDays}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         title={`${segment.event.title} (${formatDateConsistent(segment.event.start)} - ${formatDateConsistent(segment.event.end)})`}
       >
         {renderResizeHandle('left')}
