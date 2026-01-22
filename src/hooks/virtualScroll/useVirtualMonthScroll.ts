@@ -15,10 +15,54 @@ export const useResponsiveMonthConfig = () => {
     weekHeight: number;
     screenSize: 'mobile' | 'tablet' | 'desktop';
     weeksPerView: number;
-  }>({
-    weekHeight: VIRTUAL_MONTH_SCROLL_CONFIG.WEEK_HEIGHT,
-    screenSize: 'desktop',
-    weeksPerView: 6,
+  }>(() => {
+    // Initialize state based on window width if available
+    if (typeof window === 'undefined') {
+      return {
+        weekHeight: VIRTUAL_MONTH_SCROLL_CONFIG.WEEK_HEIGHT,
+        screenSize: 'desktop',
+        weeksPerView: 6,
+      };
+    }
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const headerHeight = 150;
+    const availableHeight = height - headerHeight;
+    const weeksPerView = 6;
+    const dynamicWeekHeight = Math.max(
+      80,
+      Math.floor(availableHeight / weeksPerView)
+    );
+
+    if (width < 768) {
+      return {
+        weekHeight: Math.max(
+          VIRTUAL_MONTH_SCROLL_CONFIG.MOBILE_WEEK_HEIGHT,
+          dynamicWeekHeight
+        ),
+        screenSize: 'mobile',
+        weeksPerView,
+      };
+    } else if (width < 1024) {
+      return {
+        weekHeight: Math.max(
+          VIRTUAL_MONTH_SCROLL_CONFIG.TABLET_WEEK_HEIGHT,
+          dynamicWeekHeight
+        ),
+        screenSize: 'tablet',
+        weeksPerView,
+      };
+    } else {
+      return {
+        weekHeight: Math.max(
+          VIRTUAL_MONTH_SCROLL_CONFIG.WEEK_HEIGHT,
+          dynamicWeekHeight
+        ),
+        screenSize: 'desktop',
+        weeksPerView,
+      };
+    }
   });
 
   useEffect(() => {
@@ -83,6 +127,7 @@ export const useVirtualMonthScroll = ({
   onCurrentMonthChange,
   initialWeeksToLoad = 104,
   locale = 'en-US',
+  isEnabled = true,
 }: UseVirtualMonthScrollProps): UseVirtualMonthScrollReturn => {
   const targetNavigationRef = useRef<{ month: string; year: number } | null>(
     null
@@ -628,17 +673,18 @@ export const useVirtualMonthScroll = ({
 
   useEffect(() => {
     const element = scrollElementRef.current;
-    if (!element || isInitialized) return;
+    if (!element || isInitialized || !isEnabled) return;
 
     requestAnimationFrame(() => {
       if (element && initialScrollTop > 0) {
         element.scrollTop = initialScrollTop;
+        setScrollTop(initialScrollTop);
         setIsInitialized(true);
       } else if (element) {
         setIsInitialized(true);
       }
     });
-  }, [isInitialized, initialScrollTop]);
+  }, [isInitialized, initialScrollTop, isEnabled]);
 
   // Cleanup
   useEffect(() => {

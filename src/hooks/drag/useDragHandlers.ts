@@ -120,6 +120,7 @@ export const useDragHandlers = (
       // Prevent scrolling on touch devices
       if (e.cancelable) {
         e.preventDefault();
+        e.stopPropagation();
       }
 
       const { clientX, clientY } = getClientCoordinates(e);
@@ -374,7 +375,7 @@ export const useDragHandlers = (
 
     document.removeEventListener('mousemove', handleUniversalDragMove);
     document.removeEventListener('mouseup', handleUniversalDragEnd);
-    document.removeEventListener('touchmove', handleUniversalDragMove);
+    document.removeEventListener('touchmove', handleUniversalDragMove, { capture: true });
     document.removeEventListener('touchend', handleUniversalDragEnd);
     removeDragIndicator();
     resetDragState();
@@ -1069,7 +1070,7 @@ export const useDragHandlers = (
 
       document.removeEventListener('mousemove', handleDragMove);
       document.removeEventListener('mouseup', handleDragEnd);
-      document.removeEventListener('touchmove', handleDragMove);
+      document.removeEventListener('touchmove', handleDragMove, { capture: true });
       document.removeEventListener('touchend', handleDragEnd);
       removeDragIndicator();
       drag.indicatorVisible = false;
@@ -1355,7 +1356,7 @@ export const useDragHandlers = (
         // Week/Day view uses cross-region drag support
         document.addEventListener('mousemove', handleUniversalDragMove);
         document.addEventListener('mouseup', handleUniversalDragEnd);
-        document.addEventListener('touchmove', handleUniversalDragMove, { passive: false });
+        document.addEventListener('touchmove', handleUniversalDragMove, { capture: true, passive: false });
         document.addEventListener('touchend', handleUniversalDragEnd);
       }
     },
