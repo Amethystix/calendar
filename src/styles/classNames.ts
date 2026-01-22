@@ -124,7 +124,7 @@ export const scrollbarHide = 'scrollbar-hide';
 /**
  * Time column container
  */
-export const timeColumn = 'w-20 flex-shrink-0 border-gray-200 dark:border-gray-700';
+export const timeColumn = 'flex-shrink-0 border-gray-200 dark:border-gray-700';
 
 /**
  * Time slot
@@ -174,7 +174,7 @@ export const allDayRow = 'flex items-center border-b border-gray-200 dark:border
  * All-day event label
  */
 export const allDayLabel =
-  'w-20 flex-shrink-0 p-1 text-xs font-medium text-gray-500 dark:text-gray-400 flex justify-end';
+  'flex-shrink-0 p-1 text-xs font-medium text-gray-500 dark:text-gray-400 flex justify-end';
 
 /**
  * All-day event content area
@@ -228,13 +228,13 @@ export const regularEventRounded = 'rounded-sm';
  * MonthView all-day event content
  */
 export const monthAllDayContent =
-  'text-xs px-1 mb-0.5 rounded truncate cursor-pointer flex items-center';
+  'text-xs px-1 mb-[2px] rounded truncate cursor-pointer flex items-center';
 
 /**
  * MonthView regular event content
  */
 export const monthRegularContent =
-  'text-xs mb-0.5 cursor-pointer flex items-center justify-between';
+  'text-xs mb-[2px] cursor-pointer flex items-center justify-between';
 
 /**
  * Event title (small)
