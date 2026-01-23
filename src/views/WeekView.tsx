@@ -410,6 +410,24 @@ const WeekView: React.FC<WeekViewProps> = ({
     return getWeekDaysLabels(locale, 'short');
   }, [locale, getWeekDaysLabels]);
 
+  const mobileWeekDaysLabels = useMemo(() => {
+    if (!isMobile) return [];
+    const lang = locale.split('-')[0].toLowerCase();
+    if (lang === 'zh' || lang === 'ja') {
+      return getWeekDaysLabels(locale, 'narrow');
+    }
+    // English or other languages: M, Tu, W, Th, F, Sa, Su
+    return weekDaysLabels.map(label => {
+      if (lang === 'en') {
+        if (label.startsWith('Tu')) return 'Tu';
+        if (label.startsWith('Th')) return 'Th';
+        if (label.startsWith('Sa')) return 'Sa';
+        if (label.startsWith('Su')) return 'Su';
+      }
+      return label.charAt(0);
+    });
+  }, [isMobile, locale, getWeekDaysLabels, weekDaysLabels]);
+
   const allDayLabelText = useMemo(() => {
     return t('allDay');
   }, [t]);
@@ -476,13 +494,26 @@ const WeekView: React.FC<WeekViewProps> = ({
       <div className={weekDayHeader}>
         <div className={isMobile ? 'w-12' : 'w-20'}></div>
         {weekDaysLabels.map((day, i) => (
-          <div key={i} className={weekDayCell}>
-            <div className="inline-flex items-center justify-center text-sm mt-1 mr-1">
-              {isMobile ? day.charAt(0) : day}
-            </div>
-            <div className={`${dateNumber} ${weekDates[i].isToday ? miniCalendarToday : ''}`}>
-              {weekDates[i].date}
-            </div>
+          <div key={i} className={`${weekDayCell} ${isMobile ? 'flex-col gap-0' : ''}`}>
+            {isMobile ? (
+              <>
+                <div className="text-[11px] leading-tight text-gray-500 font-medium">
+                  {mobileWeekDaysLabels[i]}
+                </div>
+                <div className={`${dateNumber} w-7 h-7 text-base font-medium ${weekDates[i].isToday ? miniCalendarToday : ''}`}>
+                  {weekDates[i].date}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="inline-flex items-center justify-center text-sm mt-1 mr-1">
+                  {day}
+                </div>
+                <div className={`${dateNumber} ${weekDates[i].isToday ? miniCalendarToday : ''}`}>
+                  {weekDates[i].date}
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>

@@ -38,6 +38,11 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   const registeredViews = Array.from(calendar.state.views.keys());
   const currentView = calendar.state.currentView;
 
+  // If there's only one view (or none), no need to show the switcher
+  if (registeredViews.length <= 1) {
+    return null;
+  }
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
