@@ -77,6 +77,7 @@ export {
   getEventsForWeek,
   createEventWithRealDate,
   updateEventWithRealDate,
+  isEventEqual,
 } from './eventUtils';
 
 // Re-export Test data utilities

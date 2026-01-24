@@ -4,6 +4,7 @@ import { Temporal } from 'temporal-polyfill';
 import { EventDetailDialogProps } from '../../types/eventDetail';
 import { isPlainDate } from '../../utils/temporal';
 import { getDefaultCalendarRegistry } from '../../core/calendarRegistry';
+import { isEventEqual } from '../../utils/eventUtils';
 import ColorPicker, { ColorOption } from './ColorPicker';
 import RangePicker from './RangePicker';
 import { CalendarApp } from '../../types';
@@ -47,6 +48,10 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
     onEventUpdate(editedEvent);
     onClose();
   };
+
+  const hasChanges = useMemo(() => {
+    return !isEventEqual(event, editedEvent);
+  }, [event, editedEvent]);
 
   const convertToAllDay = () => {
     const plainDate = isPlainDate(editedEvent.start)
@@ -292,8 +297,13 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
             </button>
 
             <button
-              className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium transition ml-auto"
+              className={`px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium transition ml-auto ${
+                hasChanges 
+                  ? 'hover:bg-primary/90 shadow-lg shadow-primary/20' 
+                  : 'opacity-50 cursor-not-allowed grayscale-[0.5]'
+              }`}
               onClick={handleSave}
+              disabled={!hasChanges}
             >
               {t('save')}
             </button>

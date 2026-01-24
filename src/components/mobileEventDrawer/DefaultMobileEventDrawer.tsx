@@ -3,7 +3,7 @@ import { Event, MobileEventProps, CalendarType } from '@/types';
 import { CalendarApp } from '@/core';
 import { MiniCalendar } from '../common/MiniCalendar';
 import { ColorPicker, ColorOption } from '../common/ColorPicker';
-import { formatTime } from '@/utils';
+import { formatTime, isEventEqual } from '@/utils';
 import { useLocale } from '@/locale';
 import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
 import { Switch } from './components/Switch';
@@ -120,6 +120,30 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
         return app.getEvents().some(e => e.id === draftEvent.id);
     }, [draftEvent, app, isOpen]); // Added isOpen to deps just in case, though app and draftEvent are the main ones.
 
+    const hasChanges = React.useMemo(() => {
+        if (!isOpen || !draftEvent) return false;
+        
+        let finalStart = new Date(startDate);
+        let finalEnd = new Date(endDate);
+
+        if (isAllDay) {
+            finalStart.setHours(0, 0, 0, 0);
+            finalEnd.setHours(0, 0, 0, 0);
+        }
+
+        const currentEvent: Event = {
+            ...draftEvent,
+            title,
+            calendarId,
+            allDay: isAllDay,
+            description: notes,
+            start: dateToZonedDateTime(finalStart),
+            end: dateToZonedDateTime(finalEnd),
+        };
+
+        return !isEventEqual(draftEvent, currentEvent);
+    }, [isOpen, draftEvent, title, calendarId, isAllDay, startDate, endDate, notes]);
+
     if (!isOpen) return null;
 
     const handleSave = () => {
@@ -206,7 +230,12 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
                     <span className="font-semibold text-lg">{isEditing ? t('editEvent') : t('newEvent')}</span>
                     <button
                         onClick={handleSave}
-                        className="text-primary font-bold px-2 py-1"
+                        disabled={!hasChanges}
+                        className={`font-bold px-2 py-1 transition-colors ${
+                            hasChanges 
+                                ? 'text-primary' 
+                                : 'text-gray-400 cursor-not-allowed opacity-50'
+                        }`}
                     >
                         {isEditing ? t('done') : t('create')}
                     </button>
