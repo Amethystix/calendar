@@ -74,9 +74,9 @@ export interface DragHookOptions extends Partial<DragConfig> {
  * Drag Hook return value
  */
 export interface DragHookReturn {
-  handleMoveStart: (e: React.MouseEvent | React.TouchEvent, event: Event) => void;
-  handleCreateStart: (e: React.MouseEvent | React.TouchEvent, ...args: (Date | number)[]) => void;
-  handleResizeStart: (
+  handleMoveStart?: (e: React.MouseEvent | React.TouchEvent, event: Event) => void;
+  handleCreateStart?: (e: React.MouseEvent | React.TouchEvent, ...args: (Date | number)[]) => void;
+  handleResizeStart?: (
     e: React.MouseEvent | React.TouchEvent,
     event: Event,
     direction: string

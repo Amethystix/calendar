@@ -502,11 +502,13 @@ const MonthView: React.FC<MonthViewProps> = ({
               dragState={dragState as MonthEventDragState}
               newlyCreatedEventId={newlyCreatedEventId}
               onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
+              onMoreEventsClick={app.onMoreEventsClick}
               onChangeView={handleChangeView}
               onSelectDate={app.selectDate}
               selectedEventId={selectedEventId}
               onEventSelect={(eventId: string | null) => {
-                if (screenSize !== 'desktop' && eventId) {
+                const isViewable = app.getReadOnlyConfig().viewable !== false;
+                if (screenSize !== 'desktop' && eventId && isViewable) {
                   const evt = events.find(e => e.id === eventId);
                   if (evt) {
                     setDraftEvent(evt);

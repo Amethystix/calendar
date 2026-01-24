@@ -455,7 +455,7 @@ const WeekView: React.FC<WeekViewProps> = ({
         cancelable: true,
       } as unknown as React.TouchEvent;
 
-      handleCreateStart(mockEvent, dayIndex, hour);
+      handleCreateStart?.(mockEvent, dayIndex, hour);
     }, 500);
   };
 
@@ -645,21 +645,23 @@ const WeekView: React.FC<WeekViewProps> = ({
                 onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
                 selectedEventId={selectedEventId}
                 detailPanelEventId={detailPanelEventId}
-                                onEventSelect={(eventId: string | null) => {
-                                  if (isMobile && eventId) {
-                                    const evt = events.find(e => e.id === eventId);
-                                    if (evt) {
-                                      setDraftEvent(evt);
-                                      setIsDrawerOpen(true);
-                                      return;
-                                    }
-                                  }
-                                  setSelectedEventId(eventId);
-                                }}
-                                onEventLongPress={(eventId: string) => {
-                                   if (isMobile) setSelectedEventId(eventId);
-                                }}
-                                onDetailPanelToggle={(eventId: string | null) =>
+                onEventSelect={(eventId: string | null) => {
+                  const isViewable = app.getReadOnlyConfig().viewable !== false;
+                  const isReadOnly = app.state.readOnly;
+                  if (isMobile && eventId && isViewable && !isReadOnly) {
+                    const evt = events.find(e => e.id === eventId);
+                    if (evt) {
+                      setDraftEvent(evt);
+                      setIsDrawerOpen(true);
+                      return;
+                    }
+                  }
+                  setSelectedEventId(eventId);
+                }}
+                onEventLongPress={(eventId: string) => {
+                  if (isMobile) setSelectedEventId(eventId);
+                }}
+                onDetailPanelToggle={(eventId: string | null) =>
                   setDetailPanelEventId(eventId)
                 }
                 customDetailPanelContent={customDetailPanelContent}
@@ -752,7 +754,7 @@ const WeekView: React.FC<WeekViewProps> = ({
                       key={`${slotIndex}-${dayIndex}`}
                       className={`${timeGridCell} ${dayIndex === weekDaysLabels.length - 1 ? 'border-r-0' : ''}`}
                       onDoubleClick={e => {
-                        handleCreateStart(e, dayIndex, slot.hour);
+                        handleCreateStart?.(e, dayIndex, slot.hour);
                       }}
                       onTouchStart={e => handleTouchStart(e, dayIndex, slot.hour)}
                       onTouchEnd={handleTouchEnd}
@@ -849,21 +851,22 @@ const WeekView: React.FC<WeekViewProps> = ({
                         onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
                         selectedEventId={selectedEventId}
                         detailPanelEventId={detailPanelEventId}
-                                        onEventSelect={(eventId: string | null) => {
-                                          if (isMobile && eventId) {
-                                            const evt = events.find(e => e.id === eventId);
-                                            if (evt) {
-                                              setDraftEvent(evt);
-                                              setIsDrawerOpen(true);
-                                              return;
-                                            }
-                                          }
-                                          setSelectedEventId(eventId);
-                                        }}
-                                        onEventLongPress={(eventId: string) => {
-                                            if (isMobile) setSelectedEventId(eventId);
-                                        }}
-                                        onDetailPanelToggle={(eventId: string | null) =>
+                        onEventSelect={(eventId: string | null) => {
+                          const isViewable = app.getReadOnlyConfig().viewable !== false;
+                          if (isMobile && eventId && isViewable) {
+                            const evt = events.find(e => e.id === eventId);
+                            if (evt) {
+                              setDraftEvent(evt);
+                              setIsDrawerOpen(true);
+                              return;
+                            }
+                          }
+                          setSelectedEventId(eventId);
+                        }}
+                        onEventLongPress={(eventId: string) => {
+                          if (isMobile) setSelectedEventId(eventId);
+                        }}
+                        onDetailPanelToggle={(eventId: string | null) =>
                           setDetailPanelEventId(eventId)
                         }
                         customDetailPanelContent={customDetailPanelContent}

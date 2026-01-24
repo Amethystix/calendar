@@ -10,6 +10,7 @@ import {
   SidebarConfig,
   CalendarType,
   MobileEventRenderer,
+  ReadOnlyConfig,
 } from '../types';
 import { Event } from '../types';
 import {
@@ -85,6 +86,7 @@ export class CalendarApp implements ICalendarApp {
       views: new Map(),
       locale: this.resolveLocale(config.locale),
       highlightedEventId: null,
+      readOnly: config.readOnly || false,
     };
 
     this.callbacks = config.callbacks || {};
@@ -134,6 +136,30 @@ export class CalendarApp implements ICalendarApp {
     return locale;
   }
 
+  getReadOnlyConfig = (): ReadOnlyConfig => {
+    const ro = this.state.readOnly;
+    if (ro === true) {
+      return { draggable: false, viewable: false };
+    }
+    if (ro === false) {
+      return { draggable: true, viewable: true };
+    }
+    return {
+      draggable: ro.draggable ?? false,
+      viewable: ro.viewable ?? false,
+    };
+  };
+
+  /**
+   * Helper to check if the calendar is in any form of read-only mode.
+   * If readOnly config is present, it's considered non-editable.
+   */
+  private isInternalEditable = (): boolean => {
+    if (this.state.readOnly === true) return false;
+    if (typeof this.state.readOnly === 'object') return false;
+    return true;
+  };
+
   // View management
   changeView = (view: ViewType): void => {
     if (!this.state.views.has(view)) {
@@ -167,11 +193,7 @@ export class CalendarApp implements ICalendarApp {
   };
 
   setVisibleMonth = (date: Date): void => {
-    const next = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      1
-    );
+    const next = new Date(date.getFullYear(), date.getMonth(), 1);
     if (
       this.visibleMonth.getFullYear() === next.getFullYear() &&
       this.visibleMonth.getMonth() === next.getMonth()
@@ -229,8 +251,15 @@ export class CalendarApp implements ICalendarApp {
   };
 
   // Event management
+
   addEvent = (event: Event): void => {
+    if (!this.isInternalEditable()) {
+      logger.warn('Cannot add event in read-only mode');
+      return;
+    }
+
     this.state.events = [...this.state.events, event];
+
     this.callbacks.onEventCreate?.(event);
   };
 
@@ -239,6 +268,15 @@ export class CalendarApp implements ICalendarApp {
     eventUpdate: Partial<Event>,
     isPending?: boolean
   ): void => {
+    if (!this.isInternalEditable() && !isPending) {
+      logger.warn('Cannot update event in read-only mode');
+      return;
+    }
+
+    if (!this.isInternalEditable()) {
+      return;
+    }
+
     const eventIndex = this.state.events.findIndex(e => e.id === id);
     if (eventIndex === -1) {
       throw new Error(`Event with id ${id} not found`);
@@ -252,10 +290,14 @@ export class CalendarApp implements ICalendarApp {
     ];
     // When resizing the events do not callbacks
     if (isPending) return;
-    this.callbacks.onEventUpdate?.(updatedEvent);
   };
 
   deleteEvent = (id: string): void => {
+    if (!this.isInternalEditable()) {
+      logger.warn('Cannot delete event in read-only mode');
+      return;
+    }
+
     const eventIndex = this.state.events.findIndex(e => e.id === id);
     if (eventIndex === -1) {
       throw new Error(`Event with id ${id} not found`);
@@ -271,6 +313,14 @@ export class CalendarApp implements ICalendarApp {
 
   getAllEvents = (): Event[] => {
     return [...this.state.events];
+  };
+
+  onEventClick = (event: Event): void => {
+    this.callbacks.onEventClick?.(event);
+  };
+
+  onMoreEventsClick = (date: Date): void => {
+    this.callbacks.onMoreEventsClick?.(date);
   };
 
   highlightEvent = (eventId: string | null): void => {
@@ -341,7 +391,9 @@ export class CalendarApp implements ICalendarApp {
   };
 
   mergeCalendars = (sourceId: string, targetId: string): void => {
-    const sourceEvents = this.state.events.filter(e => e.calendarId === sourceId);
+    const sourceEvents = this.state.events.filter(
+      e => e.calendarId === sourceId
+    );
 
     // Update all events from source calendar to target calendar
     sourceEvents.forEach(event => {
@@ -447,8 +499,13 @@ export class CalendarApp implements ICalendarApp {
     if (config.useCalendarHeader !== undefined) {
       this.useCalendarHeader = config.useCalendarHeader;
     }
+    if (config.readOnly !== undefined) {
+      this.state.readOnly = config.readOnly;
+    }
+    if (config.callbacks) {
+      this.callbacks = { ...this.callbacks, ...config.callbacks };
+    }
     // Add other config updates here if needed
-    
     // Trigger re-render to reflect changes
     this.triggerRender();
   };
@@ -483,7 +540,9 @@ export class CalendarApp implements ICalendarApp {
    * @param callback - Function to call when theme changes
    * @returns Unsubscribe function
    */
-  subscribeThemeChange = (callback: (theme: ThemeMode) => void): (() => void) => {
+  subscribeThemeChange = (
+    callback: (theme: ThemeMode) => void
+  ): (() => void) => {
     this.themeChangeListeners.add(callback);
 
     // Return unsubscribe function

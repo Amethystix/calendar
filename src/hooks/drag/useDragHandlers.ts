@@ -117,6 +117,15 @@ export const useDragHandlers = (
   // Cross-region drag move (Week/Day view specific) - complete version
   const handleUniversalDragMove = useCallback(
     (e: MouseEvent | TouchEvent) => {
+      const readOnlyConfig = app?.getReadOnlyConfig();
+      const isDraggable = readOnlyConfig?.draggable !== false;
+      const isEditable = !app?.state.readOnly;
+      
+      const drag = dragRef.current;
+      if (!drag) return;
+      if (drag.mode === 'move' && !isDraggable) return;
+      if ((drag.mode === 'resize' || drag.mode === 'create') && !isEditable) return;
+
       // Prevent scrolling on touch devices
       if (e.cancelable) {
         e.preventDefault();
@@ -125,7 +134,6 @@ export const useDragHandlers = (
 
       const { clientX, clientY } = getClientCoordinates(e);
 
-      const drag = dragRef.current;
       if (!drag || !drag.active) return;
 
       // Set cursor based on drag mode and direction
@@ -267,9 +275,18 @@ export const useDragHandlers = (
 
   // Cross-region drag end (Week/Day view specific) - complete version
   const handleUniversalDragEnd = useCallback(() => {
-    document.body.style.cursor = 'default';
     const drag = dragRef.current;
-    if (!drag || !drag.active || drag.mode !== 'move' || !drag.eventId) return;
+    if (!drag || !drag.active) return;
+
+    const readOnlyConfig = app?.getReadOnlyConfig();
+    const isDraggable = readOnlyConfig?.draggable !== false;
+    const isEditable = !app?.state.readOnly;
+
+    if (drag.mode === 'move' && !isDraggable) return;
+    if ((drag.mode === 'resize' || drag.mode === 'create') && !isEditable) return;
+
+    document.body.style.cursor = 'default';
+    if (drag.mode !== 'move' || !drag.eventId) return;
 
     let finalStartHour = drag.startHour;
     let finalEndHour = drag.endHour;
@@ -392,6 +409,16 @@ export const useDragHandlers = (
   // Drag move handler - complete version
   const handleDragMove = useCallback(
     (e: MouseEvent | TouchEvent) => {
+      const drag = dragRef.current;
+      if (!drag || !drag.active) return;
+
+      const readOnlyConfig = app?.getReadOnlyConfig();
+      const isDraggable = readOnlyConfig?.draggable !== false;
+      const isEditable = !app?.state.readOnly;
+
+      if (drag.mode === 'move' && !isDraggable) return;
+      if ((drag.mode === 'resize' || drag.mode === 'create') && !isEditable) return;
+
       // Prevent scrolling on touch devices
       if (e.cancelable) {
         e.preventDefault();
@@ -400,7 +427,6 @@ export const useDragHandlers = (
 
       const { clientX, clientY } = getClientCoordinates(e);
 
-      const drag = dragRef.current;
       if (!drag || !drag.active) return;
 
       // Set cursor based on drag mode and direction
@@ -867,11 +893,20 @@ export const useDragHandlers = (
   // Drag end handler - complete version
   const handleDragEnd = useCallback(
     (e: MouseEvent | TouchEvent) => {
+      const drag = dragRef.current;
+      if (!drag || !drag.active) return;
+
+      const readOnlyConfig = app?.getReadOnlyConfig();
+      const isDraggable = readOnlyConfig?.draggable !== false;
+      const isEditable = !app?.state.readOnly;
+
+      if (drag.mode === 'move' && !isDraggable) return;
+      if ((drag.mode === 'resize' || drag.mode === 'create') && !isEditable) return;
+
       document.body.style.cursor = 'default';
 
       const { clientX, clientY } = getClientCoordinates(e);
 
-      const drag = dragRef.current;
       if (!drag || !drag.active) return;
 
       if (isMonthView) {
@@ -917,39 +952,48 @@ export const useDragHandlers = (
           );
         } else if (drag.mode === 'move') {
           if (drag.eventId && drag.originalStartDate && drag.originalEndDate) {
-            // Update state at drag end (month view)
-            setDragState(prev => {
-              if ('targetDate' in prev) {
-                return {
-                  ...prev,
-                  targetDate: drag.originalStartDate,
-                  startDate: drag.originalStartDate,
-                  endDate: drag.originalEndDate,
-                } as MonthDragState;
-              }
-              return prev;
-            });
+            // Check if the event actually moved
+            const originalEventStart = drag.originalEvent?.start
+              ? temporalToDate(drag.originalEvent.start)
+              : null;
 
-            const isAllDay = drag.originalEvent?.allDay || false;
-            const newStartTemporal = isAllDay
-              ? dateToPlainDate(drag.originalStartDate!)
-              : dateToZonedDateTime(drag.originalStartDate!);
-            const newEndTemporal = isAllDay
-              ? dateToPlainDate(drag.originalEndDate!)
-              : dateToZonedDateTime(drag.originalEndDate!);
+            const hasMoved = originalEventStart && originalEventStart.getTime() !== drag.originalStartDate.getTime();
 
-            throttledSetEvents((prev: Event[]) =>
-              prev.map(event =>
-                event.id === drag.eventId
-                  ? {
-                    ...event,
-                    start: newStartTemporal,
-                    end: newEndTemporal,
-                    title: event.title,
-                  }
-                  : event
-              )
-            );
+            if (hasMoved) {
+              // Update state at drag end (month view)
+              setDragState(prev => {
+                if ('targetDate' in prev) {
+                  return {
+                    ...prev,
+                    targetDate: drag.originalStartDate,
+                    startDate: drag.originalStartDate,
+                    endDate: drag.originalEndDate,
+                  } as MonthDragState;
+                }
+                return prev;
+              });
+
+              const isAllDay = drag.originalEvent?.allDay || false;
+              const newStartTemporal = isAllDay
+                ? dateToPlainDate(drag.originalStartDate!)
+                : dateToZonedDateTime(drag.originalStartDate!);
+              const newEndTemporal = isAllDay
+                ? dateToPlainDate(drag.originalEndDate!)
+                : dateToZonedDateTime(drag.originalEndDate!);
+
+              throttledSetEvents((prev: Event[]) =>
+                prev.map(event =>
+                  event.id === drag.eventId
+                    ? {
+                      ...event,
+                      start: newStartTemporal,
+                      end: newEndTemporal,
+                      title: event.title,
+                    }
+                    : event
+                )
+              );
+            }
           } else {
             const finalTargetDate =
               getTargetDateFromPosition(clientX, clientY) ||
@@ -1111,6 +1155,8 @@ export const useDragHandlers = (
   // Create event start - complete version
   const handleCreateStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent, ...args: (Date | number)[]) => {
+      if (app?.state.readOnly) return; // Non-editable if readOnly exists
+
       // Prevent scrolling on touch devices
       if (e.cancelable) {
         e.preventDefault();
@@ -1218,6 +1264,8 @@ export const useDragHandlers = (
   // Move event start - complete version
   const handleMoveStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent, event: Event) => {
+      if (app?.getReadOnlyConfig().draggable === false) return;
+
       // Prevent scrolling on touch devices
       if (e.cancelable) {
         e.preventDefault();
@@ -1398,6 +1446,8 @@ export const useDragHandlers = (
   // Resize start - complete version
   const handleResizeStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent, event: Event, direction: string) => {
+      if (app?.state.readOnly) return;
+
       // Prevent scrolling on touch devices
       if (e.cancelable) {
         e.preventDefault();

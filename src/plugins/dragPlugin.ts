@@ -72,6 +72,9 @@ export function useDragForView(
 
   const config = dragService.getConfig();
   const isSupported = dragService.isViewSupported(options.viewType);
+  const readOnlyConfig = app.getReadOnlyConfig();
+  const isDraggable = readOnlyConfig.draggable !== false;
+  const isEditable = !app.state.readOnly;
 
   // If view is not supported or config is disabled, also gracefully degrade
   if (!isSupported) {
@@ -82,17 +85,23 @@ export function useDragForView(
 
   return {
     handleMoveStart:
-      isSupported && config.enableDrag ? result.handleMoveStart : () => { },
+      isSupported && config.enableDrag && isDraggable
+        ? result.handleMoveStart
+        : () => { },
     handleCreateStart:
-      isSupported && config.enableCreate ? result.handleCreateStart : () => { },
+      isSupported && config.enableCreate && isEditable
+        ? result.handleCreateStart
+        : () => { },
     handleResizeStart:
-      isSupported && config.enableResize ? result.handleResizeStart : () => { },
-    handleCreateAllDayEvent:
-      isSupported && config.enableAllDayCreate
-        ? result.handleCreateAllDayEvent
+      isSupported && config.enableResize && isEditable
+        ? result.handleResizeStart
         : undefined,
+    handleCreateAllDayEvent:
+      isSupported && config.enableAllDayCreate && isEditable
+        ? result.handleCreateAllDayEvent
+        : () => { },
     dragState: result.dragState,
-    isDragging: isSupported ? result.isDragging : false,
+    isDragging: isSupported && isDraggable ? result.isDragging : false,
   };
 }
 

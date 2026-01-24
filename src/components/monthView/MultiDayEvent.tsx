@@ -49,6 +49,9 @@ interface MultiDayEventProps {
   ) => void;
   onEventLongPress?: (eventId: string) => void;
   isMobile?: boolean;
+  isDraggable?: boolean;
+  isEditable?: boolean;
+  viewable?: boolean;
 }
 
 const ROW_HEIGHT = 16;
@@ -80,6 +83,9 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
     onResizeStart,
     onEventLongPress,
     isMobile = false,
+    isDraggable = true,
+    isEditable = true,
+    viewable = true,
   }) => {
     const HORIZONTAL_MARGIN = 2; // 2px spacing on left and right
 
@@ -95,13 +101,14 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
     const handleMouseDown = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>
     ) => {
+      if (!isDraggable && !viewable) return;
       e.preventDefault();
       e.stopPropagation();
 
       const target = e.target as HTMLElement;
       const isResizeHandle = target.closest('.resize-handle');
 
-      if (!isResizeHandle) {
+      if (!isResizeHandle && isDraggable) {
         onMoveStart(e, segment.event);
       }
     };
@@ -111,7 +118,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
     const touchStartPosRef = React.useRef<{ x: number; y: number } | null>(null);
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-      if (!onMoveStart || !isMobile) return;
+      if (!onMoveStart || !isMobile || (!isDraggable && !viewable)) return;
       e.stopPropagation();
 
       const touch = e.touches[0];
@@ -134,7 +141,9 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
           cancelable: false,
         } as unknown as React.TouchEvent<HTMLDivElement>;
 
-        onMoveStart(syntheticEvent, segment.event);
+        if (isDraggable) {
+          onMoveStart(syntheticEvent, segment.event);
+        }
         longPressTimerRef.current = null;
 
         if (navigator.vibrate) navigator.vibrate(50);
@@ -167,7 +176,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
         ? segment.isFirstSegment
         : segment.isLastSegment;
 
-      if (!shouldShow || !onResizeStart) return null;
+      if (!shouldShow || !onResizeStart || !isEditable) return null;
 
       return (
         <div
@@ -204,7 +213,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
 
         return (
           <div className="flex items-center min-w-0 w-full pointer-events-auto">
-            {segment.isFirstSegment && (
+            {segment.isFirstSegment && getEventIcon(segment.event) && (
               <div className="shrink-0 mr-1">
                 <div
                   className="rounded-full p-0.5 text-white flex items-center justify-center"
@@ -312,6 +321,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
               backgroundColor: getEventBgColor(calendarId),
               color: getEventTextColor(calendarId),
             }),
+          cursor: isDraggable ? 'pointer' : (viewable ? 'pointer' : 'default'),
         }}
         data-segment-days={segmentDays}
         onMouseDown={handleMouseDown}
@@ -320,7 +330,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
         onTouchEnd={handleTouchEnd}
         title={`${segment.event.title} (${formatDateConsistent(segment.event.start)} - ${formatDateConsistent(segment.event.end)})`}
       >
-        {isMobile && isSelected && (
+        {isMobile && isSelected && isEditable && (
           <>
             {segment.isFirstSegment && (
               <div

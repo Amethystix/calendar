@@ -50,12 +50,12 @@ interface WeekComponentProps {
   calendarRef: React.RefObject<HTMLDivElement>;
   onEventUpdate: (updatedEvent: Event) => void;
   onEventDelete: (eventId: string) => void;
-  onMoveStart: (
+  onMoveStart?: (
     e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event
   ) => void;
-  onCreateStart: (e: React.MouseEvent | React.TouchEvent, targetDate: Date) => void;
-  onResizeStart: (
+  onCreateStart?: (e: React.MouseEvent | React.TouchEvent, targetDate: Date) => void;
+  onResizeStart?: (
     e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event,
     direction: string
@@ -534,7 +534,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
         `}
           style={{ height: weekHeightPx }}
           data-date={createDateString(day.date)}
-          onDoubleClick={e => onCreateStart(e, day.date)}
+          onDoubleClick={e => onCreateStart?.(e, day.date)}
           onTouchStart={e => {
             if (screenSize !== 'mobile') return;
             const touch = e.touches[0];
@@ -543,7 +543,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
             touchStartPosRef.current = { x: clientX, y: clientY };
 
             longPressTimerRef.current = setTimeout(() => {
-              onCreateStart(e, day.date);
+              onCreateStart?.(e, day.date);
               longPressTimerRef.current = null;
               if (navigator.vibrate) navigator.vibrate(50);
             }, 500);

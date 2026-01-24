@@ -124,7 +124,10 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
     });
   };
 
-  if (!isOpen) return null;
+  const isEditable = !app?.state.readOnly;
+  const isViewable = app?.getReadOnlyConfig().viewable !== false;
+
+  if (!isOpen || !isViewable) return null;
 
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return null;
@@ -135,7 +138,7 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
     const target = e.target as HTMLElement;
 
     // Check if clicked on RangePicker or ColorPicker popup content
-    if (target.closest('[data-rangepicker-popup]')) {
+    if (target.closest('[data-range-picker-popup]')) {
       return;
     }
 
@@ -190,6 +193,8 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
               <input
                 type="text"
                 value={editedEvent.title}
+                readOnly={!isEditable}
+                disabled={!isEditable}
                 onChange={e => {
                   setEditedEvent({
                     ...editedEvent,
@@ -199,17 +204,19 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
                 className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
               />
             </div>
-            <ColorPicker
-              options={colorOptions}
-              value={editedEvent.calendarId || 'blue'}
-              onChange={value => {
-                setEditedEvent({
-                  ...editedEvent,
-                  calendarId: value,
-                });
-              }}
-              registry={app?.getCalendarRegistry()}
-            />
+            {isEditable && (
+              <ColorPicker
+                options={colorOptions}
+                value={editedEvent.calendarId || 'blue'}
+                onChange={value => {
+                  setEditedEvent({
+                    ...editedEvent,
+                    calendarId: value,
+                  });
+                }}
+                registry={app?.getCalendarRegistry()}
+              />
+            )}
           </div>
 
           {!!editedEvent.allDay ? (
@@ -221,6 +228,7 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
                 showTime={false}
                 timeZone={eventTimeZone}
                 matchTriggerWidth
+                disabled={!isEditable}
                 onChange={handleAllDayRangeChange}
                 onOk={handleAllDayRangeChange}
                 locale={app?.state.locale}
@@ -232,6 +240,7 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
               <RangePicker
                 value={[editedEvent.start, editedEvent.end]}
                 timeZone={eventTimeZone}
+                disabled={!isEditable}
                 onChange={(nextRange) => {
                   const [start, end] = nextRange;
                   setEditedEvent({
@@ -257,6 +266,8 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
             <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('note')}</span>
             <textarea
               value={editedEvent.description ?? ''}
+              readOnly={!isEditable}
+              disabled={!isEditable}
               onChange={e =>
                 setEditedEvent({
                   ...editedEvent,
@@ -269,45 +280,46 @@ const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
             />
           </div>
 
-          <div className="flex space-x-2">
-            {!editedEvent.allDay ? (
-              <button
-                className="px-3 py-2 bg-secondary/10 text-secondary rounded-lg hover:bg-secondary/20 text-sm font-medium transition"
-                onClick={convertToAllDay}
-              >
-                {t('setAsAllDay')}
-              </button>
-            ) : (
-              <button
-                className="px-3 py-2 bg-secondary/10 text-secondary rounded-lg hover:bg-secondary/20 text-sm font-medium transition"
-                onClick={convertToRegular}
-              >
-                {t('setAsTimed')}
-              </button>
-            )}
+          {isEditable && (
+            <div className="flex space-x-2">
+              {!editedEvent.allDay ? (
+                <button
+                  className="px-3 py-2 bg-secondary/10 text-secondary rounded-lg hover:bg-secondary/20 text-sm font-medium transition"
+                  onClick={convertToAllDay}
+                >
+                  {t('setAsAllDay')}
+                </button>
+              ) : (
+                <button
+                  className="px-3 py-2 bg-secondary/10 text-secondary rounded-lg hover:bg-secondary/20 text-sm font-medium transition"
+                  onClick={convertToRegular}
+                >
+                  {t('setAsTimed')}
+                </button>
+              )}
 
-            <button
-              className="px-3 py-2 bg-destructive border border-border text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium transition"
-              onClick={() => {
-                onEventDelete(event.id);
-                onClose();
-              }}
-            >
-              {t('delete')}
-            </button>
+              <button
+                className="px-3 py-2 bg-destructive border border-border text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium transition"
+                onClick={() => {
+                  onEventDelete(event.id);
+                  onClose();
+                }}
+              >
+                {t('delete')}
+              </button>
 
-            <button
-              className={`px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium transition ml-auto ${
-                hasChanges 
-                  ? 'hover:bg-primary/90 shadow-lg shadow-primary/20' 
+              <button
+                className={`px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium transition ml-auto ${hasChanges
+                  ? 'hover:bg-primary/90 shadow-lg shadow-primary/20'
                   : 'opacity-50 cursor-not-allowed grayscale-[0.5]'
-              }`}
-              onClick={handleSave}
-              disabled={!hasChanges}
-            >
-              {t('save')}
-            </button>
-          </div>
+                  }`}
+                onClick={handleSave}
+                disabled={!hasChanges}
+              >
+                {t('save')}
+              </button>
+            </div>
+          )}
 
 
         </div>

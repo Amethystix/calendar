@@ -10,6 +10,8 @@ interface CalendarListProps {
   editingId: string | null;
   setEditingId: (id: string | null) => void;
   activeContextMenuCalendarId?: string | null;
+  isDraggable?: boolean;
+  isEditable?: boolean;
 }
 
 const getCalendarInitials = (calendar: CalendarType): string => {
@@ -29,6 +31,8 @@ export const CalendarList: React.FC<CalendarListProps> = ({
   editingId,
   setEditingId,
   activeContextMenuCalendarId,
+  isDraggable = true,
+  isEditable = true,
 }) => {
   const [editingName, setEditingName] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -39,8 +43,8 @@ export const CalendarList: React.FC<CalendarListProps> = ({
   const [dropTarget, setDropTarget] = useState<{ id: string; position: 'top' | 'bottom' } | null>(null);
 
   const handleDragStart = useCallback((calendar: CalendarType, e: React.DragEvent) => {
-    // Prevent dragging when editing
-    if (editingId) {
+    // Prevent dragging when editing or not draggable
+    if (editingId || !isDraggable) {
       e.preventDefault();
       return;
     }
@@ -118,9 +122,10 @@ export const CalendarList: React.FC<CalendarListProps> = ({
   }, [draggedCalendarId, dropTarget, calendars, onReorder]);
 
   const handleRenameStart = useCallback((calendar: CalendarType) => {
+    if (!isEditable) return;
     setEditingId(calendar.id);
     setEditingName(calendar.name);
-  }, [setEditingId]);
+  }, [setEditingId, isEditable]);
 
   const handleRenameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setEditingName(e.target.value);
@@ -190,11 +195,11 @@ export const CalendarList: React.FC<CalendarListProps> = ({
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary z-10 pointer-events-none" />
               )}
               <div
-                draggable
+                draggable={isDraggable && !editingId}
                 onDragStart={(e) => handleDragStart(calendar, e)}
                 onDragEnd={handleDragEnd}
                 className={`rounded transition ${draggedCalendarId === calendar.id ? 'opacity-50' : ''
-                  }`}
+                  } ${isDraggable ? 'cursor-grab' : 'cursor-default'}`}
               >
                 <div
                   className={`group flex items-center rounded px-2 py-2 transition hover:bg-gray-100 dark:hover:bg-slate-800 ${isActive ? 'bg-gray-100 dark:bg-slate-800' : ''}`}

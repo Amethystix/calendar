@@ -234,9 +234,14 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
 
       if (onEventSelect) {
         onEventSelect(event.id);
-      } else {
+      } else if (canOpenDetail) {
         setIsSelected(true);
       }
+
+      if (app) {
+        app.onEventClick(event);
+      }
+
       onDetailPanelToggle?.(null);
       setDetailPanelPosition(null);
     }
@@ -247,6 +252,11 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
   const isEventSelected =
     selectedEventId !== undefined ? selectedEventId === event.id : isSelected;
 
+  const readOnlyConfig = app?.getReadOnlyConfig();
+  const isEditable = !app?.state.readOnly;
+  const canOpenDetail = readOnlyConfig?.viewable !== false;
+  const isDraggable = readOnlyConfig?.draggable !== false;
+
   const calculateEventStyle = () => {
     if (isMonthView) {
       return {
@@ -254,6 +264,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         zIndex: isEventSelected || showDetailPanel ? 1000 : 1,
         transform: isPopping ? 'scale(1.15)' : undefined,
         transition: 'transform 0.1s ease-in-out',
+        cursor: isDraggable ? 'pointer' : (canOpenDetail ? 'pointer' : 'default'),
       };
     }
 
@@ -264,6 +275,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         zIndex: isEventSelected || showDetailPanel ? 1000 : 1,
         transform: isPopping ? 'scale(1.12)' : undefined,
         transition: 'transform 0.1s ease-in-out',
+        cursor: isDraggable ? 'pointer' : (canOpenDetail ? 'pointer' : 'default'),
       };
 
       // Calculate vertical offset (for multi-row all-day events)
@@ -324,6 +336,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
       zIndex: isEventSelected || showDetailPanel ? 1000 : (layout?.zIndex ?? 1),
       transform: isPopping ? 'scale(1.12)' : undefined,
       transition: 'transform 0.1s ease-in-out',
+      cursor: isDraggable ? 'pointer' : (canOpenDetail ? 'pointer' : 'default'),
     };
 
     if (isEventSelected && showDetailPanel) {
@@ -446,10 +459,14 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
       setActiveDayIndex(event.day ?? null);
     }
 
+    if (app) {
+      app.onEventClick(event);
+    }
+
     const handleSelect = () => {
       if (onEventSelect) {
         onEventSelect(event.id);
-      } else {
+      } else if (canOpenDetail) {
         setIsSelected(true);
       }
       onDetailPanelToggle?.(null);
@@ -525,6 +542,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
   const handleDoubleClick = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
+    if (!canOpenDetail) return;
     e.preventDefault();
     e.stopPropagation();
 
@@ -1019,7 +1037,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
       );
 
       // Check if clicked inside RangePicker popup
-      const clickedInsideRangePickerPopup = target.closest('[data-rangepicker-popup]');
+      const clickedInsideRangePickerPopup = target.closest('[data-range-picker-popup]');
 
       if (showDetailPanel) {
         if (
@@ -1239,6 +1257,9 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         onMoveStart={onMoveStart || (() => { })}
         onResizeStart={onResizeStart}
         isMobile={isMobile}
+        isDraggable={isDraggable}
+        isEditable={isEditable}
+        viewable={canOpenDetail}
       />
     );
   };
@@ -1247,19 +1268,29 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
     if (isMultiDay) {
       return renderMonthMultiDayContent();
     }
+
+    const showIcon = event.icon !== false;
+    const customIcon = typeof event.icon !== 'boolean' ? event.icon : null;
+
     return (
       <div className={monthAllDayContent}>
-        {event.title.toLowerCase().includes('easter') ||
-          event.title.toLowerCase().includes('holiday') ? (
-          <span
-            className={`inline-block ${mr1} shrink-0 ${isEventSelected ? 'text-yellow-200' : 'text-yellow-600'}`}
-          >
-            ⭐
-          </span>
-        ) : (
-          <CalendarDays
-            className={`${eventIcon} ${isEventSelected ? 'text-white' : ''}`}
-          />
+        {showIcon && (
+          customIcon ? (
+            <div className={`${mr1} shrink-0`}>{customIcon}</div>
+          ) : (
+            event.title.toLowerCase().includes('easter') ||
+              event.title.toLowerCase().includes('holiday') ? (
+              <span
+                className={`inline-block ${mr1} shrink-0 ${isEventSelected ? 'text-yellow-200' : 'text-yellow-600'}`}
+              >
+                ⭐
+              </span>
+            ) : (
+              <CalendarDays
+                className={`${eventIcon} ${isEventSelected ? 'text-white' : ''}`}
+              />
+            )
+          )
         )}
         <span className={`truncate ${isEventSelected ? 'text-white' : ''}`}>
           {event.title}
@@ -1307,12 +1338,15 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
   };
 
   const renderAllDayContent = () => {
+    const showIcon = event.icon !== false;
+    const customIcon = typeof event.icon !== 'boolean' ? event.icon : null;
+
     return (
       <div
         className={`h-full flex items-center overflow-hidden pl-3 ${px1} py-0 relative group`}
       >
         {/* Left resize handle - only shown for single-day all-day events with onResizeStart */}
-        {onResizeStart && (
+        {onResizeStart && isEditable && (
           <div
             className={resizeHandleLeft}
             onMouseDown={e => {
@@ -1327,7 +1361,13 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
           />
         )}
 
-        <CalendarDays className={eventIcon} />
+        {showIcon && (
+          customIcon ? (
+            <div className="mr-1 shrink-0">{customIcon}</div>
+          ) : (
+            <CalendarDays className={eventIcon} />
+          )
+        )}
         <div
           className={`${eventTitleSmall} pr-1`}
           style={{ lineHeight: '1.2' }}
@@ -1336,7 +1376,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         </div>
 
         {/* Right resize handle - only shown for single-day all-day events with onResizeStart */}
-        {onResizeStart && (
+        {onResizeStart && isEditable && (
           <div
             className={resizeHandleRight}
             onMouseDown={e => {
@@ -1391,7 +1431,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
           )}
         </div>
 
-        {onResizeStart && (
+        {onResizeStart && isEditable && (
           <>
             {/* Only show top resize handle on the first segment */}
             {isFirstSegment && (
@@ -1425,7 +1465,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
           </>
         )}
 
-        {isMobile && isEventSelected && onResizeStart && (
+        {isMobile && isEventSelected && onResizeStart && isEditable && (
           <>
             {/* Top-Right Indicator (Start Time) */}
             <div

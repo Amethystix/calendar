@@ -54,6 +54,8 @@ export interface CalendarCallbacks {
   onCalendarCreate?: (calendar: CalendarType) => void | Promise<void>;
   onCalendarDelete?: (calendarId: string) => void | Promise<void>;
   onCalendarMerge?: (sourceId: string, targetId: string) => void | Promise<void>;
+  onEventClick?: (event: Event) => void | Promise<void>;
+  onMoreEventsClick?: (date: Date) => void | Promise<void>;
 }
 
 export interface CreateCalendarDialogProps {
@@ -70,6 +72,7 @@ export interface CalendarHeaderProps {
   onSearchClick?: () => void;
   searchValue?: string;
   isSearchOpen?: boolean;
+  isEditable?: boolean;
 }
 
 /**
@@ -123,6 +126,15 @@ export interface CalendarAppConfig {
   useCalendarHeader?: boolean | ((props: CalendarHeaderProps) => React.ReactNode);
   customMobileEventRenderer?: MobileEventRenderer;
   locale?: string | Locale;
+  readOnly?: boolean | ReadOnlyConfig;
+}
+
+/**
+ * Read-only configuration
+ */
+export interface ReadOnlyConfig {
+  draggable?: boolean; // Whether to allow dragging
+  viewable?: boolean; // Whether to allow inspecting (open detail panel/dialog/drawer)
 }
 
 /**
@@ -139,6 +151,7 @@ export interface CalendarAppState {
   sidebar?: SidebarConfig;
   locale: string | Locale;
   highlightedEventId?: string | null;
+  readOnly: boolean | ReadOnlyConfig;
 }
 
 /**
@@ -148,6 +161,7 @@ export interface CalendarAppState {
 export interface CalendarApp {
   // State
   state: CalendarAppState;
+  getReadOnlyConfig: () => ReadOnlyConfig;
 
   // View management
   changeView: (view: ViewType) => void;
@@ -167,6 +181,8 @@ export interface CalendarApp {
   deleteEvent: (id: string) => void;
   getEvents: () => Event[];
   getAllEvents: () => Event[];
+  onEventClick: (event: Event) => void;
+  onMoreEventsClick: (date: Date) => void;
   highlightEvent: (eventId: string | null) => void;
   getCalendars: () => CalendarType[];
   reorderCalendars: (fromIndex: number, toIndex: number) => void;
@@ -242,6 +258,7 @@ export interface UseCalendarAppReturn {
   setVisibleMonth: (date: Date) => void;
   getVisibleMonth: () => Date;
   sidebarConfig: SidebarConfig;
+  readOnlyConfig: ReadOnlyConfig;
 }
 
 /**

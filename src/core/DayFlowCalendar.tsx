@@ -310,6 +310,12 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
   }, [app, sidebarConfig.createCalendarMode, t, refreshSidebar]);
 
   const handleAddButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const isEditable = !app.state.readOnly;
+    if (!isEditable) {
+      if (sidebarEnabled) return; // Cannot create events
+      return;
+    }
+    
     if (sidebarEnabled) {
       if (isMobile) {
         // Mobile: Open Event Drawer
@@ -410,6 +416,7 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
     },
     searchValue: searchKeyword,
     isSearchOpen: isSearchOpen,
+    isEditable: !app.state.readOnly,
   };
 
   const renderHeader = () => {

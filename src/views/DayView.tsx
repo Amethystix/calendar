@@ -384,7 +384,7 @@ const DayView: React.FC<DayViewProps> = ({
         cancelable: true,
       } as unknown as React.TouchEvent;
 
-      handleCreateStart(mockEvent, dayIndex, clickedHour);
+      handleCreateStart?.(mockEvent, dayIndex, clickedHour);
     }, 500);
   };
 
@@ -517,8 +517,10 @@ const DayView: React.FC<DayViewProps> = ({
                       }
                       selectedEventId={selectedEvent?.id ?? null}
                       onEventSelect={(eventId: string | null) => {
+                        const isViewable = app.getReadOnlyConfig().viewable !== false;
+                        const isReadOnly = app.state.readOnly;
                         const evt = events.find(e => e.id === eventId);
-                        if (isMobile && evt) {
+                        if (isMobile && evt && isViewable && !isReadOnly) {
                           setDraftEvent(evt);
                           setIsDrawerOpen(true);
                         } else {
@@ -619,7 +621,7 @@ const DayView: React.FC<DayViewProps> = ({
                           ) as HTMLElement
                         )?.scrollTop || 0;
                       const clickedHour = FIRST_HOUR + relativeY / HOUR_HEIGHT;
-                      handleCreateStart(e, currentDayIndex, clickedHour);
+                      handleCreateStart?.(e, currentDayIndex, clickedHour);
                     }}
                     onTouchStart={e => {
                       const currentDayIndex = Math.floor(
@@ -690,8 +692,9 @@ const DayView: React.FC<DayViewProps> = ({
                           }
                           selectedEventId={selectedEvent?.id ?? null}
                           onEventSelect={(eventId: string | null) => {
+                            const isViewable = app.getReadOnlyConfig().viewable !== false;
                             const evt = events.find(e => e.id === eventId);
-                            if (isMobile && evt) {
+                            if (isMobile && evt && isViewable) {
                               setDraftEvent(evt);
                               setIsDrawerOpen(true);
                             } else {
@@ -778,7 +781,10 @@ const DayView: React.FC<DayViewProps> = ({
                     style={{
                       borderLeftColor: getLineColor(event.calendarId || 'blue'),
                     }}
-                    onClick={() => setSelectedEvent(event)}
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      app.onEventClick(event);
+                    }}
                   >
                     <div className={`font-medium ${textSm}`}>{event.title}</div>
                     {!event.allDay && (

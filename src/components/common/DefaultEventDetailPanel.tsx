@@ -39,6 +39,10 @@ const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
 
   // Check if dark mode is active (either via theme context or DOM class)
   const isDark = appliedTheme === 'dark' || (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
+  const isEditable = !app?.state.readOnly;
+  const isInspectable = app?.getReadOnlyConfig().viewable !== false;
+
+  if (!isInspectable) return null;
 
   const arrowBgColor = isDark ? '#1f2937' : 'white';
   const arrowBorderColor = isDark ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)';
@@ -265,6 +269,8 @@ const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
           <input
             type="text"
             value={event.title}
+            readOnly={!isEditable}
+            disabled={!isEditable}
             onChange={e => {
               onEventUpdate({
                 ...event,
@@ -274,17 +280,19 @@ const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
             className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
           />
         </div>
-        <ColorPicker
-          options={colorOptions}
-          value={event.calendarId || 'blue'}
-          onChange={value => {
-            onEventUpdate({
-              ...event,
-              calendarId: value,
-            });
-          }}
-          registry={app?.getCalendarRegistry()}
-        />
+        {isEditable && (
+          <ColorPicker
+            options={colorOptions}
+            value={event.calendarId || 'blue'}
+            onChange={value => {
+              onEventUpdate({
+                ...event,
+                calendarId: value,
+              });
+            }}
+            registry={app?.getCalendarRegistry()}
+          />
+        )}
       </div>
 
       {isAllDay ? (
@@ -296,6 +304,7 @@ const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
             showTime={false}
             timeZone={eventTimeZone}
             matchTriggerWidth
+            disabled={!isEditable}
             onChange={handleAllDayRangeChange}
             onOk={handleAllDayRangeChange}
             locale={app?.state.locale}
@@ -309,6 +318,7 @@ const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
             timeZone={
               eventTimeZone
             }
+            disabled={!isEditable}
             onChange={(nextRange) => {
               const [start, end] = nextRange;
               onEventUpdate({
@@ -334,6 +344,8 @@ const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
         <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('note')}</span>
         <textarea
           value={event.description ?? ''}
+          readOnly={!isEditable}
+          disabled={!isEditable}
           onChange={e =>
             onEventUpdate({
               ...event,
@@ -346,30 +358,32 @@ const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
         />
       </div>
 
-      <div className="flex space-x-2">
-        {!isAllDay ? (
-          <button
-            className="px-2 py-1 bg-primary text-primary-foreground rounded hover:bg-primary text-xs font-medium transition"
-            onClick={convertToAllDay}
-          >
-            {t('setAsAllDay')}
-          </button>
-        ) : (
-          <button
-            className="px-2 py-1 bg-primary text-primary-foreground rounded hover:bg-primary text-xs font-medium transition"
-            onClick={convertToRegular}
-          >
-            {t('setAsTimed')}
-          </button>
-        )}
+      {isEditable && (
+        <div className="flex space-x-2">
+          {!isAllDay ? (
+            <button
+              className="px-2 py-1 bg-primary text-primary-foreground rounded hover:bg-primary text-xs font-medium transition"
+              onClick={convertToAllDay}
+            >
+              {t('setAsAllDay')}
+            </button>
+          ) : (
+            <button
+              className="px-2 py-1 bg-primary text-primary-foreground rounded hover:bg-primary text-xs font-medium transition"
+              onClick={convertToRegular}
+            >
+              {t('setAsTimed')}
+            </button>
+          )}
 
-        <button
-          className="px-2 py-1 bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 text-xs font-medium transition"
-          onClick={() => onEventDelete(event.id)}
-        >
-          {t('delete')}
-        </button>
-      </div>
+          <button
+            className="px-2 py-1 bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 text-xs font-medium transition"
+            onClick={() => onEventDelete(event.id)}
+          >
+            {t('delete')}
+          </button>
+        </div>
+      )}
     </div>
   );
 

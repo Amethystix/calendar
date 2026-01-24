@@ -233,5 +233,6 @@ export function useCalendarApp(
     setVisibleMonth: (date: Date) => app.setVisibleMonth(date),
     getVisibleMonth: () => app.getVisibleMonth(),
     sidebarConfig: app.getSidebarConfig(),
+    readOnlyConfig: app.getReadOnlyConfig(),
   };
 }

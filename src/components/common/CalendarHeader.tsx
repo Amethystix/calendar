@@ -11,6 +11,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   onSearchClick,
   searchValue = '',
   isSearchOpen = false,
+  isEditable = true,
 }) => {
   const isSwitcherCentered = switcherMode === 'buttons';
   const isDayView = calendar.state.currentView === ViewType.DAY;
@@ -32,7 +33,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     >
       {/* Left Section: Add Calendar Button Only */}
       <div className="flex flex-1 items-center mb-1">
-        {onAddCalendar && (
+        {onAddCalendar && isEditable && (
           <button
             onClick={onAddCalendar}
             className="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
@@ -54,7 +55,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       {!isSwitcherCentered && (
         <ViewSwitcher mode={switcherMode} calendar={calendar} />
       )}
-      <div className="flex flex-1 items-center justify-end gap-3 m pb-1 h-6">
+      <div className="flex flex-1 items-center justify-end gap-3 mb-1 pb-1 h-6">
         {/* Mobile Search Icon */}
         <button
           onClick={onSearchClick}
@@ -64,7 +65,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
         </button>
 
         {/* Desktop Search Bar */}
-        <div className="relative hidden md:block group">
+        <div className="relative hidden md:block group mt-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <span className="text-gray-400 group-focus-within:text-primary transition-colors">
               <Search width={16} height={16} />
@@ -75,7 +76,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             placeholder="Search"
             value={searchValue}
             onChange={handleSearchChange}
-            className="pl-9 pr-8 py-1 text-sm border border-slate-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400  focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition resize-none w-48"
+            className="pl-9 pr-8 py-1 h-[28px] text-sm border border-slate-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400  focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition resize-none w-48"
           />
           {searchValue && (
             <button

@@ -288,7 +288,7 @@ const RangePicker: React.FC<RangePickerProps> = ({
         return;
       }
 
-      const closestPopup = target.closest('[data-rangepicker-popup]');
+      const closestPopup = target.closest('[data-range-picker-popup]');
       if (closestPopup) {
         return;
       }
@@ -896,7 +896,7 @@ const RangePicker: React.FC<RangePickerProps> = ({
     <div
       ref={popupRef}
       style={getPopupStyle()}
-      data-rangepicker-popup="true"
+      data-range-picker-popup="true"
     >
       <div
         className="space-y-3 rounded-xl border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-3"

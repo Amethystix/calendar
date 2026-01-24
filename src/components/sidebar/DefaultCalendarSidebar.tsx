@@ -198,10 +198,14 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
   const targetCalendarName = mergeState ? calendars.find(c => c.id === mergeState.targetId)?.name || 'Unknown' : '';
   const deleteCalendarName = deleteState ? calendars.find(c => c.id === deleteState.calendarId)?.name || 'Unknown' : '';
 
+  const readOnlyConfig = app.getReadOnlyConfig();
+  const isEditable = !app.state.readOnly;
+  const isDraggable = readOnlyConfig.draggable !== false;
+
   return (
     <div 
       className="flex h-full flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900"
-      onContextMenu={handleSidebarContextMenu}
+      onContextMenu={isEditable ? handleSidebarContextMenu : undefined}
     >
       <SidebarHeader
         isCollapsed={isCollapsed}
@@ -213,12 +217,14 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
           <CalendarList
             calendars={calendars}
             onToggleVisibility={toggleCalendarVisibility}
-            onReorder={app.reorderCalendars}
-            onRename={(id, newName) => app.updateCalendar(id, { name: newName })}
-            onContextMenu={handleContextMenu}
+            onReorder={isDraggable ? app.reorderCalendars : () => {}}
+            onRename={isEditable ? (id, newName) => app.updateCalendar(id, { name: newName }) : () => {}}
+            onContextMenu={isEditable ? handleContextMenu : () => {}}
             editingId={editingCalendarId}
             setEditingId={setEditingCalendarId}
             activeContextMenuCalendarId={contextMenu?.calendarId}
+            isDraggable={isDraggable}
+            isEditable={isEditable}
           />
 
           <div className='border-t border-gray-200 dark:border-slate-800'>
@@ -235,12 +241,14 @@ const DefaultCalendarSidebar: React.FC<CalendarSidebarRenderProps> = ({
         <CalendarList
           calendars={calendars}
           onToggleVisibility={toggleCalendarVisibility}
-          onReorder={app.reorderCalendars}
-          onRename={(id, newName) => app.updateCalendar(id, { name: newName })}
-          onContextMenu={handleContextMenu}
+          onReorder={isDraggable ? app.reorderCalendars : () => {}}
+          onRename={isEditable ? (id, newName) => app.updateCalendar(id, { name: newName }) : () => {}}
+          onContextMenu={isEditable ? handleContextMenu : () => {}}
           editingId={editingCalendarId}
           setEditingId={setEditingCalendarId}
           activeContextMenuCalendarId={contextMenu?.calendarId}
+          isDraggable={isDraggable}
+          isEditable={isEditable}
         />
       )}
 
