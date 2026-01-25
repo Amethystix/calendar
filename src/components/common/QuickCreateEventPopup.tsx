@@ -96,7 +96,7 @@ export const QuickCreateEventPopup: React.FC<QuickCreateEventPopupProps> = ({
     // Try to find if this title exists in history to pick calendar
     const historyEvent = allEvents.find(e => e.title.toLowerCase() === lowerInput);
     let targetCalendarId = historyEvent?.calendarId;
-    
+
     if (!targetCalendarId) {
       // Pick random calendar if no history
       const visibleCalendars = calendars.filter(c => c.isVisible !== false);
@@ -126,8 +126,8 @@ export const QuickCreateEventPopup: React.FC<QuickCreateEventPopupProps> = ({
     const seenTitles = new Set<string>();
     seenTitles.add(inputValue.toLowerCase()); // Don't show exact match again in history if it's same as input
 
-    const matchedEvents = allEvents.filter(e => 
-      e.title.toLowerCase().includes(lowerInput) && 
+    const matchedEvents = allEvents.filter(e =>
+      e.title.toLowerCase().includes(lowerInput) &&
       !seenTitles.has(e.title.toLowerCase())
     );
 
@@ -152,14 +152,14 @@ export const QuickCreateEventPopup: React.FC<QuickCreateEventPopupProps> = ({
       const rect = anchorRef.current.getBoundingClientRect();
       const popupHeight = popupRef.current.offsetHeight;
       const popupWidth = 340; // Fixed width
-      
+
       // Calculate initial left (centered)
       let left = rect.left + rect.width / 2 - popupWidth / 2;
-      
+
       // Horizontal Boundary Check
       const padding = 12;
       const windowWidth = window.innerWidth;
-      
+
       if (left < padding) {
         left = padding;
       } else if (left + popupWidth > windowWidth - padding) {
@@ -172,7 +172,7 @@ export const QuickCreateEventPopup: React.FC<QuickCreateEventPopupProps> = ({
       const buttonCenterX = rect.left + rect.width / 2;
       const calculatedArrowLeft = buttonCenterX - left;
       setArrowLeft(calculatedArrowLeft);
-      
+
       // Check space above using actual height
       const spaceAbove = rect.top;
       // Add some buffer for the browser chrome/safe area
@@ -248,7 +248,7 @@ export const QuickCreateEventPopup: React.FC<QuickCreateEventPopupProps> = ({
   return createPortal(
     <div
       ref={popupRef}
-      className={`fixed z-[1000] w-[340px] flex flex-col bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 ${isReady ? 'animate-in fade-in zoom-in-95 duration-100' : ''}`}
+      className={`fixed z-1000 w-85 flex flex-col bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 ${isReady ? 'animate-in fade-in zoom-in-95 duration-100' : ''}`}
       style={{
         top: position.top,
         left: position.left,
@@ -271,27 +271,26 @@ export const QuickCreateEventPopup: React.FC<QuickCreateEventPopupProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto max-h-[300px] py-1 px-2">
+      <div className="flex-1 overflow-y-auto max-h-75 py-1 px-2">
         {suggestions.length === 0 && inputValue && (
-           <div className="px-4 py-3 text-sm text-gray-400 text-center">
-             {t('noSuggestions') || 'Type to create'}
-           </div>
+          <div className="px-4 py-3 text-sm text-gray-400 text-center">
+            {t('noSuggestions') || 'Type to create'}
+          </div>
         )}
-        
+
         {suggestions.map((item, index) => (
           <div
             key={`${item.type}-${index}`}
-            className={`flex items-center px-4 py-2 cursor-pointer transition-colors rounded-lg ${
-              index === selectedIndex
-                ? 'bg-primary/10 dark:bg-primary/20 ring-1 ring-inset ring-primary/20'
-                : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'
-            }`}
+            className={`flex items-center px-4 py-2 cursor-pointer transition-colors rounded-lg ${index === selectedIndex
+              ? 'bg-primary/10 dark:bg-primary/20 ring-1 ring-inset ring-primary/20'
+              : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'
+              }`}
             onClick={() => handleCreate(item)}
             onMouseEnter={() => setSelectedIndex(index)}
           >
-            <div 
-              className="w-1 h-8 rounded-full mr-3 shrink-0" 
-              style={{ backgroundColor: item.color }} 
+            <div
+              className="w-1 h-8 rounded-full mr-3 shrink-0"
+              style={{ backgroundColor: item.color }}
             />
             <div className="flex-1 min-w-0 flex flex-col gap-0.5">
               <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -311,12 +310,11 @@ export const QuickCreateEventPopup: React.FC<QuickCreateEventPopupProps> = ({
       </div>
 
       {/* Triangle Arrow */}
-      <div 
-        className={`absolute w-3 h-3 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 rotate-45 -translate-x-1/2 ${
-          placement === 'top' 
-            ? 'bottom-[-6px] border-b border-r' 
-            : 'top-[-6px] border-t border-l'
-        }`}
+      <div
+        className={`absolute w-3 h-3 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 rotate-45 -translate-x-1/2 ${placement === 'top'
+          ? '-bottom-1.5 border-b border-r'
+          : '-top-1.5 border-t border-l'
+          }`}
         style={{
           left: arrowLeft
         }}

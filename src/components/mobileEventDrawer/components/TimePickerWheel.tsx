@@ -31,21 +31,17 @@ export const TimePickerWheel: React.FC<TimePickerWheelProps> = ({ date, onChange
     const hourRef = useRef<HTMLDivElement>(null);
     const minRef = useRef<HTMLDivElement>(null);
     const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const isInitialMount = useRef(true);
 
     useEffect(() => {
-        if (isInitialMount.current) {
-            if (hourRef.current) {
-                hourRef.current.scrollTop = initialHourScroll;
-                setScrollTopHour(initialHourScroll);
-            }
-            if (minRef.current) {
-                minRef.current.scrollTop = initialMinuteScroll;
-                setScrollTopMin(initialMinuteScroll);
-            }
-            isInitialMount.current = false;
+        if (hourRef.current) {
+            hourRef.current.scrollTop = initialHourScroll;
+            setScrollTopHour(initialHourScroll);
         }
-    }, []);
+        if (minRef.current) {
+            minRef.current.scrollTop = initialMinuteScroll;
+            setScrollTopMin(initialMinuteScroll);
+        }
+    }, [initialHourScroll, initialMinuteScroll]);
 
     const handleScrollStop = (type: 'hour' | 'minute', scrollTop: number) => {
         const index = Math.round(scrollTop / itemHeight);
@@ -123,7 +119,7 @@ export const TimePickerWheel: React.FC<TimePickerWheelProps> = ({ date, onChange
     };
 
     return (
-        <div className="flex h-[224px] overflow-hidden rounded-lg mt-2 relative ">
+        <div className="flex h-56 overflow-hidden rounded-lg mt-2 relative ">
             <style dangerouslySetInnerHTML={{
                 __html: `
             .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -186,7 +182,7 @@ export const TimePickerWheel: React.FC<TimePickerWheelProps> = ({ date, onChange
                 <div style={{ height: spacerHeight }}></div>
             </div>
             {/* Selection Highlight */}
-            <div className="absolute top-[96px] left-2 right-2 h-8 bg-gray-300/20 dark:bg-gray-500/20 pointer-events-none border border-gray-300 dark:border-gray-600 rounded-lg"></div>
+            <div className="absolute top-24 left-2 right-2 h-8 bg-gray-300/20 dark:bg-gray-500/20 pointer-events-none border border-gray-300 dark:border-gray-600 rounded-lg"></div>
         </div>
     );
 };

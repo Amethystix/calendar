@@ -33,11 +33,8 @@ import {
   miniCalendarToday,
   dateNumber,
   allDayRow,
-  allDayLabel,
   allDayContent,
   allDayCell,
-  calendarContent,
-  timeColumn,
   timeSlot,
   timeLabel,
   timeGridRow,
@@ -864,6 +861,7 @@ const WeekView: React.FC<WeekViewProps> = ({
                         onDrop={e => {
                           handleDrop(e, dropDate, slot.hour);
                         }}
+                        onContextMenu={e => isMobile && e.preventDefault()}
                       />
                     );
                   })}
@@ -875,7 +873,7 @@ const WeekView: React.FC<WeekViewProps> = ({
                 {weekDaysLabels.map((_, dayIndex) => (
                   <div
                     key={`24-${dayIndex}`}
-                    className={`flex-1 relative ${dayIndex === weekDaysLabels.length - 1 ? '' : 'border-r'} border-gray-200 dark:border-gray-700`}
+                    className={`flex-1 relative ${isMobile && dayIndex === weekDaysLabels.length - 1 ? '' : 'border-r'} border-gray-200 dark:border-gray-700`}
                     style={columnStyle}
                   />
                 ))}

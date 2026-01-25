@@ -40,9 +40,9 @@ const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
   // Check if dark mode is active (either via theme context or DOM class)
   const isDark = appliedTheme === 'dark' || (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
   const isEditable = !app?.state.readOnly;
-  const isInspectable = app?.getReadOnlyConfig().viewable !== false;
+  const isViewable = app?.getReadOnlyConfig().viewable !== false;
 
-  if (!isInspectable) return null;
+  if (!isViewable) return null;
 
   const arrowBgColor = isDark ? '#1f2937' : 'white';
   const arrowBorderColor = isDark ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)';

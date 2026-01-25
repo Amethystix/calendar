@@ -145,7 +145,7 @@ export const timeGridRow =
 /**
  * Time grid cell
  */
-export const timeGridCell = 'flex-1 relative border-r border-gray-200 dark:border-gray-700';
+export const timeGridCell = 'flex-1 relative border-r border-gray-200 dark:border-gray-700 select-none';
 
 /**
  * Current time line container

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Event, MobileEventProps, CalendarType } from '@/types';
-import { CalendarApp } from '@/core';
 import { MiniCalendar } from '../common/MiniCalendar';
 import { ColorPicker, ColorOption } from '../common/ColorPicker';
 import { formatTime, isEventEqual } from '@/utils';
@@ -31,6 +30,34 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
 
     // Expand states
     const [expandedPicker, setExpandedPicker] = useState<'start-date' | 'start-time' | 'end-date' | 'end-time' | null>(null);
+
+    // Animation states
+    const [isVisible, setIsVisible] = useState(isOpen);
+    const [isClosing, setIsClosing] = useState(false);
+    
+    // Persist isEditing state to avoid flickering during exit animation
+    const [isEditing, setIsEditing] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setIsVisible(true);
+            setIsClosing(false);
+        } else {
+            setIsClosing(true);
+            const timer = setTimeout(() => {
+                setIsVisible(false);
+                setIsClosing(false);
+            }, 300); // Match CSS animation duration
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (isOpen && draftEvent) {
+            const editing = app.getEvents().some(e => e.id === draftEvent.id);
+            setIsEditing(editing);
+        }
+    }, [isOpen, draftEvent, app]);
 
     const calendars = app.getCalendars();
     const calendarOptions: ColorOption[] = calendars.map((cal: CalendarType) => ({
@@ -116,11 +143,6 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
         }
     }, [isOpen, draftEvent]);
 
-    const isEditing = React.useMemo(() => {
-        if (!draftEvent || !draftEvent.id) return false;
-        return app.getEvents().some(e => e.id === draftEvent.id);
-    }, [draftEvent, app, isOpen]); // Added isOpen to deps just in case, though app and draftEvent are the main ones.
-
     const hasChanges = React.useMemo(() => {
         if (!isOpen || !draftEvent) return false;
 
@@ -145,7 +167,7 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
         return !isEventEqual(draftEvent, currentEvent);
     }, [isOpen, draftEvent, title, calendarId, isAllDay, startDate, endDate, notes]);
 
-    if (!isOpen) return null;
+    if (!isVisible) return null;
 
     const handleSave = () => {
         if (!draftEvent) return;
@@ -195,6 +217,23 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
         }
     };
 
+    const handleStartTimeChange = (newStart: Date) => {
+        const duration = endDate.getTime() - startDate.getTime();
+        setStartDate(newStart);
+        setEndDate(new Date(newStart.getTime() + duration));
+    };
+
+    const handleEndTimeChange = (newEnd: Date) => {
+        // If new end time is before start time, shift start time back to maintain duration
+        if (newEnd < startDate) {
+            const duration = endDate.getTime() - startDate.getTime();
+            setEndDate(newEnd);
+            setStartDate(new Date(newEnd.getTime() - duration));
+        } else {
+            setEndDate(newEnd);
+        }
+    };
+
     const handleMonthChange = (type: 'start' | 'end', offset: number) => {
         if (type === 'start') {
             setStartVisibleMonth(prev => {
@@ -215,14 +254,14 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
         <div className="fixed inset-0 z-10000 flex items-end pointer-events-none">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/30 pointer-events-auto"
+                className={`absolute inset-0 bg-black/30 pointer-events-auto transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
                 style={{ touchAction: 'none' }}
                 onClick={onClose}
             />
 
             {/* Drawer */}
             <div
-                className="relative w-full bg-gray-100 dark:bg-gray-800 rounded-t-2xl shadow-xl h-[85vh] flex flex-col pointer-events-auto overflow-hidden animate-slide-up"
+                className={`relative w-full bg-gray-100 dark:bg-gray-800 rounded-t-2xl shadow-xl h-[85vh] flex flex-col pointer-events-auto overflow-hidden ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header Actions */}
@@ -309,7 +348,7 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
                         </div>
                         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedPicker === 'start-time' ? 'max-h-75' : 'max-h-0'}`}>
                             <div className="">
-                                <TimePickerWheel date={startDate} onChange={setStartDate} />
+                                <TimePickerWheel date={startDate} onChange={handleStartTimeChange} />
                             </div>
                         </div>
                     </div>
@@ -348,7 +387,7 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
                         </div>
                         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedPicker === 'end-time' ? 'max-h-75' : 'max-h-0'}`}>
                             <div className="">
-                                <TimePickerWheel date={endDate} onChange={setEndDate} />
+                                <TimePickerWheel date={endDate} onChange={handleEndTimeChange} />
                             </div>
                         </div>
                     </div>

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { CalendarApp } from '@/core';
 import {
   formatTime,
-  weekDays,
   extractHourFromDate,
   createDateWithHour,
   getLineColor,
@@ -662,6 +661,7 @@ const DayView: React.FC<DayViewProps> = ({
                       const dropHour = Math.floor(FIRST_HOUR + relativeY / HOUR_HEIGHT);
                       handleDrop(e, currentDate, dropHour);
                     }}
+                    onContextMenu={e => isMobile && e.preventDefault()}
                   />
                 ))}
 
