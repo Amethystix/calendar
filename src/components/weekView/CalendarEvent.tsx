@@ -1320,23 +1320,17 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
             className={`inline-block w-0.75 h-3 ${mr1} shrink-0 rounded-full`}
           ></span>
           <span
-            className={`${isMobile ? 'whitespace-nowrap overflow-hidden block' : 'truncate'} ${isEventSelected ? 'text-white' : ''}`}
-            style={isMobile ? {
-              maskImage: 'linear-gradient(to right, black 85%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)'
-            } : undefined}
+            className={`whitespace-nowrap overflow-hidden block md:truncate mobile-mask-fade ${isEventSelected ? 'text-white' : ''}`}
           >
             {event.title}
           </span>
         </div>
-        {!isMobile && (
-          <span
-            className={`${textXs} ml-1 shrink-0 ${isEventSelected ? 'text-white' : ''}`}
-            style={!isEventSelected ? { opacity: 0.8 } : undefined}
-          >
-            {startTime}
-          </span>
-        )}
+        <span
+          className={`${textXs} ml-1 shrink-0 ${isEventSelected ? 'text-white' : ''} hidden md:block`}
+          style={!isEventSelected ? { opacity: 0.8 } : undefined}
+        >
+          {startTime}
+        </span>
       </div>
     );
   };

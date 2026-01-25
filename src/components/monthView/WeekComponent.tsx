@@ -572,13 +572,13 @@ const WeekComponent = React.memo<WeekComponentProps>(
           onDrop={e => onCalendarDrop?.(e, day.date)}
         >
           {/* Date number area */}
-          <div className="flex items-start justify-between p-2 pb-1 relative z-20">
+          <div className="flex items-center justify-between px-2 h-[33px] relative z-20">
             <div className="flex-1" />
             <div className="flex items-center">
               {(
                 <span
                   className={`
-                    inline-flex items-center justify-center h-5 rounded-full text-sm font-medium whitespace-nowrap
+                    inline-flex items-center justify-center h-6 min-w-6 rounded-full text-sm font-medium whitespace-nowrap px-1
                     ${day.isToday
                       ? 'bg-primary text-primary-foreground'
                       : belongsToCurrentMonth
@@ -587,14 +587,12 @@ const WeekComponent = React.memo<WeekComponentProps>(
                     }
                   `}
                 >
-                  <span className='px-1.5'>
-                    {
-                      day.day === 1 && screenSize === 'desktop' ? (day.date.toLocaleDateString(locale, {
-                        month: 'short',
-                        day: 'numeric',
-                      })) : day.day
-                    }
-                  </span>
+                  {
+                    day.day === 1 && screenSize === 'desktop' ? (day.date.toLocaleDateString(locale, {
+                      month: 'short',
+                      day: 'numeric',
+                    })) : day.day
+                  }
                 </span>
               )}
             </div>
@@ -607,8 +605,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
             {/* More events indicator */}
             {hasMoreEvents && (
               <div
-                className={`text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer hover:underline ${screenSize === 'mobile' ? 'text-center font-medium' : ''
-                  }`}
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer hover:underline text-center md:text-left font-medium md:font-normal"
                 onClick={e => {
                   e.stopPropagation();
                   if (onMoreEventsClick) {
@@ -619,9 +616,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
                   }
                 }}
               >
-                {screenSize === 'mobile'
-                  ? `+${hiddenEventsCount}`
-                  : `+${hiddenEventsCount} ${t('more')}`}
+                +{hiddenEventsCount} <span className="hidden md:inline">{t('more')}</span>
               </div>
             )}
           </div>

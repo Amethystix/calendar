@@ -271,24 +271,20 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
           />
           <div className="flex items-center min-w-0 flex-1">
             <span
-              className={`${isMobile ? 'whitespace-nowrap overflow-hidden block' : 'truncate'} font-medium text-xs`}
-              style={isMobile ? {
-                maskImage: 'linear-gradient(to right, black 85%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)'
-              } : undefined}
+              className="whitespace-nowrap overflow-hidden block md:truncate mobile-mask-fade font-medium text-xs"
             >{titleText}</span>
           </div>
-          {segment.isFirstSegment && !isMobile && (
+          {segment.isFirstSegment && (
             <span
               className={`${startTimeClass} ${segmentDays === 1 ? 'ml-2' : ''
-                }`}
+                } hidden md:block`}
               style={startTimeStyle}
             >
               {startTimeText}
             </span>
           )}
           {segment.isLastSegment && !segment.event.allDay && endHour !== 24 && (
-            <span className="text-xs font-medium whitespace-nowrap ml-auto">
+            <span className="text-xs font-medium whitespace-nowrap ml-auto hidden md:inline">
               {`ends ${endTimeText}`}
             </span>
           )}
@@ -307,7 +303,7 @@ export const MultiDayEvent = React.memo<MultiDayEventProps>(
         style={{
           left: adjustedLeft,
           width: adjustedWidth,
-          top: `${topOffset - 2}px`,
+          top: `${topOffset}px`,
           height: `${ROW_HEIGHT}px`,
           borderRadius: getBorderRadius(segment.segmentType),
           pointerEvents: 'auto',
