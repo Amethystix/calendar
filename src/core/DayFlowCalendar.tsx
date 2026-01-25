@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Event,
   EventDetailContentRenderer,
   EventDetailDialogRenderer,
   UseCalendarAppReturn,
@@ -16,7 +17,10 @@ import DefaultCalendarSidebar from '../components/sidebar/DefaultCalendarSidebar
 import DefaultEventDetailDialog from '../components/common/DefaultEventDetailDialog';
 import CalendarHeader from '../components/common/CalendarHeader';
 import { CreateCalendarDialog } from '../components/common/CreateCalendarDialog';
-import SearchDrawer from '../components/common/SearchDrawer';
+import SearchDrawer from '../components/search/SearchDrawer';
+import MobileSearchDialog from '../components/search/MobileSearchDialog';
+import { QuickCreateEventPopup } from '../components/common/QuickCreateEventPopup';
+import { MobileEventDrawer } from '../components/mobileEventDrawer';
 import { CalendarSearchProps, CalendarSearchEvent } from '../types/search';
 import { normalizeCssWidth } from '../utils/styleUtils';
 import { ThemeProvider } from '../contexts/ThemeContext';
@@ -26,7 +30,7 @@ import { useLocale } from '../locale/useLocale';
 import { LocaleMessages, LocaleCode, Locale } from '../locale/types';
 import { getCalendarColorsForHex } from './calendarRegistry';
 import { generateUniKey } from '../utils/helpers';
-import { temporalToDate } from '../utils/temporal';
+import { temporalToDate, dateToZonedDateTime } from '../utils/temporal';
 
 const DEFAULT_SIDEBAR_WIDTH = '240px';
 
@@ -100,14 +104,33 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
     null
   );
 
+  // Quick Create Popup State
+  const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
+  const quickCreateAnchorRef = useRef<HTMLElement>(null);
+
+  // Mobile Drawer State
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [mobileDraftEvent, setMobileDraftEvent] = useState<Event | null>(null);
+
   // Theme state
   const [theme, setTheme] = useState<ThemeMode>(() => app.getTheme());
 
   // Search State
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<CalendarSearchEvent[]>([]);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Search Logic
   useEffect(() => {
@@ -204,6 +227,10 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
     // Highlight the event
     app.highlightEvent(event.id);
 
+    if (isMobileSearchOpen) {
+      setIsMobileSearchOpen(false);
+    }
+
     // TODO(mobile view)
   };
 
@@ -282,6 +309,50 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
     refreshSidebar(); // Refresh sidebar to show new calendar
   }, [app, sidebarConfig.createCalendarMode, t, refreshSidebar]);
 
+  const handleAddButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const isEditable = !app.state.readOnly;
+    if (!isEditable) {
+      if (sidebarEnabled) return; // Cannot create events
+      return;
+    }
+
+    if (isMobile) {
+      // Mobile: Open Event Drawer
+      const now = new Date();
+      // Round to nearest next hour
+      now.setMinutes(0, 0, 0);
+      now.setHours(now.getHours() + 1);
+
+      const end = new Date(now);
+      end.setHours(end.getHours() + 1);
+
+      const draft: Event = {
+        id: generateUniKey(),
+        title: '',
+        start: dateToZonedDateTime(now),
+        end: dateToZonedDateTime(end),
+        calendarId: app.getCalendars().find(c => c.isVisible !== false)?.id || app.getCalendars()[0]?.id,
+      };
+      setMobileDraftEvent(draft);
+      setIsMobileDrawerOpen(true);
+      return;
+    }
+
+    if (sidebarEnabled) {
+      // Desktop: Toggle popup
+      if (isQuickCreateOpen) {
+        setIsQuickCreateOpen(false);
+      } else {
+        (quickCreateAnchorRef as any).current = e.currentTarget;
+        setIsQuickCreateOpen(true);
+      }
+    } else {
+      // Sidebar disabled -> Add Button creates calendar
+      handleCreateCalendar();
+    }
+  }, [sidebarEnabled, isMobile, isQuickCreateOpen, handleCreateCalendar, app]);
+
+
   // DOM reference for the entire calendar
   const calendarRef = useRef<HTMLDivElement>(null!);
 
@@ -314,6 +385,7 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
     renderCreateCalendarDialog: sidebarConfig.renderCreateCalendarDialog,
     editingCalendarId,
     setEditingCalendarId,
+    onCreateCalendar: handleCreateCalendar,
   };
 
   const renderSidebarContent = () => {
@@ -331,6 +403,32 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
     DEFAULT_SIDEBAR_WIDTH
   );
   const miniSidebarWidth = '50px';
+
+  const headerConfig = app.getCalendarHeaderConfig();
+
+  const headerProps = {
+    calendar: app,
+    switcherMode: app.state.switcherMode,
+    onAddCalendar: handleAddButtonClick,
+    onSearchChange: setSearchKeyword,
+    onSearchClick: () => {
+      setSearchKeyword('');
+      setIsMobileSearchOpen(true);
+    },
+    searchValue: searchKeyword,
+    isSearchOpen: isSearchOpen,
+    isEditable: !app.state.readOnly,
+  };
+
+  const renderHeader = () => {
+    if (headerConfig === false) return null;
+    if (typeof headerConfig === 'function') {
+      return headerConfig(headerProps);
+    }
+    return <CalendarHeader {...headerProps} />;
+  };
+
+  const MobileEventDrawerComponent = app.getCustomMobileEventRenderer() || MobileEventDrawer;
 
   return (
     <ThemeProvider initialTheme={theme} onThemeChange={handleThemeChange}>
@@ -359,14 +457,7 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
               : 0,
           }}
         >
-          <CalendarHeader
-            calendar={app}
-            switcherMode={app.state.switcherMode}
-            onAddCalendar={handleCreateCalendar}
-            onSearchChange={setSearchKeyword}
-            searchValue={searchKeyword}
-            isSearchOpen={isSearchOpen}
-          />
+          {renderHeader()}
 
           <div className="flex-1 overflow-hidden relative" ref={calendarRef}>
             <div className="calendar-renderer h-full relative flex flex-row">
@@ -388,8 +479,45 @@ const CalendarLayout: React.FC<DayFlowCalendarProps> = ({
                 emptyText={searchConfig?.emptyText}
               />
             </div>
+
+            <MobileSearchDialog
+              isOpen={isMobileSearchOpen}
+              onClose={() => {
+                setIsMobileSearchOpen(false);
+                setSearchKeyword('');
+                app.highlightEvent(null);
+              }}
+              keyword={searchKeyword}
+              onSearchChange={setSearchKeyword}
+              results={searchResults}
+              loading={searchLoading}
+              onResultClick={handleSearchResultClick}
+              emptyText={searchConfig?.emptyText}
+            />
           </div>
         </div>
+
+        <QuickCreateEventPopup
+          app={app}
+          anchorRef={quickCreateAnchorRef}
+          isOpen={isQuickCreateOpen}
+          onClose={() => setIsQuickCreateOpen(false)}
+        />
+
+        <MobileEventDrawerComponent
+          isOpen={isMobileDrawerOpen}
+          onClose={() => {
+            setIsMobileDrawerOpen(false);
+            setMobileDraftEvent(null);
+          }}
+          onSave={(event) => {
+            app.addEvent(event);
+            setIsMobileDrawerOpen(false);
+            setMobileDraftEvent(null);
+          }}
+          draftEvent={mobileDraftEvent}
+          app={app}
+        />
 
         {showCreateDialog &&
           (sidebarConfig.renderCreateCalendarDialog ? (

@@ -5,6 +5,7 @@ import { ViewSwitcherMode } from '../components/common/ViewHeader';
 import { CalendarType, ThemeConfig, ThemeMode } from './calendarTypes';
 import { CalendarRegistry } from '../core/calendarRegistry';
 import { Locale } from '../locale/types';
+import { MobileEventRenderer } from './mobileEvent';
 
 /**
  * View type enum
@@ -53,11 +54,25 @@ export interface CalendarCallbacks {
   onCalendarCreate?: (calendar: CalendarType) => void | Promise<void>;
   onCalendarDelete?: (calendarId: string) => void | Promise<void>;
   onCalendarMerge?: (sourceId: string, targetId: string) => void | Promise<void>;
+  onEventClick?: (event: Event) => void | Promise<void>;
+  onMoreEventsClick?: (date: Date) => void | Promise<void>;
 }
 
 export interface CreateCalendarDialogProps {
   onClose: () => void;
   onCreate: (calendar: CalendarType) => void;
+}
+
+export interface CalendarHeaderProps {
+  calendar: CalendarApp;
+  switcherMode?: ViewSwitcherMode;
+  onAddCalendar?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onSearchChange?: (value: string) => void;
+  /** Triggered when search icon is clicked (typically on mobile) */
+  onSearchClick?: () => void;
+  searchValue?: string;
+  isSearchOpen?: boolean;
+  isEditable?: boolean;
 }
 
 /**
@@ -75,6 +90,7 @@ export interface CalendarSidebarRenderProps {
   renderCreateCalendarDialog?: (props: CreateCalendarDialogProps) => React.ReactNode;
   editingCalendarId?: string | null;
   setEditingCalendarId?: (id: string | null) => void;
+  onCreateCalendar?: () => void;
 }
 
 /**
@@ -107,7 +123,18 @@ export interface CalendarAppConfig {
   theme?: ThemeConfig;
   useSidebar?: boolean | SidebarConfig;
   useEventDetailDialog?: boolean;
+  useCalendarHeader?: boolean | ((props: CalendarHeaderProps) => React.ReactNode);
+  customMobileEventRenderer?: MobileEventRenderer;
   locale?: string | Locale;
+  readOnly?: boolean | ReadOnlyConfig;
+}
+
+/**
+ * Read-only configuration
+ */
+export interface ReadOnlyConfig {
+  draggable?: boolean; // Whether to allow dragging
+  viewable?: boolean; // Whether to allow inspecting (open detail panel/dialog/drawer)
 }
 
 /**
@@ -124,6 +151,7 @@ export interface CalendarAppState {
   sidebar?: SidebarConfig;
   locale: string | Locale;
   highlightedEventId?: string | null;
+  readOnly: boolean | ReadOnlyConfig;
 }
 
 /**
@@ -133,6 +161,7 @@ export interface CalendarAppState {
 export interface CalendarApp {
   // State
   state: CalendarAppState;
+  getReadOnlyConfig: () => ReadOnlyConfig;
 
   // View management
   changeView: (view: ViewType) => void;
@@ -152,6 +181,8 @@ export interface CalendarApp {
   deleteEvent: (id: string) => void;
   getEvents: () => Event[];
   getAllEvents: () => Event[];
+  onEventClick: (event: Event) => void;
+  onMoreEventsClick: (date: Date) => void;
   highlightEvent: (eventId: string | null) => void;
   getCalendars: () => CalendarType[];
   reorderCalendars: (fromIndex: number, toIndex: number) => void;
@@ -174,6 +205,9 @@ export interface CalendarApp {
   // Sidebar
   getSidebarConfig: () => SidebarConfig;
 
+  // Calendar Header
+  getCalendarHeaderConfig: () => boolean | ((props: CalendarHeaderProps) => React.ReactNode);
+
   // Trigger render callback
   triggerRender: () => void;
 
@@ -182,6 +216,12 @@ export interface CalendarApp {
 
   // Get whether to use event detail dialog
   getUseEventDetailDialog: () => boolean;
+
+  // Get custom mobile event renderer
+  getCustomMobileEventRenderer: () => MobileEventRenderer | undefined;
+
+  // Update configuration dynamically
+  updateConfig: (config: Partial<CalendarAppConfig>) => void;
 
   // Theme management
   setTheme: (mode: ThemeMode) => void;
@@ -218,6 +258,7 @@ export interface UseCalendarAppReturn {
   setVisibleMonth: (date: Date) => void;
   getVisibleMonth: () => Date;
   sidebarConfig: SidebarConfig;
+  readOnlyConfig: ReadOnlyConfig;
 }
 
 /**

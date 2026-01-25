@@ -1,30 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CalendarApp, ViewType } from '../../types';
 import { useLocale } from '@/locale';
+import { ChevronDown } from 'lucide-react';
 
 interface ViewSwitcherProps {
   calendar: CalendarApp;
   mode?: 'buttons' | 'select';
 }
-
-const ChevronDownIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 16 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="transition-transform duration-200"
-  >
-    <path
-      d="M4 6L8 10L12 6"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 
 const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   calendar,
@@ -37,6 +19,11 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   // Get all registered views
   const registeredViews = Array.from(calendar.state.views.keys());
   const currentView = calendar.state.currentView;
+
+  // If there's only one view (or none), no need to show the switcher
+  if (registeredViews.length <= 1) {
+    return null;
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -61,7 +48,7 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
       <div className="relative inline-block" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 h-8 text-sm font-medium border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-all duration-200 shadow-sm min-w-30 justify-between"
+          className="flex items-center gap-2 px-3 mb-1 h-7 text-sm font-medium border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-offset-1 transition-all duration-200 shadow-sm min-w-30 justify-between"
           aria-expanded={isOpen}
           aria-haspopup="listbox"
         >
@@ -69,7 +56,7 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
           <span
             className={`text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           >
-            <ChevronDownIcon />
+            <ChevronDown width={16} height={16} />
           </span>
         </button>
 
@@ -117,7 +104,7 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   }
 
   return (
-    <div className="inline-flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
+    <div className="inline-flex items-center gap-1 p-0.5 mb-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
       {registeredViews.map(viewType => (
         <button
           key={viewType}

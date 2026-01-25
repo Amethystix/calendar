@@ -117,17 +117,17 @@ export interface UseDragManagerReturn {
  * Drag handler Hook return value
  */
 export interface UseDragHandlersReturn {
-  handleDragMove: (e: MouseEvent) => void;
-  handleDragEnd: (e: MouseEvent) => void;
-  handleCreateStart: (e: React.MouseEvent, ...args: (Date | number)[]) => void;
-  handleMoveStart: (e: React.MouseEvent, event: Event) => void;
+  handleDragMove: (e: MouseEvent | TouchEvent) => void;
+  handleDragEnd: (e: MouseEvent | TouchEvent) => void;
+  handleCreateStart: (e: React.MouseEvent | React.TouchEvent, ...args: (Date | number)[]) => void;
+  handleMoveStart: (e: React.MouseEvent | React.TouchEvent, event: Event) => void;
   handleResizeStart: (
-    e: React.MouseEvent,
+    e: React.MouseEvent | React.TouchEvent,
     event: Event,
     direction: string
   ) => void;
-  handleUniversalDragMove: (e: MouseEvent) => void;
-  handleUniversalDragEnd: () => void;
+  handleUniversalDragMove: (e: MouseEvent | TouchEvent) => void;
+  handleUniversalDragEnd: (e?: MouseEvent | TouchEvent) => void;
 }
 
 /**

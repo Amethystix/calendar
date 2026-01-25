@@ -10,6 +10,8 @@ interface CalendarListProps {
   editingId: string | null;
   setEditingId: (id: string | null) => void;
   activeContextMenuCalendarId?: string | null;
+  isDraggable?: boolean;
+  isEditable?: boolean;
 }
 
 const getCalendarInitials = (calendar: CalendarType): string => {
@@ -29,6 +31,8 @@ export const CalendarList: React.FC<CalendarListProps> = ({
   editingId,
   setEditingId,
   activeContextMenuCalendarId,
+  isDraggable = true,
+  isEditable = true,
 }) => {
   const [editingName, setEditingName] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -39,8 +43,8 @@ export const CalendarList: React.FC<CalendarListProps> = ({
   const [dropTarget, setDropTarget] = useState<{ id: string; position: 'top' | 'bottom' } | null>(null);
 
   const handleDragStart = useCallback((calendar: CalendarType, e: React.DragEvent) => {
-    // Prevent dragging when editing
-    if (editingId) {
+    // Prevent dragging when editing or not draggable
+    if (editingId || !isDraggable) {
       e.preventDefault();
       return;
     }
@@ -118,9 +122,10 @@ export const CalendarList: React.FC<CalendarListProps> = ({
   }, [draggedCalendarId, dropTarget, calendars, onReorder]);
 
   const handleRenameStart = useCallback((calendar: CalendarType) => {
+    if (!isEditable) return;
     setEditingId(calendar.id);
     setEditingName(calendar.name);
-  }, [setEditingId]);
+  }, [setEditingId, isEditable]);
 
   const handleRenameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setEditingName(e.target.value);
@@ -157,29 +162,6 @@ export const CalendarList: React.FC<CalendarListProps> = ({
     }
   }, [editingId]);
 
-  // If a new calendar is created (editingId is set externally but we don't have editingName set yet),
-  // we might want to sync. But usually the parent sets editingId after creation.
-  // We need to ensure when editingId changes from null to something, we initialize editingName.
-  // Actually, parent might pass a new ID.
-
-  // Let's use an effect to sync editingName when editingId changes?
-  // Or just rely on handleRenameStart.
-  // But for "Create Calendar", the parent sets editingId directly.
-  // The parent also needs to tell us the initial name if it's new.
-  // But in the original code:
-  // app.createCalendar(newCalendar);
-  // setEditingCalendarId(newId);
-  // setEditingName('Untitled');
-
-  // So the parent should probably control the editing state entirely or we provide a way to start editing a specific ID.
-  // I added `editingId` and `setEditingId` to props.
-  // But `editingName` is local. This might be an issue if the parent wants to set the initial name.
-  // In the original code, `setEditingName` was also in the main component.
-
-  // To support the "Create Calendar" flow correctly where it auto-focuses 'Untitled':
-  // We can add a useEffect to check if editingId changed and matches a calendar, then set name?
-  // But if it's a new calendar, we might want to set 'Untitled' or whatever the calendar has.
-
   useEffect(() => {
     if (editingId) {
       const calendar = calendars.find(c => c.id === editingId);
@@ -213,11 +195,11 @@ export const CalendarList: React.FC<CalendarListProps> = ({
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary z-10 pointer-events-none" />
               )}
               <div
-                draggable
+                draggable={isDraggable && !editingId}
                 onDragStart={(e) => handleDragStart(calendar, e)}
                 onDragEnd={handleDragEnd}
                 className={`rounded transition ${draggedCalendarId === calendar.id ? 'opacity-50' : ''
-                  }`}
+                  } ${isDraggable ? 'cursor-grab' : 'cursor-default'}`}
               >
                 <div
                   className={`group flex items-center rounded px-2 py-2 transition hover:bg-gray-100 dark:hover:bg-slate-800 ${isActive ? 'bg-gray-100 dark:bg-slate-800' : ''}`}
@@ -255,7 +237,7 @@ export const CalendarList: React.FC<CalendarListProps> = ({
                     />
                   ) : (
                     <span
-                      className="flex-1 truncate text-sm text-gray-700 group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white ml-2"
+                      className="flex-1 pl-1 truncate text-sm text-gray-700 group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white ml-2"
                       onDoubleClick={() => handleRenameStart(calendar)}
                     >
                       {calendar.name || calendar.id}

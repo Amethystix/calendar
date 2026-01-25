@@ -9,16 +9,26 @@ import {
   WeekDataCache,
 } from '../../types/monthView';
 
+let cachedConfig: {
+  weekHeight: number;
+  screenSize: 'mobile' | 'tablet' | 'desktop';
+  weeksPerView: number;
+} | null = null;
+
 // Responsive configuration Hook
 export const useResponsiveMonthConfig = () => {
   const [config, setConfig] = useState<{
     weekHeight: number;
     screenSize: 'mobile' | 'tablet' | 'desktop';
     weeksPerView: number;
-  }>({
-    weekHeight: VIRTUAL_MONTH_SCROLL_CONFIG.WEEK_HEIGHT,
-    screenSize: 'desktop',
-    weeksPerView: 6,
+  }>(() => {
+    if (cachedConfig) return cachedConfig;
+
+    return {
+      weekHeight: VIRTUAL_MONTH_SCROLL_CONFIG.WEEK_HEIGHT,
+      screenSize: 'desktop',
+      weeksPerView: 6,
+    };
   });
 
   useEffect(() => {
@@ -65,6 +75,16 @@ export const useResponsiveMonthConfig = () => {
         }
       })();
 
+      if (
+        cachedConfig &&
+        cachedConfig.screenSize === newConfig.screenSize &&
+        cachedConfig.weekHeight === newConfig.weekHeight &&
+        cachedConfig.weeksPerView === newConfig.weeksPerView
+      ) {
+        return;
+      }
+
+      cachedConfig = newConfig;
       setConfig(newConfig);
     };
 
@@ -83,6 +103,7 @@ export const useVirtualMonthScroll = ({
   onCurrentMonthChange,
   initialWeeksToLoad = 104,
   locale = 'en-US',
+  isEnabled = true,
 }: UseVirtualMonthScrollProps): UseVirtualMonthScrollReturn => {
   const targetNavigationRef = useRef<{ month: string; year: number } | null>(
     null
@@ -628,17 +649,18 @@ export const useVirtualMonthScroll = ({
 
   useEffect(() => {
     const element = scrollElementRef.current;
-    if (!element || isInitialized) return;
+    if (!element || isInitialized || !isEnabled) return;
 
     requestAnimationFrame(() => {
       if (element && initialScrollTop > 0) {
         element.scrollTop = initialScrollTop;
+        setScrollTop(initialScrollTop);
         setIsInitialized(true);
       } else if (element) {
         setIsInitialized(true);
       }
     });
-  }, [isInitialized, initialScrollTop]);
+  }, [isInitialized, initialScrollTop, isEnabled]);
 
   // Cleanup
   useEffect(() => {

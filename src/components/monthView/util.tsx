@@ -5,6 +5,11 @@ import { temporalToDate } from '@/utils/temporal';
 import { daysDifference } from '@/utils';
 
 export const getEventIcon = (event: Event) => {
+  if (event.icon === false) return null;
+  if (event.icon !== undefined && typeof event.icon !== 'boolean') {
+    return event.icon;
+  }
+
   const title = event.title.toLowerCase();
 
   if (

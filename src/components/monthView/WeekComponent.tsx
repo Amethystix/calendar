@@ -50,13 +50,13 @@ interface WeekComponentProps {
   calendarRef: React.RefObject<HTMLDivElement>;
   onEventUpdate: (updatedEvent: Event) => void;
   onEventDelete: (eventId: string) => void;
-  onMoveStart: (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  onMoveStart?: (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event
   ) => void;
-  onCreateStart: (e: React.MouseEvent, targetDate: Date) => void;
-  onResizeStart: (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  onCreateStart?: (e: React.MouseEvent | React.TouchEvent, targetDate: Date) => void;
+  onResizeStart?: (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
     event: Event,
     direction: string
   ) => void;
@@ -66,6 +66,7 @@ interface WeekComponentProps {
   onSelectDate?: (date: Date) => void;
   selectedEventId?: string | null;
   onEventSelect?: (eventId: string | null) => void;
+  onEventLongPress?: (eventId: string) => void;
   detailPanelEventId?: string | null;
   onDetailPanelToggle?: (eventId: string | null) => void;
   customDetailPanelContent?: EventDetailContentRenderer;
@@ -74,6 +75,7 @@ interface WeekComponentProps {
   onCalendarDragOver?: (e: React.DragEvent) => void;
   calendarSignature?: string;
   app: CalendarApp;
+  enableTouch?: boolean;
 }
 
 // Constants
@@ -280,6 +282,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
     currentMonth,
     currentYear,
     newlyCreatedEventId,
+    screenSize,
     isScrolling,
     isDragging,
     item,
@@ -298,6 +301,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
     onSelectDate,
     selectedEventId,
     onEventSelect,
+    onEventLongPress,
     detailPanelEventId,
     onDetailPanelToggle,
     customDetailPanelContent,
@@ -305,14 +309,27 @@ const WeekComponent = React.memo<WeekComponentProps>(
     onCalendarDrop,
     onCalendarDragOver,
     app,
+    enableTouch,
   }) => {
     const { t, locale } = useLocale();
     const [shouldShowMonthTitle, setShouldShowMonthTitle] = useState(false);
     const hideTitleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Dynamically determine how many events can be shown based on the current week height
-    const maxEventsToShow = useMemo(() => {
-      return calculateMaxEventsToShow(weekHeight);
+    const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+
+    // Calculate layout parameters once per week render
+    const layoutParams = useMemo(() => {
+      const availableHeight = weekHeight - MULTI_DAY_TOP_OFFSET;
+      if (availableHeight <= 0) return { maxSlots: 0, maxSlotsWithMore: 0 };
+
+      const hardCap = 4;
+      const maxSlots = Math.min(hardCap, Math.floor(availableHeight / ROW_SPACING));
+
+      const spaceForMore = availableHeight - MORE_TEXT_HEIGHT;
+      const maxSlotsWithMore = Math.min(hardCap, Math.max(0, Math.floor(spaceForMore / ROW_SPACING)));
+
+      return { maxSlots, maxSlotsWithMore };
     }, [weekHeight]);
 
     useEffect(() => {
@@ -437,8 +454,18 @@ const WeekComponent = React.memo<WeekComponentProps>(
         day.year === currentYear;
       const dayEvents = getEventsForDay(day.date);
       const sortedEvents = sortDayEvents(dayEvents);
-      const displayEvents = sortedEvents.slice(0, maxEventsToShow);
-      const hiddenEventsCount = sortedEvents.length - displayEvents.length;
+
+      const totalEvents = sortedEvents.length;
+      let displayCount = 0;
+
+      if (totalEvents <= layoutParams.maxSlots) {
+        displayCount = totalEvents;
+      } else {
+        displayCount = layoutParams.maxSlotsWithMore;
+      }
+
+      const displayEvents = sortedEvents.slice(0, displayCount);
+      const hiddenEventsCount = totalEvents - displayCount;
       const hasMoreEvents = hiddenEventsCount > 0;
 
       // Create render array and layer array
@@ -472,6 +499,11 @@ const WeekComponent = React.memo<WeekComponentProps>(
               event={event}
               isAllDay={!!event.allDay}
               isMonthView={true}
+              isBeingDragged={
+                isDragging &&
+                dragState.eventId === event.id &&
+                dragState.mode === 'move'
+              }
               calendarRef={calendarRef}
               hourHeight={72}
               firstHour={0}
@@ -479,20 +511,18 @@ const WeekComponent = React.memo<WeekComponentProps>(
               onEventDelete={onEventDelete}
               onMoveStart={onMoveStart}
               onResizeStart={onResizeStart}
-              isBeingDragged={
-                isDragging &&
-                dragState.eventId === event.id &&
-                dragState.mode === 'move'
-              }
-              newlyCreatedEventId={newlyCreatedEventId}
               onDetailPanelOpen={onDetailPanelOpen}
-              selectedEventId={selectedEventId}
               onEventSelect={onEventSelect}
+              onEventLongPress={onEventLongPress}
+              newlyCreatedEventId={newlyCreatedEventId}
+              selectedEventId={selectedEventId}
               detailPanelEventId={detailPanelEventId}
               onDetailPanelToggle={onDetailPanelToggle}
               customDetailPanelContent={customDetailPanelContent}
               customEventDetailDialog={customEventDetailDialog}
               app={app}
+              isMobile={screenSize !== 'desktop'}
+              enableTouch={enableTouch}
             />
           );
         }
@@ -507,18 +537,48 @@ const WeekComponent = React.memo<WeekComponentProps>(
         `}
           style={{ height: weekHeightPx }}
           data-date={createDateString(day.date)}
-          onDoubleClick={e => onCreateStart(e, day.date)}
+          onDoubleClick={e => onCreateStart?.(e, day.date)}
+          onTouchStart={e => {
+            if (screenSize !== 'mobile' && !enableTouch) return;
+            const touch = e.touches[0];
+            const clientX = touch.clientX;
+            const clientY = touch.clientY;
+            touchStartPosRef.current = { x: clientX, y: clientY };
+
+            longPressTimerRef.current = setTimeout(() => {
+              onCreateStart?.(e, day.date);
+              longPressTimerRef.current = null;
+              if (navigator.vibrate) navigator.vibrate(50);
+            }, 500);
+          }}
+          onTouchMove={e => {
+            if (longPressTimerRef.current && touchStartPosRef.current) {
+              const dx = Math.abs(e.touches[0].clientX - touchStartPosRef.current.x);
+              const dy = Math.abs(e.touches[0].clientY - touchStartPosRef.current.y);
+              if (dx > 10 || dy > 10) {
+                clearTimeout(longPressTimerRef.current);
+                longPressTimerRef.current = null;
+              }
+            }
+          }}
+          onTouchEnd={() => {
+            if (longPressTimerRef.current) {
+              clearTimeout(longPressTimerRef.current);
+              longPressTimerRef.current = null;
+            }
+            touchStartPosRef.current = null;
+          }}
           onDragOver={onCalendarDragOver}
           onDrop={e => onCalendarDrop?.(e, day.date)}
         >
           {/* Date number area */}
-          <div className="flex items-start justify-between p-2 pb-1 relative z-20">
+          <div className="flex items-center justify-between px-2 h-[33px] relative z-20">
             <div className="flex-1" />
             <div className="flex items-center">
-              {day.day === 1 ? (
+              {(
                 <span
                   className={`
-                    inline-flex items-center justify-center px-1.5 h-5 rounded-full text-sm font-medium whitespace-nowrap
+                    inline-flex items-center justify-center h-6 min-w-6 rounded-full text-sm font-medium whitespace-nowrap px-1
                     ${day.isToday
                       ? 'bg-primary text-primary-foreground'
                       : belongsToCurrentMonth
@@ -527,24 +587,12 @@ const WeekComponent = React.memo<WeekComponentProps>(
                     }
                   `}
                 >
-                  {day.date.toLocaleDateString(locale, {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              ) : (
-                <span
-                  className={`
-                    inline-flex items-center justify-center h-5 w-5 rounded-full text-sm font-medium
-                    ${day.isToday
-                      ? 'bg-primary text-primary-foreground'
-                      : belongsToCurrentMonth
-                        ? 'text-gray-900 dark:text-gray-100'
-                        : 'text-gray-400 dark:text-gray-600'
-                    }
-                  `}
-                >
-                  {day.day}
+                  {
+                    day.day === 1 && screenSize === 'desktop' ? (day.date.toLocaleDateString(locale, {
+                      month: 'short',
+                      day: 'numeric',
+                    })) : day.day
+                  }
                 </span>
               )}
             </div>
@@ -557,7 +605,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
             {/* More events indicator */}
             {hasMoreEvents && (
               <div
-                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer hover:underline"
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer hover:underline text-center md:text-left font-medium md:font-normal"
                 onClick={e => {
                   e.stopPropagation();
                   if (onMoreEventsClick) {
@@ -568,7 +616,7 @@ const WeekComponent = React.memo<WeekComponentProps>(
                   }
                 }}
               >
-                +{hiddenEventsCount} {t('more')}
+                +{hiddenEventsCount} <span className="hidden md:inline">{t('more')}</span>
               </div>
             )}
           </div>
@@ -656,11 +704,14 @@ const WeekComponent = React.memo<WeekComponentProps>(
                         onDetailPanelOpen={onDetailPanelOpen}
                         selectedEventId={selectedEventId}
                         onEventSelect={onEventSelect}
+                        onEventLongPress={onEventLongPress}
                         detailPanelEventId={detailPanelEventId}
                         onDetailPanelToggle={onDetailPanelToggle}
                         customDetailPanelContent={customDetailPanelContent}
                         customEventDetailDialog={customEventDetailDialog}
                         app={app}
+                        isMobile={screenSize !== 'desktop'}
+                        enableTouch={enableTouch}
                       />
                     ))}
                   </div>

@@ -77,6 +77,7 @@ export {
   getEventsForWeek,
   createEventWithRealDate,
   updateEventWithRealDate,
+  isEventEqual,
 } from './eventUtils';
 
 // Re-export Test data utilities
@@ -84,3 +85,4 @@ export { getTestEvents } from './testDataUtils';
 
 // Re-export General utilities
 export { generateUniKey } from './utilityFunctions';
+export { isDeepEqual } from './compareUtils';

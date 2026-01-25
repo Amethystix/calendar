@@ -44,6 +44,20 @@ const ko: Locale = {
     untitled: '무제',
     search: '검색',
     noResults: '결과 없음',
+    calendar: '캘린더',
+    starts: '시작',
+    ends: '종료',
+    notes: '메모',
+    titlePlaceholder: '제목',
+    notesPlaceholder: '메모',
+    editEvent: '일정 편집',
+    done: '완료',
+    quickCreateEvent: '빠른 일정 생성',
+    quickCreatePlaceholder: '금요일 오후 7시에 영화',
+    noSuggestions: '입력하여 만들기',
+    newCalendar: '새 캘린더',
+    refreshAll: '모두 새로 고침',
+    tomorrow: '내일',
   }
 };
 

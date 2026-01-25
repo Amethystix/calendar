@@ -20,6 +20,7 @@ export const useWeekDayDrag = (
   // Create all-day event
   const handleCreateAllDayEvent = useCallback(
     (e: React.MouseEvent, dayIndex: number) => {
+      if (app?.state.readOnly) return;
       if (isMonthView) return;
 
       e.preventDefault();

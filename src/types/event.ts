@@ -1,4 +1,5 @@
 import { Temporal } from 'temporal-polyfill';
+import { ReactNode } from 'react';
 
 /**
  * Calendar event interface (using Temporal API)
@@ -15,8 +16,11 @@ export interface Event {
   // - Temporal.ZonedDateTime: Cross-timezone events (date + time + timezone)
   start: Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime;
   end: Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime;
-
+  // TODO: make allDay to internal derived field, because we can infer allDay from start/end types(PlainDate)
   allDay?: boolean;
+
+  // all day icon
+  icon?: boolean | ReactNode;
 
   // Calendar type reference
   calendarId?: string;

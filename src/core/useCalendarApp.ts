@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { CalendarApp } from './CalendarApp';
-import { CalendarAppConfig, UseCalendarAppReturn, ViewType, CalendarType } from '../types';
+import { CalendarAppConfig, UseCalendarAppReturn, ViewType, CalendarType, SidebarConfig, ReadOnlyConfig } from '../types';
 import { Event } from '../types';
+import { isDeepEqual } from '../utils/helpers';
 
 export function useCalendarApp(
   config: CalendarAppConfig
@@ -17,6 +18,9 @@ export function useCalendarApp(
     app.state.currentDate
   );
   const [events, setEvents] = useState<Event[]>(app.getEvents());
+  const [sidebarConfig, setSidebarConfigState] = useState<SidebarConfig>(
+    app.getSidebarConfig()
+  );
 
   // Component re-render trigger
   const [, forceUpdate] = useState({});
@@ -122,6 +126,13 @@ export function useCalendarApp(
       triggerUpdate();
     };
 
+    const originalTriggerRender = app.triggerRender;
+    app.triggerRender = () => {
+      originalTriggerRender();
+      setSidebarConfigState(app.getSidebarConfig());
+      triggerUpdate();
+    };
+
     return () => {
       // Cleanup work, if needed
     };
@@ -133,6 +144,15 @@ export function useCalendarApp(
     setCurrentDateState(app.state.currentDate);
     setEvents(app.getEvents());
   }, [app]);
+
+  // Synchronize configuration updates
+  const lastConfigRef = useRef(config);
+  useEffect(() => {
+    if (!isDeepEqual(lastConfigRef.current, config)) {
+      app.updateConfig(config);
+      lastConfigRef.current = config;
+    }
+  }, [app, config]);
 
   // Wrapped methods to ensure state synchronization
   const changeView = useCallback(
@@ -227,6 +247,7 @@ export function useCalendarApp(
     highlightEvent: (eventId: string | null) => app.highlightEvent(eventId),
     setVisibleMonth: (date: Date) => app.setVisibleMonth(date),
     getVisibleMonth: () => app.getVisibleMonth(),
-    sidebarConfig: app.getSidebarConfig(),
+    sidebarConfig,
+    readOnlyConfig: app.getReadOnlyConfig(),
   };
 }

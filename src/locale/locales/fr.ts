@@ -44,6 +44,20 @@ const fr: Locale = {
     untitled: 'Sans titre',
     search: 'Rechercher',
     noResults: 'Aucun résultat trouvé',
+    calendar: 'Calendrier',
+    starts: 'Début',
+    ends: 'Fin',
+    notes: 'Notes',
+    titlePlaceholder: 'Titre',
+    notesPlaceholder: 'Notes',
+    editEvent: 'Modifier l\'événement',
+    done: 'Terminé',
+    quickCreateEvent: 'Création rapide',
+    quickCreatePlaceholder: 'Film à 19h vendredi',
+    noSuggestions: 'Tapez pour créer',
+    newCalendar: 'Nouveau calendrier',
+    refreshAll: 'Tout actualiser',
+    tomorrow: 'Demain',
   }
 };
 

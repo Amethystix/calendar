@@ -44,6 +44,20 @@ const zh: Locale = {
     untitled: '未命名',
     search: '搜索',
     noResults: '无结果',
+    calendar: '日历',
+    starts: '开始',
+    ends: '结束',
+    notes: '备注',
+    titlePlaceholder: '标题',
+    notesPlaceholder: '备注',
+    editEvent: '编辑日程',
+    done: '完成',
+    quickCreateEvent: '快速创建日程',
+    quickCreatePlaceholder: '周五晚7点看电影',
+    noSuggestions: '输入内容以创建',
+    newCalendar: '新增日历',
+    refreshAll: '全部刷新',
+    tomorrow: '明天',
   }
 };
 

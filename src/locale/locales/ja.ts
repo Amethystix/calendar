@@ -44,6 +44,20 @@ const ja: Locale = {
     untitled: '無題',
     search: '検索',
     noResults: '結果が見つかりません',
+    calendar: 'カレンダー',
+    starts: '開始',
+    ends: '終了',
+    notes: 'メモ',
+    titlePlaceholder: '予定名',
+    notesPlaceholder: 'メモ',
+    editEvent: '予定を編集',
+    done: '完了',
+    quickCreateEvent: 'クイック作成',
+    quickCreatePlaceholder: '金曜日7時から映画',
+    noSuggestions: '入力して作成',
+    newCalendar: '新しいカレンダー',
+    refreshAll: 'すべて更新',
+    tomorrow: '明日',
   }
 };
 

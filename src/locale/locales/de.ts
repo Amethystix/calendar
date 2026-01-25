@@ -44,6 +44,20 @@ const de: Locale = {
     untitled: 'Unbenannt',
     search: 'Suchen',
     noResults: 'Keine Ergebnisse gefunden',
+    calendar: 'Kalender',
+    starts: 'Beginnt',
+    ends: 'Endet',
+    notes: 'Notizen',
+    titlePlaceholder: 'Titel',
+    notesPlaceholder: 'Notizen',
+    editEvent: 'Ereignis bearbeiten',
+    done: 'Fertig',
+    quickCreateEvent: 'Ereignis schnell erstellen',
+    quickCreatePlaceholder: 'Film am Freitag um 19 Uhr',
+    noSuggestions: 'Tippen zum Erstellen',
+    newCalendar: 'Neuer Kalender',
+    refreshAll: 'Alles aktualisieren',
+    tomorrow: 'Morgen',
   }
 };
 

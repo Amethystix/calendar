@@ -62,6 +62,7 @@ export interface DragIndicatorProps {
   getLineColor: (color: string) => string;
   getDynamicPadding: (drag: DragRef) => string;
   locale?: string;
+  isMobile?: boolean;
 }
 
 export interface DragIndicatorRenderer {
@@ -115,6 +116,7 @@ export interface useDragProps extends Partial<DragConfig> {
   events: Event[];
   renderer?: DragIndicatorRenderer; // Required for Week/Day views
   app?: CalendarApp;
+  isMobile?: boolean;
 }
 
 // Unified drag state type definitions
@@ -152,10 +154,10 @@ export interface useDragReturn {
   ) => void;
   removeDragIndicator: () => void;
   handleCreateAllDayEvent?: (e: React.MouseEvent, dayIndex: number) => void; // Week/Day views
-  handleCreateStart: (e: React.MouseEvent, ...args: (Date | number)[]) => void;
-  handleMoveStart: (e: React.MouseEvent, event: Event) => void;
+  handleCreateStart: (e: React.MouseEvent | React.TouchEvent, ...args: (Date | number)[]) => void;
+  handleMoveStart: (e: React.MouseEvent | React.TouchEvent, event: Event) => void;
   handleResizeStart: (
-    e: React.MouseEvent,
+    e: React.MouseEvent | React.TouchEvent,
     event: Event,
     direction: string
   ) => void;

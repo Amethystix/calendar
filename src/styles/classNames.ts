@@ -78,7 +78,7 @@ export const weekHeaderRow =
 /**
  * Weekday labels
  */
-export const dayLabel = 'text-right text-gray-500 dark:text-gray-400 text-sm py-2 pr-2';
+export const dayLabel = 'text-right text-gray-500 dark:text-gray-400 text-sm py-2 pr-2 select-none';
 
 /**
  * WeekView week title
@@ -89,13 +89,13 @@ export const weekDayHeader = 'flex border-b border-gray-200 dark:border-gray-700
  * WeekView week title cell
  */
 export const weekDayCell =
-  'flex flex-1 justify-center items-center text-center text-gray-500 dark:text-gray-400 text-sm p-1';
+  'flex flex-1 justify-center items-center text-center text-gray-500 dark:text-gray-400 text-sm p-1 select-none';
 
 /**
  * Date number style
  */
 export const dateNumber =
-  'inline-flex items-center justify-center h-6 w-6 rounded-full text-sm mt-1';
+  'inline-flex items-center justify-center h-6 w-6 rounded-full text-sm mt-1 select-none';
 
 // ==================== Scroll Area Styles ====================
 
@@ -124,7 +124,7 @@ export const scrollbarHide = 'scrollbar-hide';
 /**
  * Time column container
  */
-export const timeColumn = 'w-20 flex-shrink-0 border-gray-200 dark:border-gray-700';
+export const timeColumn = 'flex-shrink-0 border-gray-200 dark:border-gray-700';
 
 /**
  * Time slot
@@ -134,7 +134,7 @@ export const timeSlot = 'relative h-[4.5rem] flex';
 /**
  * Time label
  */
-export const timeLabel = 'absolute -top-2.5 right-2 text-[12px] text-gray-500 dark:text-gray-400';
+export const timeLabel = 'absolute -top-2.5 right-2 text-[12px] text-gray-500 dark:text-gray-400 select-none';
 
 /**
  * Time grid row
@@ -145,7 +145,7 @@ export const timeGridRow =
 /**
  * Time grid cell
  */
-export const timeGridCell = 'flex-1 relative border-r border-gray-200 dark:border-gray-700';
+export const timeGridCell = 'flex-1 relative border-r border-gray-200 dark:border-gray-700 select-none';
 
 /**
  * Current time line container
@@ -174,7 +174,7 @@ export const allDayRow = 'flex items-center border-b border-gray-200 dark:border
  * All-day event label
  */
 export const allDayLabel =
-  'w-20 flex-shrink-0 p-1 text-xs font-medium text-gray-500 dark:text-gray-400 flex justify-end';
+  'flex-shrink-0 p-1 text-xs font-medium text-gray-500 dark:text-gray-400 flex justify-end select-none';
 
 /**
  * All-day event content area
@@ -228,13 +228,13 @@ export const regularEventRounded = 'rounded-sm';
  * MonthView all-day event content
  */
 export const monthAllDayContent =
-  'text-xs px-1 mb-0.5 rounded truncate cursor-pointer flex items-center';
+  'text-xs px-1 mb-[2px] rounded truncate cursor-pointer flex items-center';
 
 /**
  * MonthView regular event content
  */
 export const monthRegularContent =
-  'text-xs mb-0.5 cursor-pointer flex items-center justify-between';
+  'text-xs mb-[2px] cursor-pointer flex items-center justify-between';
 
 /**
  * Event title (small)

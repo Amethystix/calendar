@@ -44,6 +44,20 @@ const en: Locale = {
     untitled: 'Untitled',
     search: 'Search',
     noResults: 'No results found',
+    calendar: 'Calendar',
+    starts: 'Starts',
+    ends: 'Ends',
+    notes: 'Notes',
+    titlePlaceholder: 'Title',
+    notesPlaceholder: 'Notes',
+    editEvent: 'Edit Event',
+    done: 'Done',
+    quickCreateEvent: 'Quick Create Event',
+    quickCreatePlaceholder: 'Movie at 7pm on Friday',
+    noSuggestions: 'Type to create',
+    newCalendar: 'New Calendar',
+    refreshAll: 'Refresh All',
+    tomorrow: 'Tomorrow',
   }
 };
 

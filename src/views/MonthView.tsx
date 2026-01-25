@@ -9,14 +9,14 @@ import {
   EventDetailContentRenderer,
   EventDetailDialogRenderer,
 } from '@/types';
-import { VirtualWeekItem } from '@/types/monthView';
 import {
   useVirtualMonthScroll,
   useResponsiveMonthConfig,
 } from '@/hooks/virtualScroll';
 import { useDragForView } from '@/plugins/dragPlugin';
-import ViewHeader, { ViewSwitcherMode } from '@/components/common/ViewHeader';
+import ViewHeader from '@/components/common/ViewHeader';
 import WeekComponent from '@/components/monthView/WeekComponent';
+import { MobileEventDrawer } from '@/components/mobileEventDrawer';
 import { temporalToDate } from '@/utils/temporal';
 import { useCalendarDrop } from '@/hooks/useCalendarDrop';
 import {
@@ -32,7 +32,6 @@ interface MonthViewProps {
   customDetailPanelContent?: EventDetailContentRenderer; // Custom event detail content
   customEventDetailDialog?: EventDetailDialogRenderer; // Custom event detail dialog
   calendarRef: React.RefObject<HTMLDivElement>; // The DOM reference of the entire calendar passed from CalendarRenderer
-  switcherMode?: ViewSwitcherMode;
 }
 
 const MonthView: React.FC<MonthViewProps> = ({
@@ -40,7 +39,6 @@ const MonthView: React.FC<MonthViewProps> = ({
   customDetailPanelContent,
   customEventDetailDialog,
   calendarRef,
-  switcherMode = 'buttons',
 }) => {
   const { getWeekDaysLabels, getMonthLabels, locale } = useLocale();
   const currentDate = app.getCurrentDate();
@@ -138,6 +136,13 @@ const MonthView: React.FC<MonthViewProps> = ({
 
   // Responsive configuration
   const { screenSize } = useResponsiveMonthConfig();
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  const MobileEventDrawerComponent = app.getCustomMobileEventRenderer() || MobileEventDrawer;
 
   // Fixed weekHeight to prevent fluctuations during scrolling
   // Initialize with estimated value based on window height to minimize initial adjustment
@@ -152,14 +157,23 @@ const MonthView: React.FC<MonthViewProps> = ({
     null
   );
 
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [draftEvent, setDraftEvent] = useState<Event | null>(null);
+
   // Selected event ID, used for cross-week MultiDayEvent selected state synchronization
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   // Sync highlighted event from app state
+  const prevHighlightedEventId = useRef(app.state.highlightedEventId);
+
   useEffect(() => {
     if (app.state.highlightedEventId) {
       setSelectedEventId(app.state.highlightedEventId);
+    } else if (prevHighlightedEventId.current) {
+      // Only clear if previously had a highlighted event
+      setSelectedEventId(null);
     }
+    prevHighlightedEventId.current = app.state.highlightedEventId;
   }, [app.state.highlightedEventId]);
 
   // Detail panel event ID, used to control displaying only one detail panel
@@ -230,7 +244,12 @@ const MonthView: React.FC<MonthViewProps> = ({
       );
     },
     onEventCreate: (event: Event) => {
-      app.addEvent(event);
+      if (screenSize !== 'desktop') {
+        setDraftEvent(event);
+        setIsDrawerOpen(true);
+      } else {
+        app.addEvent(event);
+      }
     },
     onEventEdit: (event: Event) => {
       setNewlyCreatedEventId(event.id);
@@ -275,7 +294,8 @@ const MonthView: React.FC<MonthViewProps> = ({
       }
     },
     initialWeeksToLoad: 156,
-    locale: locale
+    locale: locale,
+    isEnabled: isWeekHeightInitialized
   });
 
   const previousStartIndexRef = useRef(0);
@@ -427,7 +447,6 @@ const MonthView: React.FC<MonthViewProps> = ({
           app.goToToday();
           handleToday();
         }}
-        switcherMode={switcherMode}
       />
 
       <div className={weekHeaderRow}>
@@ -488,10 +507,25 @@ const MonthView: React.FC<MonthViewProps> = ({
               dragState={dragState as MonthEventDragState}
               newlyCreatedEventId={newlyCreatedEventId}
               onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
+              onMoreEventsClick={app.onMoreEventsClick}
               onChangeView={handleChangeView}
               onSelectDate={app.selectDate}
               selectedEventId={selectedEventId}
-              onEventSelect={setSelectedEventId}
+              onEventSelect={(eventId: string | null) => {
+                const isViewable = app.getReadOnlyConfig().viewable !== false;
+                if ((screenSize !== 'desktop' || isTouch) && eventId && isViewable) {
+                  const evt = events.find(e => e.id === eventId);
+                  if (evt) {
+                    setDraftEvent(evt);
+                    setIsDrawerOpen(true);
+                    return;
+                  }
+                }
+                setSelectedEventId(eventId);
+              }}
+              onEventLongPress={(eventId: string) => {
+                if (screenSize !== 'desktop' || isTouch) setSelectedEventId(eventId);
+              }}
               detailPanelEventId={detailPanelEventId}
               onDetailPanelToggle={setDetailPanelEventId}
               customDetailPanelContent={customDetailPanelContent}
@@ -500,6 +534,7 @@ const MonthView: React.FC<MonthViewProps> = ({
               onCalendarDragOver={handleDragOver}
               calendarSignature={calendarSignature}
               app={app}
+              enableTouch={isTouch}
             />
           );
         })}
@@ -509,6 +544,24 @@ const MonthView: React.FC<MonthViewProps> = ({
           }}
         />
       </div>
+      <MobileEventDrawerComponent
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setDraftEvent(null);
+        }}
+        onSave={(updatedEvent) => {
+          if (events.find(e => e.id === updatedEvent.id)) {
+            app.updateEvent(updatedEvent.id, updatedEvent);
+          } else {
+            app.addEvent(updatedEvent);
+          }
+          setIsDrawerOpen(false);
+          setDraftEvent(null);
+        }}
+        draftEvent={draftEvent}
+        app={app}
+      />
     </div>
   );
 };

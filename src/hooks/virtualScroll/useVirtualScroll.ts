@@ -230,9 +230,7 @@ export const useVirtualScroll = ({
   const [isScrolling, setIsScrolling] = useState(false);
 
   // References
-  const scrollElementRef = useRef<HTMLDivElement>(
-    document.createElement('div')
-  );
+  const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrollTime = useRef(0);
   const lastScrollTop = useRef(0);
