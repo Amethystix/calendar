@@ -21,6 +21,7 @@ import { logger } from '../utils/logger';
 import { normalizeCssWidth } from '../utils/styleUtils';
 import { ThemeMode } from '../types/calendarTypes';
 import { isValidLocale } from '../locale/utils';
+import { isDeepEqual } from '../utils/helpers';
 
 const DEFAULT_SIDEBAR_WIDTH = '240px';
 
@@ -490,24 +491,71 @@ export class CalendarApp implements ICalendarApp {
 
   // Update configuration dynamically
   updateConfig = (config: Partial<CalendarAppConfig>): void => {
-    if (config.customMobileEventRenderer !== undefined) {
+    let hasChanged = false;
+
+    if (
+      config.customMobileEventRenderer !== undefined &&
+      config.customMobileEventRenderer !== this.customMobileEventRenderer
+    ) {
       this.customMobileEventRenderer = config.customMobileEventRenderer;
+      hasChanged = true;
     }
-    if (config.useEventDetailDialog !== undefined) {
+    if (
+      config.useEventDetailDialog !== undefined &&
+      config.useEventDetailDialog !== this.useEventDetailDialog
+    ) {
       this.useEventDetailDialog = config.useEventDetailDialog;
+      hasChanged = true;
     }
-    if (config.useCalendarHeader !== undefined) {
+    if (
+      config.useCalendarHeader !== undefined &&
+      config.useCalendarHeader !== this.useCalendarHeader
+    ) {
       this.useCalendarHeader = config.useCalendarHeader;
+      hasChanged = true;
     }
-    if (config.readOnly !== undefined) {
+    if (
+      config.readOnly !== undefined &&
+      !isDeepEqual(config.readOnly, this.state.readOnly)
+    ) {
       this.state.readOnly = config.readOnly;
+      hasChanged = true;
     }
     if (config.callbacks) {
+      // We update callbacks but don't trigger re-render as they don't affect visual state
       this.callbacks = { ...this.callbacks, ...config.callbacks };
     }
-    // Add other config updates here if needed
-    // Trigger re-render to reflect changes
-    this.triggerRender();
+    if (config.theme?.mode !== undefined && config.theme.mode !== this.getTheme()) {
+      this.setTheme(config.theme.mode);
+      // setTheme already triggers re-render via onRender callback
+    }
+    if (config.useSidebar !== undefined) {
+      const newSidebarConfig = resolveSidebarConfig(config.useSidebar);
+      if (!isDeepEqual(newSidebarConfig, this.sidebarConfig)) {
+        this.sidebarConfig = newSidebarConfig;
+        this.state.sidebar = this.sidebarConfig;
+        hasChanged = true;
+      }
+    }
+    if (
+      config.switcherMode !== undefined &&
+      config.switcherMode !== this.state.switcherMode
+    ) {
+      this.state.switcherMode = config.switcherMode;
+      hasChanged = true;
+    }
+    if (config.locale !== undefined) {
+      const newLocale = this.resolveLocale(config.locale);
+      if (!isDeepEqual(newLocale, this.state.locale)) {
+        this.state.locale = newLocale;
+        hasChanged = true;
+      }
+    }
+
+    if (hasChanged) {
+      // Trigger re-render to reflect changes
+      this.triggerRender();
+    }
   };
 
   // Theme management

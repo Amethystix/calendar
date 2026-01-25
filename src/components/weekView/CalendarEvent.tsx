@@ -347,7 +347,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         const calendarRect = calendarRef.current?.getBoundingClientRect();
         if (calendarRect) {
           const activeDayIndex = multiDaySegmentInfo?.dayIndex ?? getActiveDayIndex();
-          const timeColumnWidth = 80;
+          const timeColumnWidth = isMobile ? 48 : 80;
           const columnCount = isDayView ? 1 : 7;
           let dayColumnWidth = (calendarRect.width - timeColumnWidth) / columnCount;
           let dayStartX = calendarRect.left + timeColumnWidth + activeDayIndex * dayColumnWidth;
@@ -612,7 +612,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         : null;
     }
 
-    const timeColumnWidth = 80;
+    const timeColumnWidth = isMobile ? 48 : 80;
     const columnCount = isDayView ? 1 : 7;
     const dayColumnWidth = (calendarRect.width - timeColumnWidth) / columnCount;
     const relativeX = clientX - calendarRect.left - timeColumnWidth;
@@ -637,7 +637,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
       };
     }
 
-    const timeColumnWidth = 80;
+    const timeColumnWidth = isMobile ? 48 : 80;
     if (isDayView) {
       const dayColumnWidth = calendarRect.width - timeColumnWidth;
       return {
@@ -706,7 +706,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
       dayColumnWidth = calendarRect.width / 7;
       dayStartX = calendarRect.left + positionDayIndex * dayColumnWidth;
     } else {
-      const timeColumnWidth = 80;
+      const timeColumnWidth = isMobile ? 48 : 80;
       dayColumnWidth = (calendarRect.width - timeColumnWidth) / 7;
       dayStartX =
         calendarRect.left + timeColumnWidth + positionDayIndex * dayColumnWidth;
@@ -803,7 +803,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         !isMonthView
       ) {
         const activeDayIndex = multiDaySegmentInfo?.dayIndex ?? getActiveDayIndex();
-        const timeColumnWidth = 80;
+        const timeColumnWidth = isMobile ? 48 : 80;
         const columnCount = isDayView ? 1 : 7;
         const defaultColumnWidth = (calendarRect.width - timeColumnWidth) / columnCount;
         const metrics = getDayMetrics(activeDayIndex);

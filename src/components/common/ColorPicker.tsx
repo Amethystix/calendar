@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronsUpDown, Check } from 'lucide-react';
 import { getDefaultCalendarRegistry, CalendarRegistry } from '../../core/calendarRegistry';
 
@@ -27,18 +28,58 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   variant = 'desktop',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const pickerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Close dropdown when clicking outside
+  // Update dropdown position
+  const updatePosition = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const isMobile = variant === 'mobile';
+
+      const style: React.CSSProperties = {
+        position: 'fixed',
+        zIndex: 10001,
+        minWidth: isMobile ? '12rem' : `${rect.width}px`,
+        top: `${rect.bottom + 4}px`,
+      };
+
+      if (isMobile) {
+        style.right = `${window.innerWidth - rect.right}px`;
+      } else {
+        style.left = `${rect.left}px`;
+      }
+
+      setDropdownStyle(style);
+    }
+  };
+
+  // Close dropdown when clicking outside or scrolling
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement).closest('[data-color-picker-dropdown]')
+      ) {
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+
+    if (isOpen) {
+      updatePosition();
+      window.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+    }
+
+    return () => {
+      window.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen]);
 
   // Get the actual color value for a calendar ID
   const getColorForCalendarId = (calendarId: string): string => {
@@ -55,22 +96,16 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
 
   const currentOption = options.find(o => o.value === value);
 
-  if (variant === 'mobile') {
-    return (
-      <div className="relative" ref={pickerRef}>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-1.5 transition-colors"
-        >
-          <span
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: getColorForCalendarId(value) }}
-          />
-          <span className="text-sm font-medium">{currentOption?.label || value}</span>
-          <ChevronsUpDown className="w-4 h-4 text-gray-400" />
-        </button>
+  const renderDropdown = () => {
+    if (!isOpen || typeof window === 'undefined') return null;
 
-        <div className={`absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden transition-all duration-200 origin-top-right ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+    if (variant === 'mobile') {
+      return createPortal(
+        <div
+          data-color-picker-dropdown="true"
+          style={dropdownStyle}
+          className="bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 origin-top-right animate-in fade-in zoom-in-95"
+        >
           {options.map(opt => (
             <div
               key={opt.value}
@@ -89,7 +124,55 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               />
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
+      );
+    }
+
+    return createPortal(
+      <ul
+        data-color-picker-dropdown="true"
+        style={dropdownStyle}
+        className="bg-white dark:bg-gray-700 rounded-md shadow-lg dark:shadow-gray-900/50 overflow-hidden border border-gray-200 dark:border-gray-600 transition-all duration-200 origin-top-left animate-in fade-in zoom-in-95"
+      >
+        {options.map(opt => (
+          <li
+            key={opt.value}
+            className={`flex items-center px-2 py-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${value === opt.value ? 'font-semibold' : ''
+              }`}
+            onClick={() => handleSelect(opt.value)}
+          >
+            {value === opt.value ? <span className="mr-2 text-sm text-primary">
+              <Check width={12} height={12} />
+            </span> : <div className="mr-2 text-sm w-3 h-3">&nbsp;</div>}
+            <span
+              className="w-3 h-3 mr-2 rounded-sm shrink-0"
+              style={{ backgroundColor: getColorForCalendarId(opt.value) }}
+            />
+            <span className="text-sm whitespace-nowrap text-gray-700 dark:text-gray-200">{opt.label}</span>
+          </li>
+        ))}
+      </ul>,
+      document.body
+    );
+  };
+
+  if (variant === 'mobile') {
+    return (
+      <div className="relative inline-block" ref={pickerRef}>
+        <button
+          ref={triggerRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-1.5 transition-colors"
+        >
+          <span
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: getColorForCalendarId(value) }}
+          />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{currentOption?.label || value}</span>
+          <ChevronsUpDown className="w-4 h-4 text-gray-400" />
+        </button>
+        {renderDropdown()}
       </div>
     );
   }
@@ -97,6 +180,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   return (
     <div className="relative inline-block" ref={pickerRef}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors h-8"
@@ -107,28 +191,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         />
         <ChevronsUpDown className="w-4 h-4 text-gray-600 dark:text-gray-300" />
       </button>
-
-      <ul 
-        className={`absolute mt-1 w-full min-w-max bg-gray-100 dark:bg-gray-700 rounded-md shadow-lg dark:shadow-gray-900/50 z-10 overflow-hidden border border-gray-200 dark:border-gray-600 transition-all duration-200 origin-top-left ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
-      >
-        {options.map(opt => (
-          <li
-            key={opt.value}
-            className={`flex items-center px-2 py-1 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors ${value === opt.value ? 'font-semibold' : ''
-              }`}
-            onClick={() => handleSelect(opt.value)}
-          >
-            {value === opt.value ? <span className="mr-2 text-sm">
-              <Check width={12} height={12} />
-            </span> : <div className="mr-2 text-sm w-3 h-3">&nbsp;</div>}
-            <span
-              className="w-3 h-3 mr-2 rounded-sm shrink-0"
-              style={{ backgroundColor: getColorForCalendarId(opt.value) }}
-            />
-            <span className="text-sm whitespace-nowrap">{opt.label}</span>
-          </li>
-        ))}
-      </ul>
+      {renderDropdown()}
     </div>
   );
 };

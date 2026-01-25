@@ -6,7 +6,7 @@ import InteractiveCalendar from './InteractiveCalendar';
 
 export function LiveDemo() {
   return (
-    <div className="mx-auto px-12">
+    <div className="mx-auto px-0 sm:px-12">
       <section className="space-y-12 py-8">
         <div className="mx-auto text-center">
           <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium uppercase tracking-wide text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">

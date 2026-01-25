@@ -572,10 +572,10 @@ const WeekComponent = React.memo<WeekComponentProps>(
           <div className="flex items-start justify-between p-2 pb-1 relative z-20">
             <div className="flex-1" />
             <div className="flex items-center">
-              {day.day === 1 && screenSize === 'desktop' ? (
+              {(
                 <span
                   className={`
-                    inline-flex items-center justify-center px-1.5 h-5 rounded-full text-sm font-medium whitespace-nowrap
+                    inline-flex items-center justify-center h-5 rounded-full text-sm font-medium whitespace-nowrap
                     ${day.isToday
                       ? 'bg-primary text-primary-foreground'
                       : belongsToCurrentMonth
@@ -584,24 +584,14 @@ const WeekComponent = React.memo<WeekComponentProps>(
                     }
                   `}
                 >
-                  {day.date.toLocaleDateString(locale, {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              ) : (
-                <span
-                  className={`
-                    inline-flex items-center justify-center h-5 w-5 rounded-full text-sm font-medium
-                    ${day.isToday
-                      ? 'bg-primary text-primary-foreground'
-                      : belongsToCurrentMonth
-                        ? 'text-gray-900 dark:text-gray-100'
-                        : 'text-gray-400 dark:text-gray-600'
+                  <span className='px-1.5'>
+                    {
+                      day.day === 1 && screenSize === 'desktop' ? (day.date.toLocaleDateString(locale, {
+                        month: 'short',
+                        day: 'numeric',
+                      })) : day.day
                     }
-                  `}
-                >
-                  {day.day}
+                  </span>
                 </span>
               )}
             </div>

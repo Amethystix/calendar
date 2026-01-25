@@ -8,6 +8,7 @@ import { useLocale } from '@/locale';
 import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
 import { Switch } from './components/Switch';
 import { TimePickerWheel } from './components/TimePickerWheel';
+import { createPortal } from 'react-dom';
 
 export const MobileEventDrawer: React.FC<MobileEventProps> = ({
     isOpen,
@@ -122,7 +123,7 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
 
     const hasChanges = React.useMemo(() => {
         if (!isOpen || !draftEvent) return false;
-        
+
         let finalStart = new Date(startDate);
         let finalEnd = new Date(endDate);
 
@@ -210,7 +211,7 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-10000 flex items-end pointer-events-none">
             {/* Backdrop */}
             <div
@@ -231,11 +232,10 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
                     <button
                         onClick={handleSave}
                         disabled={!hasChanges}
-                        className={`font-bold px-2 py-1 transition-colors ${
-                            hasChanges 
-                                ? 'text-primary' 
-                                : 'text-gray-400 cursor-not-allowed opacity-50'
-                        }`}
+                        className={`font-bold px-2 py-1 transition-colors ${hasChanges
+                            ? 'text-primary'
+                            : 'text-gray-400 cursor-not-allowed opacity-50'
+                            }`}
                     >
                         {isEditing ? t('done') : t('create')}
                     </button>
@@ -365,6 +365,7 @@ export const MobileEventDrawer: React.FC<MobileEventProps> = ({
 
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

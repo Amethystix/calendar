@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import SearchResultsList from './SearchResultsList';
 import { CalendarSearchEvent } from '../../types/search';
 import { ArrowLeft, X } from 'lucide-react';
-import { useLocale } from '../../locale/useLocale';
+import { useLocale } from '@/locale';
 
 interface MobileSearchDialogProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ const MobileSearchDialog: React.FC<MobileSearchDialogProps> = ({
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
-      
+
       // Prevent body scroll
       document.body.style.overflow = 'hidden';
     } else {
@@ -46,10 +47,10 @@ const MobileSearchDialog: React.FC<MobileSearchDialogProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof window === 'undefined') return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col">
+  return createPortal(
+    <div className="fixed inset-0 z-9999 bg-white dark:bg-gray-900 flex flex-col">
       {/* Header with Back button and Search Input */}
       <div className="flex items-center p-2 border-b border-gray-200 dark:border-gray-700 gap-2">
         <button
@@ -59,7 +60,7 @@ const MobileSearchDialog: React.FC<MobileSearchDialogProps> = ({
           <ArrowLeft className="w-6 h-6" />
         </button>
         <div className="flex-1 relative">
-           <input
+          <input
             ref={inputRef}
             type="text"
             placeholder={t('search') || 'Search'}
@@ -90,7 +91,8 @@ const MobileSearchDialog: React.FC<MobileSearchDialogProps> = ({
           emptyText={emptyText}
         />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

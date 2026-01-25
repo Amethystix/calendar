@@ -9,6 +9,12 @@ import {
   WeekDataCache,
 } from '../../types/monthView';
 
+let cachedConfig: {
+  weekHeight: number;
+  screenSize: 'mobile' | 'tablet' | 'desktop';
+  weeksPerView: number;
+} | null = null;
+
 // Responsive configuration Hook
 export const useResponsiveMonthConfig = () => {
   const [config, setConfig] = useState<{
@@ -16,53 +22,13 @@ export const useResponsiveMonthConfig = () => {
     screenSize: 'mobile' | 'tablet' | 'desktop';
     weeksPerView: number;
   }>(() => {
-    // Initialize state based on window width if available
-    if (typeof window === 'undefined') {
-      return {
-        weekHeight: VIRTUAL_MONTH_SCROLL_CONFIG.WEEK_HEIGHT,
-        screenSize: 'desktop',
-        weeksPerView: 6,
-      };
-    }
+    if (cachedConfig) return cachedConfig;
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const headerHeight = 150;
-    const availableHeight = height - headerHeight;
-    const weeksPerView = 6;
-    const dynamicWeekHeight = Math.max(
-      80,
-      Math.floor(availableHeight / weeksPerView)
-    );
-
-    if (width < 768) {
-      return {
-        weekHeight: Math.max(
-          VIRTUAL_MONTH_SCROLL_CONFIG.MOBILE_WEEK_HEIGHT,
-          dynamicWeekHeight
-        ),
-        screenSize: 'mobile',
-        weeksPerView,
-      };
-    } else if (width < 1024) {
-      return {
-        weekHeight: Math.max(
-          VIRTUAL_MONTH_SCROLL_CONFIG.TABLET_WEEK_HEIGHT,
-          dynamicWeekHeight
-        ),
-        screenSize: 'tablet',
-        weeksPerView,
-      };
-    } else {
-      return {
-        weekHeight: Math.max(
-          VIRTUAL_MONTH_SCROLL_CONFIG.WEEK_HEIGHT,
-          dynamicWeekHeight
-        ),
-        screenSize: 'desktop',
-        weeksPerView,
-      };
-    }
+    return {
+      weekHeight: VIRTUAL_MONTH_SCROLL_CONFIG.WEEK_HEIGHT,
+      screenSize: 'desktop',
+      weeksPerView: 6,
+    };
   });
 
   useEffect(() => {
@@ -109,6 +75,16 @@ export const useResponsiveMonthConfig = () => {
         }
       })();
 
+      if (
+        cachedConfig &&
+        cachedConfig.screenSize === newConfig.screenSize &&
+        cachedConfig.weekHeight === newConfig.weekHeight &&
+        cachedConfig.weeksPerView === newConfig.weeksPerView
+      ) {
+        return;
+      }
+
+      cachedConfig = newConfig;
       setConfig(newConfig);
     };
 

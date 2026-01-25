@@ -31,21 +31,6 @@ export interface ThemeProviderProps {
 }
 
 /**
- * Get system theme preference
- */
-const getSystemTheme = (): 'light' | 'dark' => {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
-
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-
-  return 'light';
-};
-
-/**
  * Theme Provider Component
  *
  * Manages theme state and applies it to the document root.
@@ -64,7 +49,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   onThemeChange,
 }) => {
   const [theme, setThemeState] = useState<ThemeMode>(initialTheme);
-  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(getSystemTheme);
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
 
   // Compute effective theme (resolve 'auto' to actual theme)
   const effectiveTheme: 'light' | 'dark' = theme === 'auto' ? systemTheme : theme;
@@ -98,7 +83,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
       setSystemTheme(newSystemTheme);
     };
 
-    // Initial check
+    // Initial check on mount
     const initialSystemTheme = mediaQuery.matches ? 'dark' : 'light';
     setSystemTheme(initialSystemTheme);
 

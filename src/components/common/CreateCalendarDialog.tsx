@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PhotoshopPicker, ColorResult } from 'react-color';
 import { getCalendarColorsForHex } from '../../core/calendarRegistry';
 import { generateUniKey } from '../../utils/helpers';
@@ -102,9 +103,11 @@ export const CreateCalendarDialog: React.FC<CreateCalendarDialogProps> = ({
     },
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-sm rounded-lg p-6 shadow-xl bg-background">
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-sm rounded-lg p-6 shadow-xl bg-background animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
           {t('createCalendar')}
         </h2>
@@ -152,7 +155,7 @@ export const CreateCalendarDialog: React.FC<CreateCalendarDialogProps> = ({
               </button>
 
               {showPicker && (
-                <div className="absolute left-0 top-full z-50 mt-2">
+                <div className="absolute left-0 top-full z-[10001] mt-2">
                   <PhotoshopPicker
                     color={selectedColor}
                     onChange={handleColorChange}
@@ -183,6 +186,7 @@ export const CreateCalendarDialog: React.FC<CreateCalendarDialogProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

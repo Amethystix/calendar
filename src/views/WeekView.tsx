@@ -567,7 +567,7 @@ const WeekView: React.FC<WeekViewProps> = ({
 
       {/* Weekday titles */}
       <div className={weekDayHeader}>
-        <div className={isMobile ? 'w-12' : 'w-20'}></div>
+        <div className="w-12 md:w-20 shrink-0"></div>
         {weekDaysLabels.map((day, i) => (
           <div key={i} className={`${weekDayCell} ${isMobile ? 'flex-col gap-0' : ''}`}>
             {isMobile ? (
@@ -595,7 +595,7 @@ const WeekView: React.FC<WeekViewProps> = ({
 
       {/* All-day event area */}
       <div className={allDayRow} ref={allDayRowRef}>
-        <div className={`${allDayLabel} ${isMobile ? 'w-12 text-[10px]' : 'w-20'}`}>{allDayLabelText}</div>
+        <div className={`${allDayLabel} w-12 text-[10px] md:w-20 md:text-xs`}>{allDayLabelText}</div>
         <div
           className={allDayContent}
           style={{ minHeight: `${allDayAreaHeight}px` }}
@@ -699,8 +699,7 @@ const WeekView: React.FC<WeekViewProps> = ({
                   }}
                 >
                   <div
-                    className="flex items-center"
-                    style={{ width: `${TIME_COLUMN_WIDTH}px` }}
+                    className="flex items-center w-12 md:w-20"
                   >
                     <div className="relative w-full flex items-center"></div>
                     <div className={currentTimeLabel}>{formatTime(hours)}</div>
@@ -732,10 +731,10 @@ const WeekView: React.FC<WeekViewProps> = ({
             })()}
 
           {/* Time column */}
-          <div className={`${timeColumn} ${isMobile ? 'w-12' : 'w-20'}`}>
+          <div className={`${timeColumn} w-12 md:w-20`}>
             {timeSlots.map((slot, slotIndex) => (
               <div key={slotIndex} className={timeSlot}>
-                <div className={`${timeLabel} ${isMobile ? 'text-[10px]' : ''}`}>
+                <div className={`${timeLabel} text-[10px] md:text-[12px]`}>
                   {slotIndex === 0 ? '' : slot.label}
                 </div>
               </div>
@@ -772,7 +771,7 @@ const WeekView: React.FC<WeekViewProps> = ({
             {/* Bottom boundary */}
             <div className="h-3 border-t border-gray-200 dark:border-gray-700 flex relative">
               <div className="absolute -top-2.5 -left-9 text-[12px] text-gray-500 dark:text-gray-400">
-                00.00
+                00:00
               </div>
               {weekDaysLabels.map((_, dayIndex) => (
                 <div

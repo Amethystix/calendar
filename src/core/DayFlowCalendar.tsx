@@ -17,8 +17,8 @@ import DefaultCalendarSidebar from '../components/sidebar/DefaultCalendarSidebar
 import DefaultEventDetailDialog from '../components/common/DefaultEventDetailDialog';
 import CalendarHeader from '../components/common/CalendarHeader';
 import { CreateCalendarDialog } from '../components/common/CreateCalendarDialog';
-import SearchDrawer from '../components/common/SearchDrawer';
-import MobileSearchDialog from '../components/common/MobileSearchDialog';
+import SearchDrawer from '../components/search/SearchDrawer';
+import MobileSearchDialog from '../components/search/MobileSearchDialog';
 import { QuickCreateEventPopup } from '../components/common/QuickCreateEventPopup';
 import { MobileEventDrawer } from '../components/mobileEventDrawer';
 import { CalendarSearchProps, CalendarSearchEvent } from '../types/search';
