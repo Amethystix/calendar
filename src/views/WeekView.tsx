@@ -106,6 +106,20 @@ const WeekView: React.FC<WeekViewProps> = ({
 
   // References
   const allDayRowRef = React.useRef<HTMLDivElement>(null);
+  const scrollerRef = React.useRef<HTMLDivElement>(null);
+  const topFrozenContentRef = React.useRef<HTMLDivElement>(null);
+  const leftFrozenContentRef = React.useRef<HTMLDivElement>(null);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollLeft } = e.currentTarget;
+    if (topFrozenContentRef.current) {
+      topFrozenContentRef.current.scrollLeft = scrollLeft;
+    }
+    if (leftFrozenContentRef.current) {
+      leftFrozenContentRef.current.style.transform = `translateY(${-scrollTop}px)`;
+    }
+  };
+
   // Events for the current week
   const currentWeekEvents = useMemo(() => {
     // Calculate the end time of the current week
@@ -153,8 +167,7 @@ const WeekView: React.FC<WeekViewProps> = ({
       );
       if (highlightedEvent && !highlightedEvent.allDay) {
         const startHour = extractHourFromDate(highlightedEvent.start);
-        const scrollContainer =
-          calendarRef.current?.querySelector('.calendar-content');
+        const scrollContainer = scrollerRef.current;
         if (scrollContainer) {
           const top = (startHour - FIRST_HOUR) * HOUR_HEIGHT;
           // Scroll with some padding using requestAnimationFrame for smoother performance
@@ -175,7 +188,6 @@ const WeekView: React.FC<WeekViewProps> = ({
     currentWeekEvents,
     FIRST_HOUR,
     HOUR_HEIGHT,
-    calendarRef,
   ]);
 
   // Analyze multi-day all-day events
@@ -553,6 +565,9 @@ const WeekView: React.FC<WeekViewProps> = ({
     return () => clearInterval(timer);
   }, []);
 
+  const gridWidth = isMobile ? '175%' : '100%';
+  const columnStyle: React.CSSProperties = { flexShrink: 0 };
+
   return (
     <div className={calendarContainer}>
       {/* Header navigation */}
@@ -565,173 +580,143 @@ const WeekView: React.FC<WeekViewProps> = ({
         onToday={() => app.goToToday()}
       />
 
-      {/* Weekday titles */}
-      <div className={weekDayHeader}>
-        <div className="w-12 md:w-20 shrink-0"></div>
-        {weekDaysLabels.map((day, i) => (
-          <div key={i} className={`${weekDayCell} ${isMobile ? 'flex-col gap-0' : ''}`}>
-            {isMobile ? (
-              <>
-                <div className="text-[11px] leading-tight text-gray-500 font-medium">
-                  {mobileWeekDaysLabels[i]}
-                </div>
-                <div className={`${dateNumber} w-7 h-7 text-base font-medium ${weekDates[i].isToday ? miniCalendarToday : ''}`}>
-                  {weekDates[i].date}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="inline-flex items-center justify-center text-sm mt-1 mr-1">
-                  {day}
-                </div>
-                <div className={`${dateNumber} ${weekDates[i].isToday ? miniCalendarToday : ''}`}>
-                  {weekDates[i].date}
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+      {/* Top Frozen Row (Header + All Day) */}
+      <div className="flex flex-none border-b border-gray-200 dark:border-gray-700 relative z-10">
+        {/* Top Frozen Content */}
+        <div ref={topFrozenContentRef} className="flex-1 overflow-hidden relative">
+          <div className="flex flex-col" style={{ width: gridWidth === '100%' ? '100%' : `calc(1.75 * (100% - ${isMobile ? 48 : 80}px) + ${isMobile ? 48 : 80}px)`, minWidth: '100%' }}>
+            {/* Weekday titles row */}
+            <div className="flex">
+              {/* Header Spacer */}
+              <div className="w-12 md:w-20 shrink-0 border-b border-gray-200 dark:border-gray-700 sticky left-0 bg-white dark:bg-gray-900 z-20"></div>
+              {/* Weekday titles */}
+              <div className={`${weekDayHeader} flex-1`}>
+                {weekDaysLabels.map((day, i) => (
+                  <div
+                    key={i}
+                    className={`${weekDayCell} ${isMobile ? 'flex-col gap-0' : ''}`}
+                    style={columnStyle}
+                  >
+                    {isMobile ? (
+                      <>
+                        <div className="text-[11px] leading-tight text-gray-500 font-medium">
+                          {mobileWeekDaysLabels[i]}
+                        </div>
+                        <div className={`${dateNumber} w-7 h-7 text-base font-medium ${weekDates[i].isToday ? miniCalendarToday : ''}`}>
+                          {weekDates[i].date}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="inline-flex items-center justify-center text-sm mt-1 mr-1">
+                          {day}
+                        </div>
+                        <div className={`${dateNumber} ${weekDates[i].isToday ? miniCalendarToday : ''}`}>
+                          {weekDates[i].date}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-      {/* All-day event area */}
-      <div className={allDayRow} ref={allDayRowRef}>
-        <div className={`${allDayLabel} w-12 text-[10px] md:w-20 md:text-xs`}>{allDayLabelText}</div>
-        <div
-          className={allDayContent}
-          style={{ minHeight: `${allDayAreaHeight}px` }}
-        >
-          {weekDaysLabels.map((_, dayIndex) => {
-            const dropDate = new Date(currentWeekStart);
-            dropDate.setDate(currentWeekStart.getDate() + dayIndex);
-            return (
-              <div
-                key={`allday-${dayIndex}`}
-                className={`${allDayCell} ${dayIndex === weekDaysLabels.length - 1 ? 'border-r-0' : ''}`}
-                style={{ minHeight: `${allDayAreaHeight}px` }}
-                onDoubleClick={e => handleCreateAllDayEvent?.(e, dayIndex)}
-                onDragOver={handleDragOver}
-                onDrop={e => {
-                  handleDrop(e, dropDate, undefined, true);
-                }}
-              />
-            );
-          })}
+            {/* All-day event area row */}
+            <div className="flex" style={{
+              marginRight: `${isMobile ? 0 : 11}px`,
+            }}>
+              {/* All Day Label */}
+              <div className="w-12 md:w-20 shrink-0 flex items-center justify-end p-1 text-[10px] md:text-xs font-medium text-gray-500 dark:text-gray-400 select-none bg-white dark:bg-gray-900 sticky left-0 z-20">
+                {allDayLabelText}
+              </div>
 
-          {/* Multi-day event overlay */}
-          <div className="absolute inset-0 pointer-events-none">
-            {organizedAllDaySegments.map(segment => (
-              <CalendarEvent
-                key={segment.id}
-                event={segment.event}
-                segment={segment}
-                segmentIndex={segment.row}
-                isAllDay={true}
-                isMultiDay={true}
-                allDayHeight={ALL_DAY_HEIGHT}
-                calendarRef={calendarRef}
-                isBeingDragged={
-                  isDragging &&
-                  (dragState as WeekDayDragState)?.eventId ===
-                  segment.event.id &&
-                  (dragState as WeekDayDragState)?.mode === 'move'
-                }
-                hourHeight={HOUR_HEIGHT}
-                firstHour={FIRST_HOUR}
-                onMoveStart={handleMoveStart}
-                onResizeStart={handleResizeStart}
-                onEventUpdate={handleEventUpdate}
-                onEventDelete={handleEventDelete}
-                newlyCreatedEventId={newlyCreatedEventId}
-                onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
-                selectedEventId={selectedEventId}
-                detailPanelEventId={detailPanelEventId}
-                onEventSelect={(eventId: string | null) => {
-                  const isViewable = app.getReadOnlyConfig().viewable !== false;
-                  const isReadOnly = app.state.readOnly;
-                  if (isMobile && eventId && isViewable && !isReadOnly) {
-                    const evt = events.find(e => e.id === eventId);
-                    if (evt) {
-                      setDraftEvent(evt);
-                      setIsDrawerOpen(true);
-                      return;
-                    }
-                  }
-                  setSelectedEventId(eventId);
-                }}
-                onEventLongPress={(eventId: string) => {
-                  if (isMobile) setSelectedEventId(eventId);
-                }}
-                onDetailPanelToggle={(eventId: string | null) =>
-                  setDetailPanelEventId(eventId)
-                }
-                customDetailPanelContent={customDetailPanelContent}
-                customEventDetailDialog={customEventDetailDialog}
-                app={app}
-                isMobile={isMobile}
-              />
-            ))}
+              <div className={`${allDayRow} border-none flex-1`} ref={allDayRowRef} style={{ minHeight: `${allDayAreaHeight}px` }}>
+                <div className={allDayContent} style={{ minHeight: `${allDayAreaHeight}px` }}>
+                  {weekDaysLabels.map((_, dayIndex) => {
+                    const dropDate = new Date(currentWeekStart);
+                    dropDate.setDate(currentWeekStart.getDate() + dayIndex);
+                    return (
+                      <div
+                        key={`allday-${dayIndex}`}
+                        className={`${allDayCell}`}
+                        style={{ minHeight: `${allDayAreaHeight}px`, ...columnStyle }}
+                        onDoubleClick={e => handleCreateAllDayEvent?.(e, dayIndex)}
+                        onDragOver={handleDragOver}
+                        onDrop={e => {
+                          handleDrop(e, dropDate, undefined, true);
+                        }}
+                      />
+                    );
+                  })}
+
+                  {/* Multi-day event overlay */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {organizedAllDaySegments.map(segment => {
+                      return (
+                        <CalendarEvent
+                          key={segment.id}
+                          event={segment.event}
+                          segment={segment}
+                          segmentIndex={segment.row}
+                          isAllDay={true}
+                          isMultiDay={true}
+                          allDayHeight={ALL_DAY_HEIGHT}
+                          calendarRef={calendarRef}
+                          isBeingDragged={
+                            isDragging &&
+                            (dragState as WeekDayDragState)?.eventId ===
+                            segment.event.id &&
+                            (dragState as WeekDayDragState)?.mode === 'move'
+                          }
+                          hourHeight={HOUR_HEIGHT}
+                          firstHour={FIRST_HOUR}
+                          onMoveStart={handleMoveStart}
+                          onResizeStart={handleResizeStart}
+                          onEventUpdate={handleEventUpdate}
+                          onEventDelete={handleEventDelete}
+                          newlyCreatedEventId={newlyCreatedEventId}
+                          onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
+                          selectedEventId={selectedEventId}
+                          detailPanelEventId={detailPanelEventId}
+                          onEventSelect={(eventId: string | null) => {
+                            const isViewable = app.getReadOnlyConfig().viewable !== false;
+                            const isReadOnly = app.state.readOnly;
+                            if (isMobile && eventId && isViewable && !isReadOnly) {
+                              const evt = events.find(e => e.id === eventId);
+                              if (evt) {
+                                setDraftEvent(evt);
+                                setIsDrawerOpen(true);
+                                return;
+                              }
+                            }
+                            setSelectedEventId(eventId);
+                          }}
+                          onEventLongPress={(eventId: string) => {
+                            if (isMobile) setSelectedEventId(eventId);
+                          }}
+                          onDetailPanelToggle={(eventId: string | null) =>
+                            setDetailPanelEventId(eventId)
+                          }
+                          customDetailPanelContent={customDetailPanelContent}
+                          customEventDetailDialog={customEventDetailDialog}
+                          app={app}
+                          isMobile={isMobile}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Time grid and event area */}
-      <div className={calendarContent} style={{ position: 'relative' }}>
-        <div className="relative flex">
-          {/* Current time line */}
-          {isCurrentWeek && currentTime &&
-            (() => {
-              const now = currentTime;
-              const hours = now.getHours() + now.getMinutes() / 60;
-              if (hours < FIRST_HOUR || hours > LAST_HOUR) return null;
-
-              const jsDay = now.getDay();
-              const todayIndex = jsDay === 0 ? 6 : jsDay - 1;
-              const topPx = (hours - FIRST_HOUR) * HOUR_HEIGHT;
-
-              return (
-                <div
-                  className={currentTimeLine}
-                  style={{
-                    top: `${topPx}px`,
-                    width: '100%',
-                    height: 0,
-                    zIndex: 20,
-                  }}
-                >
-                  <div
-                    className="flex items-center w-12 md:w-20"
-                  >
-                    <div className="relative w-full flex items-center"></div>
-                    <div className={currentTimeLabel}>{formatTime(hours)}</div>
-                  </div>
-
-                  <div className="flex flex-1">
-                    {weekDaysLabels.map((_, idx) => (
-                      <div key={idx} className="flex-1 flex items-center">
-                        <div
-                          className={`h-0.5 w-full relative ${idx === todayIndex
-                            ? 'bg-primary'
-                            : 'bg-primary/30'
-                            }`} style={{
-                              zIndex: 9999,
-                            }}
-                        >
-                          {idx === todayIndex && todayIndex !== 0 && (
-                            <div
-                              className="absolute w-2 h-2 bg-primary rounded-full"
-                              style={{ top: '-3px', left: '-4px' }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-
-          {/* Time column */}
-          <div className={`${timeColumn} w-12 md:w-20`}>
+      {/* Main Body (Left Column + Scroller) */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Left Frozen Column */}
+        <div className="w-12 md:w-20 shrink-0 overflow-hidden relative bg-white dark:bg-gray-900 z-10">
+          <div ref={leftFrozenContentRef}>
             {timeSlots.map((slot, slotIndex) => (
               <div key={slotIndex} className={timeSlot}>
                 <div className={`${timeLabel} text-[10px] md:text-[12px]`}>
@@ -739,146 +724,219 @@ const WeekView: React.FC<WeekViewProps> = ({
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Time grid */}
-          <div className="grow relative">
-            {timeSlots.map((slot, slotIndex) => (
-              <div key={slotIndex} className={timeGridRow}>
-                {weekDaysLabels.map((_, dayIndex) => {
-                  const dropDate = new Date(currentWeekStart);
-                  dropDate.setDate(currentWeekStart.getDate() + dayIndex);
-                  return (
-                    <div
-                      key={`${slotIndex}-${dayIndex}`}
-                      className={`${timeGridCell} ${dayIndex === weekDaysLabels.length - 1 ? 'border-r-0' : ''}`}
-                      onDoubleClick={e => {
-                        handleCreateStart?.(e, dayIndex, slot.hour);
-                      }}
-                      onTouchStart={e => handleTouchStart(e, dayIndex, slot.hour)}
-                      onTouchEnd={handleTouchEnd}
-                      onTouchMove={handleTouchMove}
-                      onDragOver={handleDragOver}
-                      onDrop={e => {
-                        handleDrop(e, dropDate, slot.hour);
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-
-            {/* Bottom boundary */}
-            <div className="h-3 border-t border-gray-200 dark:border-gray-700 flex relative">
-              <div className="absolute -top-2.5 -left-9 text-[12px] text-gray-500 dark:text-gray-400">
-                00:00
-              </div>
-              {weekDaysLabels.map((_, dayIndex) => (
-                <div
-                  key={`24-${dayIndex}`}
-                  className={`flex-1 relative ${dayIndex === weekDaysLabels.length - 1 ? '' : 'border-r'} border-gray-200 dark:border-gray-700`}
-                />
-              ))}
+            <div className="relative">
+              <div className={`${timeLabel} text-[10px] md:text-[12px]`}>00:00</div>
             </div>
+            {/* Current Time Label */}
+            {isCurrentWeek && currentTime &&
+              (() => {
+                const now = currentTime;
+                const hours = now.getHours() + now.getMinutes() / 60;
+                if (hours < FIRST_HOUR || hours > LAST_HOUR) return null;
 
-            {/* Event layer */}
-            {weekDaysLabels.map((_, dayIndex) => {
-              // Collect all event segments for this day (including segments of multi-day events)
-              const dayEvents = getEventsForDay(dayIndex, currentWeekEvents);
-              const allEventSegments: Array<{
-                event: Event;
-                segmentInfo?: { startHour: number; endHour: number; isFirst: boolean; isLast: boolean; dayIndex?: number };
-              }> = [];
+                const topPx = (hours - FIRST_HOUR) * HOUR_HEIGHT;
 
-              // Add regular events starting on this day
-              dayEvents.forEach(event => {
-                const segments = analyzeMultiDayRegularEvent(event, currentWeekStart);
-                if (segments.length > 0) {
-                  // Multi-day event: Add the segment for this day
-                  const segment = segments.find(s => s.dayIndex === dayIndex);
-                  if (segment) {
-                    allEventSegments.push({ event, segmentInfo: { ...segment, dayIndex } });
-                  }
-                } else {
-                  // Single-day event
-                  allEventSegments.push({ event });
-                }
-              });
+                return (
+                  <div
+                    className="absolute left-0 w-full z-20 pointer-events-none flex items-center justify-end"
+                    style={{ top: `${topPx}px`, transform: 'translateY(-50%)' }}
+                  >
+                    <div className={currentTimeLabel}>{formatTime(hours)}</div>
+                  </div>
+                );
+              })()}
+          </div>
+        </div>
 
-              // Add segments of events starting on other days but spanning to this day
-              currentWeekEvents.forEach(event => {
-                if (event.allDay || event.day === dayIndex) return;
-                const segments = analyzeMultiDayRegularEvent(event, currentWeekStart);
-                const segment = segments.find(s => s.dayIndex === dayIndex);
-                if (segment) {
-                  allEventSegments.push({ event, segmentInfo: { ...segment, dayIndex } });
-                }
-              });
+        {/* Scroller */}
+        <div ref={scrollerRef} className="flex-1 overflow-auto relative calendar-content snap-x snap-mandatory" onScroll={handleScroll}>
+          <div className="relative flex" style={{ width: gridWidth, minWidth: '100%' }}>
+            {/* Current time line */}
+            {isCurrentWeek && currentTime &&
+              (() => {
+                const now = currentTime;
+                const hours = now.getHours() + now.getMinutes() / 60;
+                if (hours < FIRST_HOUR || hours > LAST_HOUR) return null;
 
-              return (
-                <div
-                  key={`events-day-${dayIndex}`}
-                  className="absolute top-0 pointer-events-none"
-                  style={{
-                    left: `calc(${(100 / 7) * dayIndex}%)`,
-                    width: `${100 / 7}%`,
-                    height: '100%',
-                  }}
-                >
-                  {allEventSegments.map(({ event, segmentInfo }) => {
-                    const dayLayouts = eventLayouts.get(dayIndex);
-                    const eventLayout = dayLayouts?.get(event.id);
+                const jsDay = now.getDay();
+                const todayIndex = jsDay === 0 ? 6 : jsDay - 1;
+                const topPx = (hours - FIRST_HOUR) * HOUR_HEIGHT;
 
+                return (
+                  <div
+                    className={currentTimeLine}
+                    style={{
+                      top: `${topPx}px`,
+                      width: '100%',
+                      height: 0,
+                      zIndex: 20,
+                    }}
+                  >
+                    <div
+                      className="flex items-center w-0"
+                    >
+                      {/* Empty left part since it is in frozen column now */}
+                    </div>
+
+                    <div className="flex flex-1">
+                      {weekDaysLabels.map((_, idx) => (
+                        <div key={idx} className="flex-1 flex items-center" >
+                          <div
+                            className={`h-0.5 w-full relative ${idx === todayIndex
+                              ? 'bg-primary'
+                              : 'bg-primary/30'
+                              }`} style={{
+                                zIndex: 9999,
+                              }}
+                          >
+                            {idx === todayIndex && todayIndex !== 0 && (
+                              <div
+                                className="absolute w-2 h-2 bg-primary rounded-full"
+                                style={{ top: '-3px', left: '-4px' }}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+            {/* Time Grid */}
+            <div className="grow relative">
+              {timeSlots.map((slot, slotIndex) => (
+                <div key={slotIndex} className={timeGridRow}>
+                  {weekDaysLabels.map((_, dayIndex) => {
+                    const dropDate = new Date(currentWeekStart);
+                    dropDate.setDate(currentWeekStart.getDate() + dayIndex);
                     return (
-                      <CalendarEvent
-                        key={segmentInfo ? `${event.id}-seg-${dayIndex}` : event.id}
-                        event={event}
-                        layout={eventLayout}
-                        calendarRef={calendarRef}
-                        isBeingDragged={
-                          isDragging &&
-                          (dragState as WeekDayDragState)?.eventId === event.id &&
-                          (dragState as WeekDayDragState)?.mode === 'move'
-                        }
-                        hourHeight={HOUR_HEIGHT}
-                        firstHour={FIRST_HOUR}
-                        onMoveStart={handleMoveStart}
-                        onResizeStart={handleResizeStart}
-                        onEventUpdate={handleEventUpdate}
-                        onEventDelete={handleEventDelete}
-                        newlyCreatedEventId={newlyCreatedEventId}
-                        onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
-                        selectedEventId={selectedEventId}
-                        detailPanelEventId={detailPanelEventId}
-                        onEventSelect={(eventId: string | null) => {
-                          const isViewable = app.getReadOnlyConfig().viewable !== false;
-                          if (isMobile && eventId && isViewable) {
-                            const evt = events.find(e => e.id === eventId);
-                            if (evt) {
-                              setDraftEvent(evt);
-                              setIsDrawerOpen(true);
-                              return;
-                            }
-                          }
-                          setSelectedEventId(eventId);
+                      <div
+                        key={`${slotIndex}-${dayIndex}`}
+                        className={`${timeGridCell} snap-start`}
+                        style={columnStyle}
+                        onDoubleClick={e => {
+                          handleCreateStart?.(e, dayIndex, slot.hour);
                         }}
-                        onEventLongPress={(eventId: string) => {
-                          if (isMobile) setSelectedEventId(eventId);
+                        onTouchStart={e => handleTouchStart(e, dayIndex, slot.hour)}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchMove={handleTouchMove}
+                        onDragOver={handleDragOver}
+                        onDrop={e => {
+                          handleDrop(e, dropDate, slot.hour);
                         }}
-                        onDetailPanelToggle={(eventId: string | null) =>
-                          setDetailPanelEventId(eventId)
-                        }
-                        customDetailPanelContent={customDetailPanelContent}
-                        customEventDetailDialog={customEventDetailDialog}
-                        multiDaySegmentInfo={segmentInfo}
-                        app={app}
-                        isMobile={isMobile}
                       />
                     );
                   })}
                 </div>
-              );
-            })}
+              ))}
+
+              {/* Bottom boundary */}
+              <div className="h-3 border-t border-gray-200 dark:border-gray-700 flex relative">
+                {weekDaysLabels.map((_, dayIndex) => (
+                  <div
+                    key={`24-${dayIndex}`}
+                    className={`flex-1 relative ${dayIndex === weekDaysLabels.length - 1 ? '' : 'border-r'} border-gray-200 dark:border-gray-700`}
+                    style={columnStyle}
+                  />
+                ))}
+              </div>
+
+              {/* Event layer */}
+              {weekDaysLabels.map((_, dayIndex) => {
+                // Collect all event segments for this day
+                const dayEvents = getEventsForDay(dayIndex, currentWeekEvents);
+                const allEventSegments: Array<{
+                  event: Event;
+                  segmentInfo?: { startHour: number; endHour: number; isFirst: boolean; isLast: boolean; dayIndex?: number };
+                }> = [];
+
+                dayEvents.forEach(event => {
+                  const segments = analyzeMultiDayRegularEvent(event, currentWeekStart);
+                  if (segments.length > 0) {
+                    const segment = segments.find(s => s.dayIndex === dayIndex);
+                    if (segment) {
+                      allEventSegments.push({ event, segmentInfo: { ...segment, dayIndex } });
+                    }
+                  } else {
+                    allEventSegments.push({ event });
+                  }
+                });
+
+                currentWeekEvents.forEach(event => {
+                  if (event.allDay || event.day === dayIndex) return;
+                  const segments = analyzeMultiDayRegularEvent(event, currentWeekStart);
+                  const segment = segments.find(s => s.dayIndex === dayIndex);
+                  if (segment) {
+                    allEventSegments.push({ event, segmentInfo: { ...segment, dayIndex } });
+                  }
+                });
+
+                return (
+                  <div
+                    key={`events-day-${dayIndex}`}
+                    className="absolute top-0 pointer-events-none"
+                    style={{
+                      left: `calc(${(100 / 7) * dayIndex}%)`,
+                      width: `${100 / 7}%`,
+                      height: '100%',
+                    }}
+                  >
+                    {allEventSegments.map(({ event, segmentInfo }) => {
+                      const dayLayouts = eventLayouts.get(dayIndex);
+                      const eventLayout = dayLayouts?.get(event.id);
+
+                      return (
+                        <CalendarEvent
+                          key={segmentInfo ? `${event.id}-seg-${dayIndex}` : event.id}
+                          event={event}
+                          layout={eventLayout}
+                          calendarRef={calendarRef}
+                          isBeingDragged={
+                            isDragging &&
+                            (dragState as WeekDayDragState)?.eventId === event.id &&
+                            (dragState as WeekDayDragState)?.mode === 'move'
+                          }
+                          hourHeight={HOUR_HEIGHT}
+                          firstHour={FIRST_HOUR}
+                          onMoveStart={handleMoveStart}
+                          onResizeStart={handleResizeStart}
+                          onEventUpdate={handleEventUpdate}
+                          onEventDelete={handleEventDelete}
+                          newlyCreatedEventId={newlyCreatedEventId}
+                          onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
+                          selectedEventId={selectedEventId}
+                          detailPanelEventId={detailPanelEventId}
+                          onEventSelect={(eventId: string | null) => {
+                            const isViewable = app.getReadOnlyConfig().viewable !== false;
+                            if (isMobile && eventId && isViewable) {
+                              const evt = events.find(e => e.id === eventId);
+                              if (evt) {
+                                setDraftEvent(evt);
+                                setIsDrawerOpen(true);
+                                return;
+                              }
+                            }
+                            setSelectedEventId(eventId);
+                          }}
+                          onEventLongPress={(eventId: string) => {
+                            if (isMobile) setSelectedEventId(eventId);
+                          }}
+                          onDetailPanelToggle={(eventId: string | null) =>
+                            setDetailPanelEventId(eventId)
+                          }
+                          customDetailPanelContent={customDetailPanelContent}
+                          customEventDetailDialog={customEventDetailDialog}
+                          multiDaySegmentInfo={segmentInfo}
+                          app={app}
+                          isMobile={isMobile}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
