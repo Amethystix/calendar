@@ -56,7 +56,6 @@ const DefaultCalendarExample: React.FC<DefaultCalendarExampleProps> = ({ useCust
     defaultView: ViewType.MONTH,
     theme: { mode: 'auto' as const },
     // switcherMode: 'select' as const,
-    locale: zh,
     useSidebar: window.innerWidth < 768 ? false : true,
     // readOnly: true,
     callbacks: {

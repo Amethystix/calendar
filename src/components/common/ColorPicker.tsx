@@ -89,7 +89,8 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   };
 
   // Handle color selection
-  const handleSelect = (optionValue: string) => {
+  const handleSelect = (e: React.MouseEvent, optionValue: string) => {
+    e.stopPropagation();
     onChange(optionValue);
     setIsOpen(false);
   };
@@ -110,7 +111,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
             <div
               key={opt.value}
               className={`flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${opt.value === value ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
-              onClick={() => handleSelect(opt.value)}
+              onClick={(e) => handleSelect(e, opt.value)}
             >
               <div className="flex items-center flex-1 min-w-0 mr-3">
                 <div className="w-5 flex justify-center mr-2">
@@ -140,7 +141,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
             key={opt.value}
             className={`flex items-center px-2 py-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${value === opt.value ? 'font-semibold' : ''
               }`}
-            onClick={() => handleSelect(opt.value)}
+            onClick={(e) => handleSelect(e, opt.value)}
           >
             {value === opt.value ? <span className="mr-2 text-sm text-primary">
               <Check width={12} height={12} />
@@ -162,7 +163,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
       <div className="relative inline-block" ref={pickerRef}>
         <button
           ref={triggerRef}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
           className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-1.5 transition-colors"
         >
           <span
@@ -182,7 +186,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
         className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors h-8"
       >
         <span
