@@ -13,7 +13,7 @@ Use the interactive sample below to compare both modes with identical data and c
 
 ## Quick Start
 
-```tsx copy
+```tsx copy {9}
 import {
   useCalendarApp,
   DayFlowCalendar,
@@ -22,7 +22,7 @@ import {
 
 const calendar = useCalendarApp({
   views: [createMonthView()],
-  switcherMode: 'select',
+  switcherMode: 'select', // default switcherMode: 'buttons'
 });
 
 <DayFlowCalendar calendar={calendar} />;

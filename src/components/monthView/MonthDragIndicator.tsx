@@ -1,7 +1,8 @@
 import React from 'react';
-import { Event } from '@/types';
+import { Event } from '../../types';
 import { Calendar } from 'lucide-react';
-import { daysDifference } from '@/utils';
+import { daysDifference } from '../../utils';
+import { useLocale } from '@/locale';
 
 interface MonthDragIndicatorProps {
   event: Event;
@@ -19,10 +20,11 @@ const MonthDragIndicatorComponent: React.FC<MonthDragIndicatorProps> = ({
   startDate,
   endDate,
 }) => {
+  const { t } = useLocale();
   const getDisplayContent = () => {
     if (isCreating) {
       return {
-        title: 'New Event',
+        title: t('newEvent'),
         icon: <Calendar className="h-3 w-3" />,
         showDateRange: false,
       };
@@ -49,7 +51,7 @@ const MonthDragIndicatorComponent: React.FC<MonthDragIndicatorProps> = ({
 
   return (
     <div className="flex items-center space-x-2 text-white text-xs font-medium rounded-sm">
-      <div className="flex-shrink-0">{content.icon}</div>
+      <div className="shrink-0">{content.icon}</div>
       <div className="flex-1 min-w-0">
         <div className="truncate font-medium">{content.title}</div>
       </div>

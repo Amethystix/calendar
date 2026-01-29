@@ -1,5 +1,5 @@
-import { CalendarConfig } from '@/types';
-import { getLineColor as resolveLineColor } from '@/utils/colorUtils';
+import { CalendarConfig } from '../types';
+import { getLineColor as resolveLineColor } from '../utils/colorUtils';
 
 export const defaultDragConfig = {
   HOUR_HEIGHT: 72,

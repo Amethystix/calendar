@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import ReactDOM from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
-import { isPlainDate } from '@/utils/temporal';
+import { isPlainDate } from '../../utils/temporal';
 import {
   mergeFormatTemplate,
   buildParseRegExp,
@@ -15,56 +15,12 @@ import {
   getZoneId,
   normalizeToZoned,
   formatTemporal,
-  pad,
-} from '@/utils/rangePicker';
-import { MoveRight, ChevronsRight, ChevronRight, ChevronLeft, ChevronsLeft } from 'lucide-react';
-
-type ZonedRange = [Temporal.ZonedDateTime, Temporal.ZonedDateTime];
-
-export interface RangePickerProps {
-  value: [
-    Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime,
-    Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime
-  ];
-  format?: string;
-  showTimeFormat?: string;
-  showTime?: boolean | { format?: string };
-  onChange?: (value: ZonedRange, dateString: [string, string]) => void;
-  onOk?: (value: ZonedRange, dateString: [string, string]) => void;
-  timeZone?: string;
-  disabled?: boolean;
-  placement?: 'bottomLeft' | 'bottomRight' | 'topLeft' | 'topRight';
-  autoAdjustOverflow?: boolean;
-  getPopupContainer?: () => HTMLElement;
-  matchTriggerWidth?: boolean;
-}
-
-const DEFAULT_FORMAT = 'YYYY-MM-DD HH:mm';
-const DEFAULT_TIME_FORMAT = 'HH:mm';
-const HOURS = Array.from({ length: 24 }, (_, index) => index);
-const MINUTES = Array.from({ length: 60 }, (_, index) => index);
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-
-const compareDates = (
-  a: Temporal.PlainDate,
-  b: Temporal.PlainDate
-): number => {
-  return Temporal.PlainDate.compare(a, b);
-};
+} from '../../utils/rangePicker';
+import { MoveRight } from 'lucide-react';
+import { getMonthLabels, getWeekDaysLabels } from '@/locale';
+import { RangePickerProps, ZonedRange } from './types';
+import { DEFAULT_FORMAT, DEFAULT_TIME_FORMAT } from './constants';
+import RangePickerPanel from './components/RangePickerPanel';
 
 const RangePicker: React.FC<RangePickerProps> = ({
   value,
@@ -79,12 +35,25 @@ const RangePicker: React.FC<RangePickerProps> = ({
   autoAdjustOverflow = true,
   getPopupContainer,
   matchTriggerWidth = false,
+  locale = 'en-US',
 }) => {
+  const localeCode = useMemo(() => {
+    return typeof locale === 'string' ? locale : locale?.code || 'en-US';
+  }, [locale]);
+
   const isTimeEnabled = useMemo(() => {
     if (showTime === undefined) return true;
     if (typeof showTime === 'object') return true;
     return Boolean(showTime);
   }, [showTime]);
+
+  const monthLabels = useMemo(() => {
+    return getMonthLabels(localeCode, 'short');
+  }, [localeCode]);
+
+  const weekDayLabels = useMemo(() => {
+    return getWeekDaysLabels(localeCode, 'narrow');
+  }, [localeCode]);
 
   const effectiveTimeFormat = useMemo(() => {
     if (!isTimeEnabled) {
@@ -272,7 +241,7 @@ const RangePicker: React.FC<RangePickerProps> = ({
         return;
       }
 
-      const closestPopup = target.closest('[data-rangepicker-popup]');
+      const closestPopup = target.closest('[data-range-picker-popup]');
       if (closestPopup) {
         return;
       }
@@ -632,130 +601,6 @@ const RangePicker: React.FC<RangePickerProps> = ({
     );
   }, [visibleMonth]);
 
-  const startDate = draftRange[0].toPlainDate();
-  const endDate = draftRange[1].toPlainDate();
-
-  const renderDayCell = (day: Temporal.PlainDate) => {
-    const isOutsideMonth = day.month !== visibleMonth.month;
-    const isStart = compareDates(day, startDate) === 0;
-    const isEnd = compareDates(day, endDate) === 0;
-    const isInRange =
-      compareDates(day, startDate) >= 0 && compareDates(day, endDate) <= 0;
-
-    const baseClasses =
-      'flex h-9 w-9 items-center justify-center rounded-md text-sm transition';
-
-    const stateClass = (() => {
-      if (isStart || isEnd) {
-        return 'bg-blue-500 text-white font-semibold';
-      }
-      if (isInRange) {
-        return 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300';
-      }
-      if (isOutsideMonth) {
-        return 'text-slate-300 dark:text-gray-600';
-      }
-      return 'text-slate-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-300';
-    })();
-
-    return (
-      <button
-        key={day.toString()}
-        type="button"
-        disabled={disabled}
-        onClick={() => handleDaySelect(day)}
-        className={`${baseClasses} ${stateClass}`}
-      >
-        {day.day}
-      </button>
-    );
-  };
-
-  const renderTimeSelectors = () => {
-    // Always show the time selector for the current focusedField
-    const field = focusedField;
-    const index = field === 'start' ? 0 : 1;
-    const current = draftRange[index];
-    const currentMinute = current.minute;
-    const minuteOptions = MINUTES.includes(currentMinute)
-      ? MINUTES
-      : [...MINUTES, currentMinute].sort((a, b) => a - b);
-
-    return (
-      <div className="flex flex-col rounded-xl border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm sm:w-28">
-        <div className="flex border-b border-slate-100 dark:border-gray-600 justify-center">
-          <div className='text-lg py-1 text-slate-700 dark:text-gray-300'>{current.hour.toString().padStart(2, '0')}:{current.minute.toString().padStart(2, '0')}</div>
-        </div>
-
-        {/* Hour and Minute Selectors */}
-        <div className="flex p-1">
-          <div className="w-14">
-            <div
-              className="h-72 overflow-y-auto rounded-md border border-slate-100 dark:border-gray-600 bg-white dark:bg-gray-700"
-              role="listbox"
-              aria-label="Hour"
-              ref={element => {
-                timeListRefs.current[field].hour = element;
-              }}
-            >
-              {HOURS.map(hour => {
-                const isActive = hour === current.hour;
-                return (
-                  <button
-                    key={hour}
-                    type="button"
-                    role="option"
-                    aria-selected={isActive}
-                    disabled={disabled}
-                    onClick={() => handleHourSelect(field, hour)}
-                    className={`flex h-8 w-full items-center justify-center text-sm transition ${isActive
-                      ? 'bg-blue-500 text-white font-semibold'
-                      : 'text-slate-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-300'
-                      }`}
-                    data-active={isActive ? 'true' : undefined}
-                  >
-                    {pad(hour)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="w-14">
-            <div
-              className="h-72 overflow-y-auto rounded-md border border-slate-100 dark:border-gray-600 bg-white dark:bg-gray-700"
-              role="listbox"
-              aria-label="Minute"
-              ref={element => {
-                timeListRefs.current[field].minute = element;
-              }}
-            >
-              {minuteOptions.map(minute => {
-                const isActive = minute === currentMinute;
-                return (
-                  <button
-                    key={minute}
-                    type="button"
-                    role="option"
-                    aria-selected={isActive}
-                    disabled={disabled}
-                    onClick={() => handleMinuteSelect(field, minute)}
-                    className={`flex h-8 w-full items-center justify-center text-sm transition ${isActive
-                      ? 'bg-blue-500 text-white font-semibold'
-                      : 'text-slate-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-300'
-                      }`}
-                    data-active={isActive ? 'true' : undefined}
-                  >
-                    {pad(minute)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const calculateOptimalPlacement = useCallback(
     (basePlacement: typeof placement = placement): typeof placement => {
       if (!autoAdjustOverflow || !containerRef.current) {
@@ -876,101 +721,14 @@ const RangePicker: React.FC<RangePickerProps> = ({
     return style;
   };
 
-  const panel = (
-    <div
-      ref={popupRef}
-      style={getPopupStyle()}
-      data-rangepicker-popup="true"
-    >
-      <div
-        className="space-y-3 rounded-xl border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-3"
-        style={{
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-          width: matchTriggerWidth ? '100%' : undefined,
-        }}
-      >
-        <div className="flex gap-1">
-          <div className="flex-3 rounded-xl border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm w-full">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-gray-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-gray-300">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => changeYear(-1)}
-                  className="rounded-md px-2 py-1 text-slate-400 dark:text-gray-400 transition hover:text-slate-600 dark:hover:text-gray-200 disabled:opacity-40"
-                >
-                  <ChevronsLeft width={14} height={12} />
-                </button>
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => changeMonth(-1)}
-                  className="rounded-md px-2 py-1 text-slate-400 dark:text-gray-400 transition hover:text-slate-600 dark:hover:text-gray-200 disabled:opacity-40"
-                >
-                  <ChevronLeft width={14} height={12} />
-                </button>
-              </div>
-              <div className="text-sm font-semibold text-slate-700 dark:text-gray-300">
-                {MONTHS[visibleMonth.month - 1]} {visibleMonth.year}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => changeMonth(1)}
-                  className="rounded-md px-2 py-1 text-slate-400 dark:text-gray-400 transition hover:text-slate-600 dark:hover:text-gray-200 disabled:opacity-40"
-                >
-                  <ChevronRight width={14} height={12} />
-                </button>
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => changeYear(1)}
-                  className="rounded-md px-2 py-1 text-slate-400 dark:text-gray-400 transition hover:text-slate-600 dark:hover:text-gray-200 disabled:opacity-40"
-                >
-                  <ChevronsRight width={14} height={12} />
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-7 gap-1 px-3 pb-3 pt-2 text-center text-[11px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
-              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                <span key={day}>{day}</span>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-2 px-1 ">
-              {calendarDays.map(renderDayCell)}
-            </div>
-          </div>
-
-          {isTimeEnabled && (
-            <div className="flex flex-1 justify-end sm:w-32">
-              {renderTimeSelectors()}
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={handleOk}
-            disabled={disabled}
-            className="inline-flex items-center rounded-full bg-blue-500 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
-            OK
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="relative max-w-[400px]" ref={containerRef}>
+    <div className="relative max-w-100" ref={containerRef}>
       <div
         className={`flex items-center gap-2 rounded-lg border text-sm shadow-sm transition ${disabled
           ? 'cursor-not-allowed border-slate-200 dark:border-gray-600 bg-slate-50 dark:bg-gray-800 text-slate-400 dark:text-gray-500'
           : isOpen
-            ? 'border-blue-500 bg-white dark:bg-gray-700 shadow-md'
-            : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-500'
+            ? 'border-primary bg-white dark:bg-gray-700 shadow-md'
+            : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700'
           }`}
       >
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -982,11 +740,11 @@ const RangePicker: React.FC<RangePickerProps> = ({
             onClick={() => openPanelForField('start')}
             onBlur={handleInputBlur('start')}
             onKeyDown={handleInputKeyDown('start')}
-            className={`w-full rounded-md border px-2 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-0 ${disabled
+            className={`w-full rounded-md border px-2 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 ${disabled
               ? 'cursor-not-allowed border-transparent bg-transparent text-slate-400 dark:text-gray-500'
               : focusedField === 'start' && isOpen
-                ? ' bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400'
-                : 'border-transparent bg-transparent text-slate-700 dark:text-gray-300 hover:border-blue-200 dark:hover:border-blue-400'
+                ? ' bg-white dark:bg-gray-700 text-primary'
+                : 'border-transparent bg-transparent text-slate-700 dark:text-gray-300'
               }`}
             placeholder={formatTemplate}
             autoComplete="off"
@@ -1005,11 +763,11 @@ const RangePicker: React.FC<RangePickerProps> = ({
             onClick={() => openPanelForField('end')}
             onBlur={handleInputBlur('end')}
             onKeyDown={handleInputKeyDown('end')}
-            className={`w-full rounded-md border px-2 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-0 ${disabled
+            className={`w-full rounded-md border px-2 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 ${disabled
               ? 'cursor-not-allowed border-transparent bg-transparent text-slate-400 dark:text-gray-500'
               : focusedField === 'end' && isOpen
-                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400'
-                : 'border-transparent bg-transparent text-slate-700 dark:text-gray-300 hover:border-blue-200 dark:hover:border-blue-400'
+                ? 'bg-white dark:bg-gray-700 text-primary'
+                : 'border-transparent bg-transparent text-slate-700 dark:text-gray-300'
               }`}
             placeholder={formatTemplate}
             autoComplete="off"
@@ -1018,7 +776,51 @@ const RangePicker: React.FC<RangePickerProps> = ({
         </div>
       </div>
 
-      {isOpen && (getPopupContainer ? ReactDOM.createPortal(panel, getPopupContainer()) : ReactDOM.createPortal(panel, document.body))}
+      {isOpen && (getPopupContainer ? ReactDOM.createPortal(
+        <RangePickerPanel
+          visibleMonth={visibleMonth}
+          monthLabels={monthLabels}
+          weekDayLabels={weekDayLabels}
+          calendarDays={calendarDays}
+          draftRange={draftRange}
+          focusedField={focusedField}
+          isTimeEnabled={!!isTimeEnabled}
+          disabled={disabled}
+          matchTriggerWidth={matchTriggerWidth}
+          popupRef={popupRef}
+          timeListRefs={timeListRefs}
+          onMonthChange={changeMonth}
+          onYearChange={changeYear}
+          onDaySelect={handleDaySelect}
+          onHourSelect={handleHourSelect}
+          onMinuteSelect={handleMinuteSelect}
+          onOk={handleOk}
+          getPopupStyle={getPopupStyle}
+        />,
+        getPopupContainer()
+      ) : ReactDOM.createPortal(
+        <RangePickerPanel
+          visibleMonth={visibleMonth}
+          monthLabels={monthLabels}
+          weekDayLabels={weekDayLabels}
+          calendarDays={calendarDays}
+          draftRange={draftRange}
+          focusedField={focusedField}
+          isTimeEnabled={!!isTimeEnabled}
+          disabled={disabled}
+          matchTriggerWidth={matchTriggerWidth}
+          popupRef={popupRef}
+          timeListRefs={timeListRefs}
+          onMonthChange={changeMonth}
+          onYearChange={changeYear}
+          onDaySelect={handleDaySelect}
+          onHourSelect={handleHourSelect}
+          onMinuteSelect={handleMinuteSelect}
+          onOk={handleOk}
+          getPopupStyle={getPopupStyle}
+        />,
+        document.body
+      ))}
     </div>
   );
 };

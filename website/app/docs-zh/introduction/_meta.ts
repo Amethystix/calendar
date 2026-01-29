@@ -10,11 +10,11 @@ const meta: MetaRecord = {
   plugins: {
     title: "插件"
   },
-  sidebar: {
-    title: "侧边栏"
-  },
   views: {
     title: "视图"
+  },
+  sidebar: {
+    title: "侧边栏"
   },
   'dayflow-calendar': {
     title: 'DayFlowCalendar'

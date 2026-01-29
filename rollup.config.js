@@ -3,7 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import postcss from 'rollup-plugin-postcss';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser'
 import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path';
 
@@ -47,7 +47,7 @@ export default {
     }),
     postcss({
       extensions: ['.css'],
-      minimize: true,
+      minimize: false,
       inject: false,
       extract: 'styles.css',
       config: {
@@ -68,5 +68,13 @@ export default {
       template: 'treemap',
     }),
   ],
-  external: ['react', 'react-dom', 'react/jsx-runtime', 'lucide-react'],
+  external: [
+    'react',
+    'react-dom',
+    'react/jsx-runtime',
+    'react-color',
+    'lucide-react',
+    'temporal-polyfill',
+    'tslib',
+  ],
 };

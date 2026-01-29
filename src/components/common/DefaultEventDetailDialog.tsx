@@ -1,40 +1,64 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
-import { EventDetailDialogProps } from '@/types/eventDetail';
-import { isPlainDate } from '@/utils/temporal';
-import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
+import { EventDetailDialogProps } from '../../types/eventDetail';
+import { isPlainDate } from '../../utils/temporal';
+import { getDefaultCalendarRegistry } from '../../core/calendarRegistry';
+import { isEventEqual } from '../../utils/eventUtils';
 import ColorPicker, { ColorOption } from './ColorPicker';
-import RangePicker from './RangePicker';
+import RangePicker from '../rangePicker';
+import { CalendarApp } from '../../types';
+import { useLocale } from '@/locale';
+
+interface DefaultEventDetailDialogProps extends EventDetailDialogProps {
+  app?: CalendarApp;
+}
 
 /**
  * Default event detail dialog component (Dialog mode)
  * Content is consistent with DefaultEventDetailPanel, but displayed using Dialog/Modal
  */
-const DefaultEventDetailDialog: React.FC<EventDetailDialogProps> = ({
+const DefaultEventDetailDialog: React.FC<DefaultEventDetailDialogProps> = ({
   event,
   isOpen,
   isAllDay,
   onEventUpdate,
   onEventDelete,
   onClose,
+  app,
 }) => {
+  const [editedEvent, setEditedEvent] = useState(event);
+  const { t } = useLocale();
+
+  // Sync state when event prop changes (e.g. if opened with a different event)
+  useEffect(() => {
+    setEditedEvent(event);
+  }, [event]);
 
   // Get visible calendar type options
   const colorOptions: ColorOption[] = useMemo(() => {
-    const registry = getDefaultCalendarRegistry();
+    const registry = app ? app.getCalendarRegistry() : getDefaultCalendarRegistry();
     return registry.getVisible().map(cal => ({
       label: cal.name,
       value: cal.id,
     }));
-  }, []);
+  }, [app, app?.getCalendars()]);
+
+  const handleSave = () => {
+    onEventUpdate(editedEvent);
+    onClose();
+  };
+
+  const hasChanges = useMemo(() => {
+    return !isEventEqual(event, editedEvent);
+  }, [event, editedEvent]);
 
   const convertToAllDay = () => {
-    const plainDate = isPlainDate(event.start)
-      ? event.start
-      : event.start.toPlainDate();
-    onEventUpdate({
-      ...event,
+    const plainDate = isPlainDate(editedEvent.start)
+      ? editedEvent.start
+      : editedEvent.start.toPlainDate();
+    setEditedEvent({
+      ...editedEvent,
       allDay: true,
       start: plainDate,
       end: plainDate,
@@ -42,9 +66,9 @@ const DefaultEventDetailDialog: React.FC<EventDetailDialogProps> = ({
   };
 
   const convertToRegular = () => {
-    const plainDate = isPlainDate(event.start)
-      ? event.start
-      : event.start.toPlainDate();
+    const plainDate = isPlainDate(editedEvent.start)
+      ? editedEvent.start
+      : editedEvent.start.toPlainDate();
     const start = Temporal.ZonedDateTime.from({
       year: plainDate.year,
       month: plainDate.month,
@@ -61,8 +85,8 @@ const DefaultEventDetailDialog: React.FC<EventDetailDialogProps> = ({
       minute: 0,
       timeZone: Temporal.Now.timeZoneId(),
     });
-    onEventUpdate({
-      ...event,
+    setEditedEvent({
+      ...editedEvent,
       allDay: false,
       start,
       end,
@@ -70,37 +94,40 @@ const DefaultEventDetailDialog: React.FC<EventDetailDialogProps> = ({
   };
 
   const eventTimeZone = useMemo(() => {
-    if (!isPlainDate(event.start)) {
+    if (!isPlainDate(editedEvent.start)) {
       return (
-        (event.start as any).timeZoneId ||
-        (event.start as Temporal.ZonedDateTime).timeZoneId ||
+        (editedEvent.start as any).timeZoneId ||
+        (editedEvent.start as Temporal.ZonedDateTime).timeZoneId ||
         Temporal.Now.timeZoneId()
       );
     }
 
-    if (event.end && !isPlainDate(event.end)) {
+    if (editedEvent.end && !isPlainDate(editedEvent.end)) {
       return (
-        (event.end as any).timeZoneId ||
-        (event.end as Temporal.ZonedDateTime).timeZoneId ||
+        (editedEvent.end as any).timeZoneId ||
+        (editedEvent.end as Temporal.ZonedDateTime).timeZoneId ||
         Temporal.Now.timeZoneId()
       );
     }
 
     return Temporal.Now.timeZoneId();
-  }, [event.end, event.start]);
+  }, [editedEvent.end, editedEvent.start]);
 
   const handleAllDayRangeChange = (
     nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]
   ) => {
     const [start, end] = nextRange;
-    onEventUpdate({
-      ...event,
+    setEditedEvent({
+      ...editedEvent,
       start: start.toPlainDate(),
       end: end.toPlainDate(),
     });
   };
 
-  if (!isOpen) return null;
+  const isEditable = !app?.state.readOnly;
+  const isViewable = app?.getReadOnlyConfig().viewable !== false;
+
+  if (!isOpen || !isViewable) return null;
 
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return null;
@@ -111,7 +138,7 @@ const DefaultEventDetailDialog: React.FC<EventDetailDialogProps> = ({
     const target = e.target as HTMLElement;
 
     // Check if clicked on RangePicker or ColorPicker popup content
-    if (target.closest('[data-rangepicker-popup]')) {
+    if (target.closest('[data-range-picker-popup]')) {
       return;
     }
 
@@ -159,116 +186,142 @@ const DefaultEventDetailDialog: React.FC<EventDetailDialogProps> = ({
         </button>
 
         {/* Content */}
-        <div className="pr-8">
-          <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">Event Title</span>
+        <div>
+          <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('eventTitle')}</span>
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex-1">
               <input
                 type="text"
-                value={event.title}
+                value={editedEvent.title}
+                readOnly={!isEditable}
+                disabled={!isEditable}
                 onChange={e => {
-                  onEventUpdate({
-                    ...event,
+                  setEditedEvent({
+                    ...editedEvent,
                     title: e.target.value,
                   });
                 }}
-                className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-blue-400 dark:focus:border-blue-500 transition"
+                className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
               />
             </div>
-            <ColorPicker
-              options={colorOptions}
-              value={event.calendarId || 'blue'}
-              onChange={value => {
-                onEventUpdate({
-                  ...event,
-                  calendarId: value,
-                });
-              }}
-            />
+            {isEditable && (
+              <ColorPicker
+                options={colorOptions}
+                value={editedEvent.calendarId || 'blue'}
+                onChange={value => {
+                  setEditedEvent({
+                    ...editedEvent,
+                    calendarId: value,
+                  });
+                }}
+                registry={app?.getCalendarRegistry()}
+              />
+            )}
           </div>
 
-          {isAllDay ? (
+          {!!editedEvent.allDay ? (
             <div className="mb-4">
-              <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">Date Range</div>
+              <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">{t('dateRange')}</div>
               <RangePicker
-                value={[event.start, event.end]}
+                value={[editedEvent.start, editedEvent.end]}
                 format="YYYY-MM-DD"
                 showTime={false}
                 timeZone={eventTimeZone}
                 matchTriggerWidth
+                disabled={!isEditable}
                 onChange={handleAllDayRangeChange}
                 onOk={handleAllDayRangeChange}
+                locale={app?.state.locale}
               />
             </div>
           ) : (
             <div className="mb-4">
-              <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">Time Range</div>
+              <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">{t('timeRange')}</div>
               <RangePicker
-                value={[event.start, event.end]}
+                value={[editedEvent.start, editedEvent.end]}
                 timeZone={eventTimeZone}
+                disabled={!isEditable}
                 onChange={(nextRange) => {
                   const [start, end] = nextRange;
-                  onEventUpdate({
-                    ...event,
+                  setEditedEvent({
+                    ...editedEvent,
                     start,
                     end,
                   });
                 }}
                 onOk={(nextRange) => {
                   const [start, end] = nextRange;
-                  onEventUpdate({
-                    ...event,
+                  setEditedEvent({
+                    ...editedEvent,
                     start,
                     end,
                   });
                 }}
+                locale={app?.state.locale}
               />
             </div>
           )}
 
           <div className="mb-4">
-            <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">Note</span>
+            <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('note')}</span>
             <textarea
-              value={event.description ?? ''}
+              value={editedEvent.description ?? ''}
+              readOnly={!isEditable}
+              disabled={!isEditable}
               onChange={e =>
-                onEventUpdate({
-                  ...event,
+                setEditedEvent({
+                  ...editedEvent,
                   description: e.target.value,
                 })
               }
               rows={4}
-              className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-blue-400 dark:focus:border-blue-500 transition resize-none"
-              placeholder="Add a note..."
+              className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition resize-none"
+              placeholder={t('addNotePlaceholder')}
             />
           </div>
 
-          <div className="flex space-x-2">
-            {!isAllDay ? (
-              <button
-                className="px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 text-sm font-medium transition"
-                onClick={convertToAllDay}
-              >
-                Set as All-day
-              </button>
-            ) : (
-              <button
-                className="px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 text-sm font-medium transition"
-                onClick={convertToRegular}
-              >
-                Set as Timed Event
-              </button>
-            )}
+          {isEditable && (
+            <div className="flex space-x-2">
+              {!editedEvent.allDay ? (
+                <button
+                  className="px-3 py-2 bg-secondary/10 text-secondary rounded-lg hover:bg-secondary/20 text-sm font-medium transition"
+                  onClick={convertToAllDay}
+                >
+                  {t('setAsAllDay')}
+                </button>
+              ) : (
+                <button
+                  className="px-3 py-2 bg-secondary/10 text-secondary rounded-lg hover:bg-secondary/20 text-sm font-medium transition"
+                  onClick={convertToRegular}
+                >
+                  {t('setAsTimed')}
+                </button>
+              )}
 
-            <button
-              className="px-3 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 text-sm font-medium transition"
-              onClick={() => {
-                onEventDelete(event.id);
-                onClose();
-              }}
-            >
-              Delete
-            </button>
-          </div>
+              <button
+                className="px-3 py-2 bg-destructive border border-border text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium transition"
+                onClick={() => {
+                  onEventDelete(event.id);
+                  onClose();
+                }}
+              >
+                {t('delete')}
+              </button>
+
+              <button
+                className={`px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium transition ml-auto ${hasChanges
+                  ? 'hover:bg-primary/90 shadow-lg shadow-primary/20'
+                  : 'opacity-50 cursor-not-allowed grayscale-[0.5]'
+                  }`}
+                onClick={handleSave}
+                disabled={!hasChanges}
+              >
+                {t('save')}
+              </button>
+            </div>
+          )}
+
+
         </div>
       </div>
     </div>

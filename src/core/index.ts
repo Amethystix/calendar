@@ -6,7 +6,7 @@ export * from './DayFlowCalendar';
 export { CalendarApp } from './CalendarApp';
 
 // Re-export types from @/types for convenience
-export { ViewType } from '@/types';
+export { ViewType } from '../types';
 
 export type {
   CalendarPlugin,
@@ -17,4 +17,4 @@ export type {
   CalendarApp as ICalendarApp,
   UseCalendarAppReturn,
   CalendarConfig,
-} from '@/types';
+} from '../types';

@@ -6,9 +6,9 @@ import {
   ViewAdapterProps,
   CalendarView,
   ViewType,
-} from '@/types';
+} from '../types';
 import { ViewAdapter } from './ViewAdapter';
-import YearView from '@/views/YearView';
+import YearView from '../views/YearView';
 
 // Default Year view configuration
 const defaultYearViewConfig: YearViewConfig = {
@@ -62,37 +62,6 @@ export const createYearView: ViewFactory<YearViewConfig> = (config = {}) => {
     component: YearViewAdapter,
     config: finalConfig,
   };
-};
-// TODO remove
-// Convenient Year view configuration creation function
-export function createYearViewConfig(
-  overrides: Partial<YearViewConfig> = {}
-): YearViewConfig {
-  return { ...defaultYearViewConfig, ...overrides };
-}
-
-// Preset configurations
-export const yearViewPresets = {
-  // Standard configuration
-  standard: (): CalendarView => createYearView(),
-
-  // Disable virtual scroll (suitable for devices with better performance)
-  noVirtualScroll: (): CalendarView =>
-    createYearView({
-      enableVirtualScroll: false,
-      viewConfig: {
-        enableVirtualScroll: false,
-      },
-    }),
-
-  // Debug mode
-  debug: (): CalendarView =>
-    createYearView({
-      showDebugInfo: true,
-      viewConfig: {
-        showDebugInfo: true,
-      },
-    }),
 };
 
 export default createYearView;

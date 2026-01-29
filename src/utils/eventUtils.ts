@@ -9,7 +9,7 @@
  */
 
 import { Temporal } from 'temporal-polyfill';
-import { Event } from '@/types';
+import { Event } from '../types';
 import { temporalToDate } from './temporal';
 
 // ============================================================================
@@ -411,4 +411,24 @@ export const createEventWithZonedDateTime = (
     start: zonedDateTime,
     end: zonedDateTime,
   };
+};
+
+/**
+ * Compare two events for equality
+ * @param event1 First event
+ * @param event2 Second event
+ * @returns Whether events are equal in content
+ */
+export const isEventEqual = (event1: Event | null, event2: Event | null): boolean => {
+  if (event1 === event2) return true;
+  if (!event1 || !event2) return false;
+
+  return (
+    event1.title === event2.title &&
+    event1.calendarId === event2.calendarId &&
+    (event1.description || '') === (event2.description || '') &&
+    !!event1.allDay === !!event2.allDay &&
+    event1.start.toString() === event2.start.toString() &&
+    event1.end.toString() === event2.end.toString()
+  );
 };

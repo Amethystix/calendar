@@ -13,6 +13,30 @@ DayFlow のサイドバー体験を 2 つのデモで紹介します。標準 UI
 
 <SidebarBasicsShowcase />
 
+```tsx copy {17-20}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createDayView,
+  createWeekView,
+  createMonthView,
+  createDragPlugin,
+  ViewType,
+} from '@dayflow/core';
+
+const calendar = useCalendarApp({
+  views: [createMonthView(), createWeekView(), createDayView()],
+  plugins: [createDragPlugin()],
+  events: events,
+  calendars: calendars,
+  defaultView: ViewType.WEEK,
+  useSidebar: {
+    enabled: true,
+    width: 280,
+  },
+});
+```
+
 ## カスタムレイアウト
 
 `render` 関数を渡すと、チーム別フィルターやアナリティクスなど好きな UI に変えられます。それでも内部状態は同じ `calendar` オブジェクトを共有するため、カレンダーの表示/非表示や日付選択と同期したままです。

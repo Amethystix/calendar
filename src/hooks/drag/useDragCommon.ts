@@ -1,7 +1,7 @@
 // Shared utility hook providing common utility functions for drag operations
 import { useCallback, useMemo } from 'react';
-import { useDragProps, ViewType, UseDragCommonReturn } from '@/types';
-import { daysDifference as utilsDaysDifference, addDays as utilsAddDays } from '@/utils';
+import { useDragProps, ViewType, UseDragCommonReturn } from '../../types';
+import { daysDifference as utilsDaysDifference, addDays as utilsAddDays } from '../../utils';
 
 export const useDragCommon = (options: useDragProps): UseDragCommonReturn => {
   const {
@@ -12,6 +12,7 @@ export const useDragCommon = (options: useDragProps): UseDragCommonReturn => {
     FIRST_HOUR = 0,
     LAST_HOUR = 24,
     TIME_COLUMN_WIDTH = 80,
+    isMobile,
   } = options;
 
   // View type check
@@ -40,14 +41,30 @@ export const useDragCommon = (options: useDragProps): UseDragCommonReturn => {
   const getColumnDayIndex = useCallback(
     (x: number) => {
       if (isMonthView || !calendarRef.current) return 0;
-      const calendarRect = calendarRef.current.getBoundingClientRect();
-      const remainingWidth = calendarRect.width - TIME_COLUMN_WIDTH;
-      const dayColumnWidth = remainingWidth / (isWeekView ? 7 : 1);
-      const offsetX = x - calendarRect.left - TIME_COLUMN_WIDTH;
-      const columnIndex = Math.floor(offsetX / dayColumnWidth);
-      return Math.max(0, Math.min(isWeekView ? 6 : 0, columnIndex));
+
+      const calendarContent = calendarRef.current.querySelector('.calendar-content');
+      if (!calendarContent) return 0;
+
+      const contentRect = calendarContent.getBoundingClientRect();
+      const scrollLeft = calendarContent.scrollLeft;
+      const containerWidth = contentRect.width;
+
+      if (isWeekView) {
+        // WeekView on mobile has 175% width
+        const totalWidth = (isMobile) ? containerWidth * 1.75 : containerWidth;
+        const dayColumnWidth = totalWidth / 7;
+
+        // Determine relative X including scroll
+        const relativeX = x - contentRect.left + scrollLeft;
+
+        const columnIndex = Math.floor(relativeX / dayColumnWidth);
+        return Math.max(0, Math.min(6, columnIndex));
+      } else {
+        // DayView
+        return 0;
+      }
     },
-    [calendarRef, TIME_COLUMN_WIDTH, isMonthView, isWeekView]
+    [calendarRef, isMonthView, isWeekView, isMobile]
   );
 
   const handleDirectScroll = useCallback(

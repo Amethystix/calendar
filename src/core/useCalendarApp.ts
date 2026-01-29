@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { CalendarApp } from './CalendarApp';
-import { CalendarAppConfig, UseCalendarAppReturn, ViewType } from '@/types';
-import { Event } from '@/types';
+import { CalendarAppConfig, UseCalendarAppReturn, ViewType, CalendarType, SidebarConfig, ReadOnlyConfig } from '../types';
+import { Event } from '../types';
+import { isDeepEqual } from '../utils/helpers';
 
 export function useCalendarApp(
   config: CalendarAppConfig
@@ -17,6 +18,9 @@ export function useCalendarApp(
     app.state.currentDate
   );
   const [events, setEvents] = useState<Event[]>(app.getEvents());
+  const [sidebarConfig, setSidebarConfigState] = useState<SidebarConfig>(
+    app.getSidebarConfig()
+  );
 
   // Component re-render trigger
   const [, forceUpdate] = useState({});
@@ -85,6 +89,50 @@ export function useCalendarApp(
       triggerUpdate();
     };
 
+    const originalReorderCalendars = app.reorderCalendars;
+    app.reorderCalendars = (fromIndex: number, toIndex: number) => {
+      originalReorderCalendars(fromIndex, toIndex);
+      triggerUpdate();
+    };
+
+    const originalUpdateCalendar = app.updateCalendar;
+    app.updateCalendar = (id: string, updates: Partial<CalendarType>) => {
+      originalUpdateCalendar(id, updates);
+      triggerUpdate();
+    };
+
+    const originalCreateCalendar = app.createCalendar;
+    app.createCalendar = (calendar: CalendarType) => {
+      originalCreateCalendar(calendar);
+      triggerUpdate();
+    };
+
+    const originalDeleteCalendar = app.deleteCalendar;
+    app.deleteCalendar = (id: string) => {
+      originalDeleteCalendar(id);
+      triggerUpdate();
+    };
+
+    const originalMergeCalendars = app.mergeCalendars;
+    app.mergeCalendars = (sourceId: string, targetId: string) => {
+      originalMergeCalendars(sourceId, targetId);
+      setEvents([...app.getEvents()]);
+      triggerUpdate();
+    };
+
+    const originalHighlightEvent = app.highlightEvent;
+    app.highlightEvent = (eventId: string | null) => {
+      originalHighlightEvent(eventId);
+      triggerUpdate();
+    };
+
+    const originalTriggerRender = app.triggerRender;
+    app.triggerRender = () => {
+      originalTriggerRender();
+      setSidebarConfigState(app.getSidebarConfig());
+      triggerUpdate();
+    };
+
     return () => {
       // Cleanup work, if needed
     };
@@ -96,6 +144,15 @@ export function useCalendarApp(
     setCurrentDateState(app.state.currentDate);
     setEvents(app.getEvents());
   }, [app]);
+
+  // Synchronize configuration updates
+  const lastConfigRef = useRef(config);
+  useEffect(() => {
+    if (!isDeepEqual(lastConfigRef.current, config)) {
+      app.updateConfig(config);
+      lastConfigRef.current = config;
+    }
+  }, [app, config]);
 
   // Wrapped methods to ensure state synchronization
   const changeView = useCallback(
@@ -182,11 +239,15 @@ export function useCalendarApp(
     goToNext,
     selectDate,
     getCalendars: () => app.getCalendars(),
+    createCalendar: (calendar: CalendarType) => app.createCalendar(calendar),
+    mergeCalendars: (sourceId: string, targetId: string) => app.mergeCalendars(sourceId, targetId),
     setCalendarVisibility,
     setAllCalendarsVisibility,
     getAllEvents: () => app.getAllEvents(),
+    highlightEvent: (eventId: string | null) => app.highlightEvent(eventId),
     setVisibleMonth: (date: Date) => app.setVisibleMonth(date),
     getVisibleMonth: () => app.getVisibleMonth(),
-    sidebarConfig: app.getSidebarConfig(),
+    sidebarConfig,
+    readOnlyConfig: app.getReadOnlyConfig(),
   };
 }

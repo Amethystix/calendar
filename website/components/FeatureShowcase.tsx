@@ -12,13 +12,13 @@ import {
   User,
   X,
 } from 'lucide-react';
-import { useCalendarApp } from '@dayflow/core';
-import { DayFlowCalendar } from '@dayflow/core';
-import { createMonthView } from '@dayflow/core';
-import { createWeekView } from '@dayflow/core';
-import { createDayView } from '@dayflow/core';
-import { createDragPlugin } from '@dayflow/core';
 import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createMonthView,
+  createWeekView,
+  createDayView,
+  createDragPlugin,
   ViewType,
   Event,
   EventDetailContentRenderer,
@@ -27,6 +27,7 @@ import {
 } from '@dayflow/core';
 import { CALENDAR_SIDE_PANEL, getWebsiteCalendars } from '@/utils/palette';
 import { generateSampleEvents } from '@/utils/sampleData';
+import '@dayflow/core/dist/styles.css';
 
 type SwitcherMode = 'buttons' | 'select';
 
@@ -34,6 +35,7 @@ interface DemoCalendarProps {
   switcherMode?: SwitcherMode;
   customDetailPanelContent?: EventDetailContentRenderer;
   customEventDetailDialog?: EventDetailDialogRenderer;
+  useEventDetailDialog?: boolean;
   className?: string;
 }
 
@@ -131,9 +133,11 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 const useDemoCalendar = ({
   switcherMode,
   events,
+  useEventDetailDialog = false,
 }: {
   switcherMode?: SwitcherMode;
   events?: Event[];
+  useEventDetailDialog?: boolean;
 }) => {
   const { resolvedTheme } = useTheme();
 
@@ -173,7 +177,8 @@ const useDemoCalendar = ({
     defaultView: ViewType.MONTH,
     initialDate: new Date(),
     switcherMode: switcherMode ?? 'buttons',
-    theme: { mode: themeMode }
+    theme: { mode: themeMode },
+    useEventDetailDialog,
   });
 };
 
@@ -181,12 +186,13 @@ const DemoCalendar: React.FC<DemoCalendarProps> = ({
   switcherMode,
   customDetailPanelContent,
   customEventDetailDialog,
-  className = 'h-[520px]',
+  useEventDetailDialog = false,
+  className = 'h-130',
 }) => {
-  const calendar = useDemoCalendar({ switcherMode });
+  const calendar = useDemoCalendar({ switcherMode, useEventDetailDialog });
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
+    <div className="rounded-xl dark:border-slate-700 bg-white dark:bg-slate-900 ">
       <DayFlowCalendar
         calendar={calendar}
         className={`w-full ${className}`}
@@ -200,10 +206,10 @@ const DemoCalendar: React.FC<DemoCalendarProps> = ({
 export const SwitcherModeShowcase: React.FC = () => (
   <div className="flex flex-col gap-10">
     <div>
-      <DemoCalendar switcherMode="buttons" className="h-[480px]" />
+      <DemoCalendar switcherMode="buttons" className="h-120" />
     </div>
     <div>
-      <DemoCalendar switcherMode="select" className="h-[480px]" />
+      <DemoCalendar switcherMode="select" className="h-120" />
     </div>
   </div>
 );
@@ -289,17 +295,9 @@ export const CustomDetailPanelShowcase: React.FC = () => {
 
   return (
     <div>
-      <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-        Use{' '}
-        <code className="bg-slate-100 dark:bg-slate-800/70 px-1.5 py-0.5 rounded text-[11px] text-slate-800 dark:text-black">
-          customDetailPanelContent
-        </code>{' '}
-        to replace the default panel content with business context and custom
-        actions.
-      </p>
       <DemoCalendar
         customDetailPanelContent={detailPanel}
-        className="h-[520px]"
+        className="h-130"
       />
     </div>
   );
@@ -307,14 +305,7 @@ export const CustomDetailPanelShowcase: React.FC = () => {
 
 export const EventDialogShowcase: React.FC = () => {
   return (
-    <div>
-      <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-        The built-in event dialog provides comprehensive event management with
-        editing, time selection, calendar types, and delete functionality. Click
-        any event to see it in action.
-      </p>
-      <DemoCalendar className="h-[520px]" />
-    </div>
+    <DemoCalendar className="h-130" useEventDetailDialog={true} />
   );
 };
 
@@ -503,7 +494,7 @@ export const CustomDetailDialogShowcase: React.FC = () => {
 
       return (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-md sm:py-10"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-md sm:py-10"
           data-event-detail-dialog="true"
         >
           <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-black/5">
@@ -516,7 +507,7 @@ export const CustomDetailDialogShowcase: React.FC = () => {
             <button
               type="button"
               onClick={onClose}
-              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-slate-900/20 text-white transition hover:bg-white dark:bg-slate-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:right-6 sm:top-6 z-10"
+              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-slate-900/20 text-slate-900 dark:text-white transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:right-6 sm:top-6 z-10"
               aria-label="Close dialog"
             >
               <X className="h-5 w-5" />
@@ -528,9 +519,26 @@ export const CustomDetailDialogShowcase: React.FC = () => {
                   <span className="inline-flex items-center text-xs font-semibold uppercase tracking-[0.25em] text-white/70">
                     {meta.owner ? `Hosted by ${meta.owner}` : 'Team ritual'}
                   </span>
-                  <h2 className="text-2xl font-semibold sm:text-3xl">
-                    {event.title}
-                  </h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-semibold sm:text-3xl">
+                      {event.title}
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={handleToggleFavorite}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${isFavorite ? 'bg-white text-slate-900 dark:bg-slate-900/20 dark:text-white backdrop-blur' : 'text-white hover:bg-white hover:text-slate-900 dark:hover:bg-slate-900/15 dark:hover:text-white'
+                        }`}
+                      aria-label={
+                        isFavorite ? 'Remove from focus list' : 'Add to focus list'
+                      }
+                    >
+                      {isFavorite ? (
+                        <Star className="h-4 w-4 fill-current" />
+                      ) : (
+                        <StarOff className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   {event.description && (
                     <p className="max-w-xl text-sm text-white/80">
                       {event.description}
@@ -540,30 +548,13 @@ export const CustomDetailDialogShowcase: React.FC = () => {
                     {headerChips.map(({ icon: Icon, label }) => (
                       <span
                         key={label}
-                        className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-slate-900/10 px-3 py-1 text-xs font-medium text-white shadow-sm backdrop-blur"
+                        className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-slate-900/10 px-3 py-1 text-xs font-medium text-slate-900 dark:text-white shadow-sm backdrop-blur"
                       >
                         <Icon className="h-4 w-4" />
                         {label}
                       </span>
                     ))}
                   </div>
-                </div>
-                <div className="flex w-full justify-end sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={handleToggleFavorite}
-                    className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${isFavorite ? 'bg-white dark:bg-slate-900/20 backdrop-blur' : 'hover:bg-white dark:bg-slate-900/15'
-                      }`}
-                    aria-label={
-                      isFavorite ? 'Remove from focus list' : 'Add to focus list'
-                    }
-                  >
-                    {isFavorite ? (
-                      <Star className="h-5 w-5 fill-current" />
-                    ) : (
-                      <StarOff className="h-5 w-5" />
-                    )}
-                  </button>
                 </div>
               </div>
             </div>
@@ -747,17 +738,10 @@ export const CustomDetailDialogShowcase: React.FC = () => {
   );
 
   return (
-    <div>
-      <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-        Use{' '}
-        <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[11px]">
-          customEventDetailDialog
-        </code>{' '}
-        to supply a fully custom modal that aligns with your design system.
-      </p>
+    <div className='mt-2'>
       <DemoCalendar
         customEventDetailDialog={customDialog}
-        className="h-[520px]"
+        className="h-130"
       />
     </div>
   );

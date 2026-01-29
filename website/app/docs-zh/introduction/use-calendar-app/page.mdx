@@ -1,10 +1,10 @@
-# useCalendarApp 详解
+# useCalendarApp Hook
 
 `useCalendarApp(config: CalendarAppConfig)` 是 DayFlow 的“中控台”。通过一个配置对象即可完成视图注册、事件注入、主题/侧边栏/对话框开关，以及与外部系统同步的回调设置。下面依次拆解常用选项与实践技巧。
 
 ## 快速开始
 
-```tsx copy
+```tsx copy {11-16}
 import {
   useCalendarApp,
   DayFlowCalendar,
@@ -28,20 +28,24 @@ export function TeamCalendar() {
 
 ## 配置概览
 
-| 选项                   | 类型                       | 必需 | 默认值              | 描述                                                                   |
-| ---------------------- | -------------------------- | ---- | ------------------- | ---------------------------------------------------------------------- |
-| `views`                | `CalendarView[]`           | ✅   | —                   | 注册视图定义（例如 `createMonthView()`）。至少需要一个视图             |
-| `plugins`              | `CalendarPlugin[]`         | ❌   | `[]`                | 安装可选插件（拖拽辅助、快捷键等）。每个插件在安装期间接收 app 实例    |
-| `events`               | `Event[]`                  | ❌   | `[]`                | 初始事件数据。之后使用 `addEvent`/`updateEvent` 来修改状态             |
-| `callbacks`            | `CalendarCallbacks`        | ❌   | `{}`                | 在视图、日期或事件更改时触发的生命周期钩子——非常适合与 API 同步        |
-| `defaultView`          | `ViewType`                 | ❌   | `ViewType.WEEK`     | 首先加载的视图；必须存在于 `views` 中                                  |
-| `initialDate`          | `Date`                     | ❌   | `new Date()`        | 起始焦点日期（也初始化可见月份计算）                                   |
-| `switcherMode`         | `'buttons' \| 'select'`    | ❌   | `'buttons'`         | 控制内置视图切换器在标题中的渲染方式                                   |
-| `calendars`            | `CalendarType[]`           | ❌   | `[]`                | 注册日历类别（工作、个人等）及其颜色和可见性                           |
-| `defaultCalendar`      | `string`                   | ❌   | 第一个可见日历      | 创建新事件时使用的 ID                                                  |
-| `theme`                | `ThemeConfig`              | ❌   | `{ mode: 'light' }` | 设置全局主题模式和可选的令牌覆盖                                       |
-| `useSidebar`           | `boolean \| SidebarConfig` | ❌   | `false`             | 启用内置侧边栏或让您自定义宽度、折叠状态和渲染器                       |
-| `useEventDetailDialog` | `boolean`                  | ❌   | `false`             | 启用默认模态详情对话框而不是内联面板                                   |
+| 选项                   | 类型                       | 必需 | 默认值              | 描述                                                                  |
+| ---------------------- | -------------------------- | ---- | ------------------- | --------------------------------------------------------------------- |
+| `views`                | `CalendarView[]`           | ✅   | —                   | 注册视图定义（例如 `createMonthView()`）。至少需要一个视图            |
+| `plugins`              | `CalendarPlugin[]`         | ❌   | `[]`                | 安装可选插件（拖拽辅助、快捷键等）。每个插件在安装期间接收 app 实例   |
+| `events`               | `Event[]`                  | ❌   | `[]`                | 初始事件数据。之后使用 `addEvent`/`updateEvent` 来修改状态            |
+| `callbacks`            | `CalendarCallbacks`        | ❌   | `{}`                | 在视图、日期或事件更改时触发的生命周期钩子——非常适合与 API 同步       |
+| `defaultView`          | `ViewType`                 | ❌   | `ViewType.WEEK`     | 首先加载的视图；必须存在于 `views` 中                                 |
+| `initialDate`          | `Date`                     | ❌   | `new Date()`        | 起始焦点日期（也初始化可见月份计算）                                  |
+| `switcherMode`         | `'buttons' \| 'select'`    | ❌   | `'buttons'`         | 控制内置视图切换器在标题中的渲染方式                                  |
+| `calendars`            | `CalendarType[]`           | ❌   | `[]`                | 注册日历类别（工作、个人等）及其颜色和可见性                          |
+| `defaultCalendar`      | `string`                   | ❌   | 第一个可见日历      | 创建新事件时使用的 ID                                                 |
+| `theme`                | `ThemeConfig`              | ❌   | `{ mode: 'light' }` | 设置全局主题模式和可选的令牌覆盖                                      |
+| `locale`               | `string \| Locale`         | ❌   | `'en-US'`           | 设置国际化（i18n）的语言环境。支持语言代码（如 'zh'）或 Locale 对象。 |
+| `useSidebar`           | `boolean \| SidebarConfig` | ❌   | `false`             | 启用内置侧边栏或让您自定义宽度、折叠状态和渲染器                      |
+| `useEventDetailDialog` | `boolean`                  | ❌   | `false`             | 启用默认模态详情对话框而不是内联面板                                  |
+| `useCalendarHeader`    | `boolean \| Function`      | ❌   | `true`              | 启用默认页眉、隐藏页眉（`false`）或提供自定义渲染函数                 |
+| `readOnly`             | `boolean \| ReadOnlyConfig`| ❌   | `false`             | 禁用交互。可以是布尔值，也可以是用于细粒度控制（拖拽/查看）的配置对象 |
+| `customMobileEventRenderer` | `MobileEventRenderer` | ❌   | —                   | 用于替换默认移动端事件抽屉/对话框的自定义组件                         |
 
 ## 核心选项说明
 
@@ -88,6 +92,9 @@ const calendar = useCalendarApp({
 - `onDateChange(date)`：当前聚焦日期变化
 - `onVisibleMonthChange(date)`：月份视窗滚动，用于预加载数据
 - `onEventCreate/Update/Delete`：与服务端 CRUD 对接
+- `onMoreEventsClick(date)`：当月视图中的“+ X 更多”链接被点击时触发
+- `onCalendarCreate/onCalendarUpdate/onCalendarDelete`：日历增删改的回调，用于同步日历列表
+- `onCalendarMerge(sourceId, targetId)`：合并两个日历时触发（例如将“工作”合并到“个人”）
 - `onRender`：一次渲染完成后触发，适合性能监控
 
 ### 默认视图 & 初始日期
@@ -118,6 +125,7 @@ const calendar = useCalendarApp({
 ```
 
 **主题模式：**
+
 - `'light'`：浅色模式，浅色背景和深色文本（默认）
 - `'dark'`：深色模式，深色背景和浅色文本
 - `'auto'`：自动跟随系统主题偏好
@@ -132,7 +140,7 @@ const currentTheme = calendar.app.getTheme();
 calendar.app.setTheme('dark');
 
 // 订阅主题更改
-calendar.app.subscribeThemeChange((theme) => {
+calendar.app.subscribeThemeChange(theme => {
   console.log('主题已更改为:', theme);
 });
 ```
@@ -164,6 +172,35 @@ const calendars = [
 
 更多细节见 [深色模式](/docs-zh/features/dark-mode)。
 
+### locale
+
+`locale` 选项用于设置日历的语言和区域设置。
+
+- **字符串代码：** 使用 `'en-US'`、`'ja'`、`'zh'`、`'de'`、`'fr'`、`'es'`、`'ko'` 等语言代码。
+- **Locale 对象：** 传递导入的 `Locale` 对象（以获得类型安全）或自定义对象（用于未支持的语言）。
+
+```tsx
+// 使用字符串代码
+const calendar = useCalendarApp({
+  locale: 'zh',
+});
+
+// 使用内置 Locale 对象
+import { zh } from '@dayflow/core';
+const calendar = useCalendarApp({
+  locale: zh,
+});
+
+// 使用自定义 Locale 对象
+const customLocale = {
+  code: 'it',
+  messages: { today: 'Oggi', ... }
+};
+const calendar = useCalendarApp({
+  locale: customLocale,
+});
+```
+
 ### useSidebar
 
 - `true`：启用默认侧边栏
@@ -173,6 +210,25 @@ const calendars = [
 
 - `true`：切换到模态详情对话框
 - 可与 `DayFlowCalendar` 的 `customEventDetailDialog` / `customDetailPanelContent` 协作，实现完全自定义的详情体验
+
+### useCalendarHeader
+
+- `true` (默认)：渲染内置的日历页眉。
+- `false`：完全隐藏页眉。
+- `(props) => ReactNode`：渲染自定义页眉。详见 [日历页眉](/docs-zh/features/calendar-header)。
+
+### readOnly
+
+- `true`：禁用所有修改（拖拽、创建、编辑）。
+- `ReadOnlyConfig`：细粒度控制。
+  - `draggable`：是否允许拖拽。
+  - `viewable`：是否允许打开事件详情。
+- 详见 [只读模式](/docs-zh/features/read-only)。
+
+### customMobileEventRenderer
+
+- 允许使用您自己的组件替换移动端的默认事件编辑抽屉。
+- 详见 [移动端支持](/docs-zh/features/mobile-support)。
 
 ## 高级配置示例
 

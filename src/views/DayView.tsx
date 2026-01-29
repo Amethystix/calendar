@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { CalendarApp } from '@/core';
 import {
   formatTime,
-  weekDays,
   extractHourFromDate,
   createDateWithHour,
   getLineColor,
   getEventEndHour,
 } from '@/utils';
+import { useLocale } from '@/locale';
 import {
   EventLayout,
   Event,
@@ -15,16 +15,18 @@ import {
   EventDetailDialogRenderer,
   ViewType,
 } from '@/types';
-import CalendarEvent from '@/components/weekView/CalendarEvent';
-import { EventLayoutCalculator } from '@/components/EventLayout';
+import CalendarEvent from '@/components/calendarEvent';
+import { EventLayoutCalculator } from '@/components/eventLayout';
 import { useDragForView } from '@/plugins/dragPlugin';
 import { ViewType as DragViewType, WeekDayDragState } from '@/types';
 import { defaultDragConfig } from '@/core/config';
 import ViewHeader, { ViewSwitcherMode } from '@/components/common/ViewHeader';
 import TodayBox from '@/components/common/TodayBox';
-import ViewSwitcher from '@/components/common/ViewSwitcher';
+import { MiniCalendar } from '@/components/common/MiniCalendar';
+import { MobileEventDrawer } from '@/components/mobileEventDrawer';
 import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
 import { useCalendarDrop } from '@/hooks/useCalendarDrop';
+import { useResponsiveMonthConfig } from '@/hooks/virtualScroll';
 import {
   allDayRow,
   allDayLabel,
@@ -37,13 +39,6 @@ import {
   currentTimeLabel,
   currentTimeLineBar,
   miniCalendarContainer,
-  miniCalendarGrid,
-  miniCalendarDayHeader,
-  miniCalendarDay,
-  miniCalendarCurrentMonth,
-  miniCalendarOtherMonth,
-  miniCalendarToday,
-  miniCalendarSelected,
   bgGray50,
   flexCol,
   p2,
@@ -62,7 +57,7 @@ interface DayViewProps {
   app: CalendarApp; // Required prop, provided by CalendarRenderer
   customDetailPanelContent?: EventDetailContentRenderer; // Custom event detail content
   customEventDetailDialog?: EventDetailDialogRenderer; // Custom event detail dialog
-  calendarRef: React.RefObject<HTMLDivElement | null>; // The DOM reference of the entire calendar passed from CalendarRenderer
+  calendarRef: React.RefObject<HTMLDivElement>; // The DOM reference of the entire calendar passed from CalendarRenderer
   switcherMode?: ViewSwitcherMode;
 }
 
@@ -73,16 +68,59 @@ const DayView: React.FC<DayViewProps> = ({
   calendarRef,
   switcherMode = 'buttons',
 }) => {
-  const currentDate = app.getCurrentDate();
   const events = app.getEvents();
+  const { t, locale } = useLocale();
+  const { screenSize } = useResponsiveMonthConfig();
+  const isMobile = screenSize !== 'desktop';
+  const [isTouch, setIsTouch] = useState(false);
 
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  useEffect(() => {
+    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  const MobileEventDrawerComponent = app.getCustomMobileEventRenderer() || MobileEventDrawer;
+
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [detailPanelEventId, setDetailPanelEventId] = useState<string | null>(
     null
   );
+
   const [newlyCreatedEventId, setNewlyCreatedEventId] = useState<string | null>(
     null
+  );
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [draftEvent, setDraftEvent] = useState<Event | null>(null);
+  const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const currentDate = app.getCurrentDate();
+  const visibleMonthDate = app.getVisibleMonth();
+  const visibleYear = visibleMonthDate.getFullYear();
+  const visibleMonthIndex = visibleMonthDate.getMonth();
+  // Visible Month State
+  const [visibleMonth, setVisibleMonth] = useState(currentDate);
+  const prevDateRef = useRef(currentDate.getTime());
+
+  if (currentDate.getTime() !== prevDateRef.current) {
+    prevDateRef.current = currentDate.getTime();
+    if (
+      currentDate.getFullYear() !== visibleMonth.getFullYear() ||
+      currentDate.getMonth() !== visibleMonth.getMonth()
+    ) {
+      setVisibleMonth(currentDate);
+    }
+  }
+
+  const handleMonthChange = useCallback(
+    (offset: number) => {
+      setVisibleMonth(prev => {
+        const next = new Date(prev.getFullYear(), prev.getMonth() + offset, 1);
+        app.setVisibleMonth(next);
+        return next;
+      });
+    },
+    [app]
   );
 
   // Get configuration constants
@@ -93,6 +131,52 @@ const DayView: React.FC<DayViewProps> = ({
     TIME_COLUMN_WIDTH,
     ALL_DAY_HEIGHT,
   } = defaultDragConfig;
+
+  // Sync highlighted event from app state
+  const prevHighlightedEventId = React.useRef(app.state.highlightedEventId);
+
+  useEffect(() => {
+    const hasChanged = app.state.highlightedEventId !== prevHighlightedEventId.current;
+
+    if (hasChanged) {
+      if (app.state.highlightedEventId) {
+        const currentEvents = app.getEvents();
+        const event = currentEvents.find(
+          e => e.id === app.state.highlightedEventId
+        );
+        if (event) {
+          setSelectedEvent(event);
+
+          // Auto scroll to highlighted event
+          if (!event.allDay) {
+            const startHour = extractHourFromDate(event.start);
+            const scrollContainer =
+              calendarRef.current?.querySelector('.calendar-content');
+            if (scrollContainer) {
+              const top = (startHour - FIRST_HOUR) * HOUR_HEIGHT;
+              // Scroll with some padding using requestAnimationFrame for smoother performance
+              requestAnimationFrame(() => {
+                scrollContainer.scrollTo({
+                  top: Math.max(0, top - 100),
+                  behavior: 'smooth',
+                });
+              });
+            }
+          }
+        }
+      } else {
+        // Only clear if previously had a highlighted event
+        setSelectedEvent(null);
+      }
+    }
+    prevHighlightedEventId.current = app.state.highlightedEventId;
+  }, [
+    app.state.highlightedEventId,
+    FIRST_HOUR,
+    HOUR_HEIGHT,
+    calendarRef,
+    app,
+  ]);
 
   // References
   const allDayRowRef = React.useRef<HTMLDivElement>(null);
@@ -262,7 +346,12 @@ const DayView: React.FC<DayViewProps> = ({
       eventsToUpdate.forEach(event => app.updateEvent(event.id, event));
     },
     onEventCreate: (event: Event) => {
-      app.addEvent(event);
+      if (isMobile) {
+        setDraftEvent(event);
+        setIsDrawerOpen(true);
+      } else {
+        app.addEvent(event);
+      }
     },
     onEventEdit: () => {
       // Event edit handling (add logic here if needed)
@@ -271,7 +360,56 @@ const DayView: React.FC<DayViewProps> = ({
     events: currentDayEvents,
     calculateNewEventLayout,
     calculateDragLayout,
+    TIME_COLUMN_WIDTH: isMobile ? 48 : 80,
+    isMobile,
   });
+
+  const handleTouchStart = (e: React.TouchEvent, dayIndex: number) => {
+    if (!isMobile && !isTouch) return;
+    const touch = e.touches[0];
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+    const target = e.currentTarget;
+
+    longPressTimerRef.current = setTimeout(() => {
+      const rect = calendarRef.current
+        ?.querySelector('.calendar-content')
+        ?.getBoundingClientRect();
+
+      if (!rect) return;
+      const container = calendarRef.current?.querySelector('.calendar-content');
+      const scrollTop = container ? container.scrollTop : 0;
+      const relativeY = clientY - rect.top + scrollTop;
+      const clickedHour = FIRST_HOUR + relativeY / HOUR_HEIGHT;
+
+      const mockEvent = {
+        preventDefault: () => { },
+        stopPropagation: () => { },
+        touches: [{ clientX, clientY }],
+        changedTouches: [{ clientX, clientY }],
+        target: target,
+        currentTarget: target,
+        cancelable: true,
+      } as unknown as React.TouchEvent;
+
+      handleCreateStart?.(mockEvent, dayIndex, clickedHour);
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
 
   // Use calendar drop functionality
   const { handleDrop, handleDragOver } = useCalendarDrop({
@@ -295,63 +433,19 @@ const DayView: React.FC<DayViewProps> = ({
     label: formatTime(i + FIRST_HOUR),
   }));
 
-  // Generate mini calendar data
-  const generateMiniCalendar = () => {
-    const year = app.getCurrentDate().getFullYear();
-    const month = app.getCurrentDate().getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const firstDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Adjust to start from Monday
-    const days = [];
-
-    // Add dates from previous month
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-      const date = new Date(year, month, -i);
-      days.push({
-        date: date.getDate(),
-        isCurrentMonth: false,
-        isToday: false,
-        isSelected: false,
-        fullDate: date,
-      });
-    }
-
-    // Add dates from current month
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      const date = new Date(year, month, i);
-      const isToday = date.toDateString() === new Date().toDateString();
-      const isSelected = date.toDateString() === currentDate.toDateString();
-      days.push({
-        date: i,
-        isCurrentMonth: true,
-        isToday,
-        isSelected,
-        fullDate: date,
-      });
-    }
-
-    // Add dates from next month to fill 42 cells
-    const remainingDays = 42 - days.length;
-    for (let i = 1; i <= remainingDays; i++) {
-      const date = new Date(year, month + 1, i);
-      days.push({
-        date: i,
-        isCurrentMonth: false,
-        isToday: false,
-        isSelected: false,
-        fullDate: date,
-      });
-    }
-    return days;
-  };
-
-  const miniCalendarDays = generateMiniCalendar();
-
   // Date selection handling
-  const handleDateSelect = (date: Date) => {
-    app.setCurrentDate(date);
-  };
-
+  const handleDateSelect = useCallback(
+    (date: Date) => {
+      const nextDate = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+      );
+      app.setCurrentDate(nextDate);
+      setVisibleMonth(new Date(nextDate.getFullYear(), nextDate.getMonth(), 1));
+    },
+    [app]
+  );
   // Check if it is today
   const isToday = useMemo(() => {
     const today = new Date();
@@ -363,6 +457,7 @@ const DayView: React.FC<DayViewProps> = ({
 
   // Timer
   useEffect(() => {
+    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
@@ -371,7 +466,7 @@ const DayView: React.FC<DayViewProps> = ({
     <div className={`flex h-full ${bgGray50}`}>
       {/* Left time axis area - 70% */}
       <div
-        className={`flex-none ${switcherMode === 'buttons' ? '' : 'md:w-[60%]'} w-[70%] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700`}
+        className={`flex-none ${switcherMode === 'buttons' ? '' : 'md:w-[60%]'} w-full md:w-[70%] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700`}
       >
         <div className={`relative ${flexCol} h-full`}>
           {/* Fixed navigation bar */}
@@ -379,14 +474,13 @@ const DayView: React.FC<DayViewProps> = ({
             calendar={app}
             viewType={ViewType.DAY}
             currentDate={currentDate}
-            switcherMode={switcherMode}
-            customSubtitle={currentTime.toLocaleDateString('en-US', {
+            customSubtitle={currentDate.toLocaleDateString(locale, {
               weekday: 'long',
             })}
           />
           {/* All-day event area */}
-          <div className={allDayRow} ref={allDayRowRef}>
-            <div className={allDayLabel}>all-day</div>
+          <div className={`${allDayRow} pt-px`} ref={allDayRowRef}>
+            <div className={`${allDayLabel} w-12 text-[10px] md:w-20 md:text-xs`}>{t('allDay')}</div>
             <div className="flex flex-1 relative">
               <div
                 className="w-full relative"
@@ -429,8 +523,34 @@ const DayView: React.FC<DayViewProps> = ({
                       onDetailPanelToggle={(eventId: string | null) =>
                         setDetailPanelEventId(eventId)
                       }
+                      selectedEventId={selectedEvent?.id ?? null}
+                      onEventSelect={(eventId: string | null) => {
+                        const isViewable = app.getReadOnlyConfig().viewable !== false;
+                        const isReadOnly = app.state.readOnly;
+                        const evt = events.find(e => e.id === eventId);
+                        if ((isMobile || isTouch) && evt && isViewable && !isReadOnly) {
+                          setDraftEvent(evt);
+                          setIsDrawerOpen(true);
+                        } else {
+                          const e = events.find(e => e.id === eventId);
+                          setSelectedEvent(e || null);
+                          if (app.state.highlightedEventId) {
+                            app.highlightEvent(null);
+                            prevHighlightedEventId.current = null;
+                          }
+                        }
+                      }}
+                      onEventLongPress={(eventId: string) => {
+                        if (isMobile || isTouch) {
+                          const evt = events.find(e => e.id === eventId);
+                          setSelectedEvent(evt || null);
+                        }
+                      }}
                       customDetailPanelContent={customDetailPanelContent}
                       customEventDetailDialog={customEventDetailDialog}
+                      app={app}
+                      isMobile={isMobile}
+                      enableTouch={isTouch}
                     />
                   ))}
               </div>
@@ -441,7 +561,7 @@ const DayView: React.FC<DayViewProps> = ({
           <div className={calendarContent} style={{ position: 'relative' }}>
             <div className="relative flex">
               {/* Current time line */}
-              {isToday &&
+              {isToday && currentTime &&
                 (() => {
                   const now = currentTime;
                   const hours = now.getHours() + now.getMinutes() / 60;
@@ -460,8 +580,7 @@ const DayView: React.FC<DayViewProps> = ({
                       }}
                     >
                       <div
-                        className="flex items-center"
-                        style={{ width: `${TIME_COLUMN_WIDTH}px` }}
+                        className="flex items-center w-12 md:w-20"
                       >
                         <div className="relative w-full flex items-center"></div>
                         <div className={currentTimeLabel}>
@@ -477,10 +596,10 @@ const DayView: React.FC<DayViewProps> = ({
                 })()}
 
               {/* Time column */}
-              <div className={timeColumn}>
+              <div className={`${timeColumn} w-12 md:w-20`}>
                 {timeSlots.map((slot, slotIndex) => (
                   <div key={slotIndex} className={timeSlot}>
-                    <div className={timeLabel}>
+                    <div className={`${timeLabel} text-[10px] md:text-[12px]`}>
                       {slotIndex === 0 ? '' : slot.label}
                     </div>
                   </div>
@@ -488,7 +607,10 @@ const DayView: React.FC<DayViewProps> = ({
               </div>
 
               {/* Time grid */}
-              <div className="flex-grow relative">
+              <div
+                className="grow relative select-none"
+                style={{ WebkitTouchCallout: 'none' }}
+              >
                 {timeSlots.map((slot, slotIndex) => (
                   <div
                     key={slotIndex}
@@ -511,8 +633,17 @@ const DayView: React.FC<DayViewProps> = ({
                           ) as HTMLElement
                         )?.scrollTop || 0;
                       const clickedHour = FIRST_HOUR + relativeY / HOUR_HEIGHT;
-                      handleCreateStart(e, currentDayIndex, clickedHour);
+                      handleCreateStart?.(e, currentDayIndex, clickedHour);
                     }}
+                    onTouchStart={e => {
+                      const currentDayIndex = Math.floor(
+                        (currentDate.getTime() - currentWeekStart.getTime()) /
+                        (24 * 60 * 60 * 1000)
+                      );
+                      handleTouchStart(e, currentDayIndex);
+                    }}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchMove={handleTouchMove}
                     onDragOver={handleDragOver}
                     onDrop={e => {
                       const rect = calendarRef.current
@@ -530,13 +661,14 @@ const DayView: React.FC<DayViewProps> = ({
                       const dropHour = Math.floor(FIRST_HOUR + relativeY / HOUR_HEIGHT);
                       handleDrop(e, currentDate, dropHour);
                     }}
+                    onContextMenu={e => isMobile && e.preventDefault()}
                   />
                 ))}
 
                 {/* Bottom boundary */}
                 <div className="h-3 border-t border-gray-200 dark:border-gray-700 relative">
                   <div className="absolute -top-2.5 -left-9 text-[12px] text-gray-500 dark:text-gray-400">
-                    00.00
+                    00:00
                   </div>
                 </div>
 
@@ -571,8 +703,33 @@ const DayView: React.FC<DayViewProps> = ({
                           onDetailPanelToggle={(eventId: string | null) =>
                             setDetailPanelEventId(eventId)
                           }
+                          selectedEventId={selectedEvent?.id ?? null}
+                          onEventSelect={(eventId: string | null) => {
+                            const isViewable = app.getReadOnlyConfig().viewable !== false;
+                            const evt = events.find(e => e.id === eventId);
+                            if ((isMobile || isTouch) && evt && isViewable) {
+                              setDraftEvent(evt);
+                              setIsDrawerOpen(true);
+                            } else {
+                              const e = events.find(e => e.id === eventId);
+                              setSelectedEvent(e || null);
+                              if (app.state.highlightedEventId) {
+                                app.highlightEvent(null);
+                                prevHighlightedEventId.current = null;
+                              }
+                            }
+                          }}
+                          onEventLongPress={(eventId: string) => {
+                            if (isMobile || isTouch) {
+                              const evt = events.find(e => e.id === eventId);
+                              setSelectedEvent(evt || null);
+                            }
+                          }}
                           customDetailPanelContent={customDetailPanelContent}
                           customEventDetailDialog={customEventDetailDialog}
+                          app={app}
+                          isMobile={isMobile}
+                          enableTouch={isTouch}
                         />
                       );
                     })}
@@ -584,7 +741,7 @@ const DayView: React.FC<DayViewProps> = ({
       </div>
       {/* Right control panel - 30% */}
       <div
-        className={`flex-none ${switcherMode === 'buttons' ? '' : 'md:w-[40%]'} w-[30%] bg-white dark:bg-gray-900`}
+        className={`hidden md:block flex-none ${switcherMode === 'buttons' ? '' : ''} w-[30%] bg-white dark:bg-gray-900`}
       >
         <div className={`${flexCol} h-full`}>
           {/* Mini calendar */}
@@ -599,44 +756,26 @@ const DayView: React.FC<DayViewProps> = ({
                     <h1 className={headerTitle}>&nbsp;</h1>
                   </div>
                 </div>
-                {switcherMode === 'select' ? (
-                  <ViewSwitcher mode={switcherMode} calendar={app} />
-                ) : null}
                 <TodayBox
                   handlePreviousMonth={() => app.goToPrevious()}
                   handleNextMonth={() => app.goToNext()}
                   handleToday={() => app.goToToday()}
                 />
               </div>
-              {/* Mini calendar grid */}
-              <div className={miniCalendarGrid}>
-                {weekDays.map(day => (
-                  <div key={day} className={miniCalendarDayHeader}>
-                    {day.charAt(0)}
-                  </div>
-                ))}
-                {miniCalendarDays.map((day, i) => (
-                  <button
-                    key={i}
-                    className={`
-                  ${miniCalendarDay}
-                  ${day.isCurrentMonth ? miniCalendarCurrentMonth : miniCalendarOtherMonth}
-                  ${day.isToday ? miniCalendarToday : ''}
-                  ${day.isSelected && !day.isToday ? miniCalendarSelected : ''}
-                `}
-                    onClick={() => handleDateSelect(day.fullDate)}
-                  >
-                    {day.date}
-                  </button>
-                ))}
-              </div>
+              <MiniCalendar
+                visibleMonth={visibleMonth}
+                currentDate={currentDate}
+                showHeader={true}
+                onMonthChange={handleMonthChange}
+                onDateSelect={handleDateSelect}
+              />
             </div>
           </div>
 
           {/* Event details area */}
           <div className={`flex-1 ${p4} overflow-y-auto`}>
             <h3 className={`${textLg} font-semibold ${mb3}`}>
-              {currentDate.toLocaleDateString('en-US', {
+              {currentDate.toLocaleDateString(locale, {
                 weekday: 'long',
                 month: 'long',
                 day: 'numeric',
@@ -645,7 +784,7 @@ const DayView: React.FC<DayViewProps> = ({
 
             {currentDayEvents.length === 0 ? (
               <p className={`${textGray500} ${textSm}`}>
-                No events for this day
+                {t('noEvents')}
               </p>
             ) : (
               <div className="space-y-2">
@@ -654,13 +793,16 @@ const DayView: React.FC<DayViewProps> = ({
                     key={event.id}
                     className={`
                       ${p2} rounded border-l-4 cursor-pointer transition-colors
-                      ${selectedEvent?.id === event.id ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500' : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600'}
+                      ${selectedEvent?.id === event.id ? 'bg-primary/10 border-primary' : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600'}
                       hover:bg-gray-100 dark:hover:bg-gray-700
                     `}
                     style={{
                       borderLeftColor: getLineColor(event.calendarId || 'blue'),
                     }}
-                    onClick={() => setSelectedEvent(event)}
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      app.onEventClick(event);
+                    }}
                   >
                     <div className={`font-medium ${textSm}`}>{event.title}</div>
                     {!event.allDay && (
@@ -670,7 +812,7 @@ const DayView: React.FC<DayViewProps> = ({
                       </div>
                     )}
                     {event.allDay && (
-                      <div className={`${textXs} ${textGray600}`}>All day</div>
+                      <div className={`${textXs} ${textGray600}`}>{t('allDay')}</div>
                     )}
                   </div>
                 ))}
@@ -679,6 +821,24 @@ const DayView: React.FC<DayViewProps> = ({
           </div>
         </div>
       </div>
+      <MobileEventDrawerComponent
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setDraftEvent(null);
+        }}
+        onSave={(updatedEvent) => {
+          if (events.find(e => e.id === updatedEvent.id)) {
+            app.updateEvent(updatedEvent.id, updatedEvent);
+          } else {
+            app.addEvent(updatedEvent);
+          }
+          setIsDrawerOpen(false);
+          setDraftEvent(null);
+        }}
+        draftEvent={draftEvent}
+        app={app}
+      />
     </div>
   );
 };

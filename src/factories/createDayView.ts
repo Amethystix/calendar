@@ -1,14 +1,14 @@
 // Factory function for creating Day view
 import React from 'react';
 import { ViewAdapter } from './ViewAdapter';
-import DayView from '@/views/DayView';
+import DayView from '../views/DayView';
 import {
   CalendarView,
   DayViewConfig,
   ViewAdapterProps,
   ViewFactory,
   ViewType,
-} from '@/types';
+} from '../types';
 
 // Default Day view configuration
 const defaultDayViewConfig: DayViewConfig = {
@@ -75,65 +75,6 @@ export const createDayView: ViewFactory<DayViewConfig> = (config = {}) => {
     component: DayViewAdapter,
     config: finalConfig,
   };
-};
-// TODO: remove
-// Convenient Day view configuration creation function
-export function createDayViewConfig(
-  overrides: Partial<DayViewConfig> = {}
-): DayViewConfig {
-  return { ...defaultDayViewConfig, ...overrides };
-}
-
-// Preset configurations
-export const dayViewPresets = {
-  // Standard configuration
-  standard: (): CalendarView => createDayView(),
-
-  // Compact mode
-  compact: (): CalendarView =>
-    createDayView({
-      hourHeight: 48,
-      showMiniCalendar: false,
-      viewConfig: {
-        showMiniCalendar: false,
-        hourHeight: 48,
-      },
-    }),
-
-  // Work hours only
-  workHours: (): CalendarView =>
-    createDayView({
-      firstHour: 8,
-      lastHour: 18,
-      scrollToCurrentTime: true,
-      viewConfig: {
-        firstHour: 8,
-        lastHour: 18,
-      },
-    }),
-
-  // Disable drag
-  readOnly: (): CalendarView =>
-    createDayView({
-      enableDrag: false,
-      enableResize: false,
-      enableCreate: false,
-      dragConfig: {
-        enableDrag: false,
-        enableResize: false,
-        enableCreate: false,
-      },
-    }),
-
-  // High density display
-  dense: (): CalendarView =>
-    createDayView({
-      hourHeight: 36,
-      viewConfig: {
-        hourHeight: 36,
-        showMiniCalendar: false,
-      },
-    }),
 };
 
 export default createDayView;

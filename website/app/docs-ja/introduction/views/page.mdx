@@ -11,8 +11,13 @@ DayFlow には日・週・月・年の 4 つのビューが用意されていま
 - **向いているケース**：長期計画の可視化、複数日のイベント配置、空き状況のざっくり確認
 - **主な機能**：バーチャルスクロール、終日/複数日イベント、イベント作成・移動・リサイズ、レスポンシブ対応
 
-```tsx copy
-import { useCalendarApp, DayFlowCalendar, createMonthView, ViewType } from '@dayflow/core';
+```tsx copy {10}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createMonthView,
+  ViewType,
+} from '@dayflow/core';
 
 function MonthOnly() {
   const calendar = useCalendarApp({
@@ -32,8 +37,13 @@ function MonthOnly() {
 - **向いているケース**：ミーティングの調整、工数見積り、時間単位のドラッグ編集
 - **主な機能**：24 時間スロット、現在時刻インジケータ、終日列、衝突検出、ダブルクリックで作成
 
-```tsx copy
-import { useCalendarApp, DayFlowCalendar, createWeekView, ViewType } from '@dayflow/core';
+```tsx copy {10}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createWeekView,
+  ViewType,
+} from '@dayflow/core';
 
 function WeekOnly() {
   const calendar = useCalendarApp({
@@ -53,8 +63,13 @@ function WeekOnly() {
 - **向いているケース**：集中した日次計画、タスク実行の進捗管理、他の日に気を散らされたくない場面
 - **主な機能**：1 日 24 時間グリッド、終日セクション、ミニカレンダーとイベント一覧、ドラッグ&リサイズ
 
-```tsx copy
-import { useCalendarApp, DayFlowCalendar, createDayView, ViewType } from '@dayflow/core';
+```tsx copy {10}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createDayView,
+  ViewType,
+} from '@dayflow/core';
 
 function DayOnly() {
   const calendar = useCalendarApp({
@@ -74,8 +89,13 @@ function DayOnly() {
 - **向いているケース**：年間イベントの俯瞰、祝日や締切のざっくり配置、日付ピッカー代替
 - **主な機能**：マルチイヤーのバーチャルスクロール、レスポンシブレイアウト、現在日/選択日のハイライト、キーボードショートカット
 
-```tsx copy
-import { useCalendarApp, DayFlowCalendar, createYearView, ViewType } from '@dayflow/core';
+```tsx copy {10}
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createYearView,
+  ViewType,
+} from '@dayflow/core';
 
 function YearOnly() {
   const calendar = useCalendarApp({
@@ -92,7 +112,7 @@ function YearOnly() {
 
 `views` に複数のファクトリを渡し、UI から `calendar.changeView` を呼び出せばタブのように切り替えられます。
 
-```tsx copy
+```tsx copy {13-18}
 import {
   useCalendarApp,
   DayFlowCalendar,
@@ -105,7 +125,12 @@ import {
 
 function MultiViewCalendar() {
   const calendar = useCalendarApp({
-    views: [createDayView(), createWeekView(), createMonthView(), createYearView()],
+    views: [
+      createDayView(),
+      createWeekView(),
+      createMonthView(),
+      createYearView(),
+    ],
     defaultView: ViewType.MONTH,
     initialDate: new Date(),
     callbacks: {
@@ -118,7 +143,9 @@ function MultiViewCalendar() {
       <div className="flex gap-2">
         <button onClick={() => calendar.changeView(ViewType.DAY)}>Day</button>
         <button onClick={() => calendar.changeView(ViewType.WEEK)}>Week</button>
-        <button onClick={() => calendar.changeView(ViewType.MONTH)}>Month</button>
+        <button onClick={() => calendar.changeView(ViewType.MONTH)}>
+          Month
+        </button>
         <button onClick={() => calendar.changeView(ViewType.YEAR)}>Year</button>
       </div>
       <div className="flex-1">
@@ -129,7 +156,7 @@ function MultiViewCalendar() {
 }
 ```
 
-## プログラムからの制御
+## API による制御
 
 共通の API を呼び出すだけで、独自のツールバーやショートカットからビューを制御できます。
 

@@ -5,7 +5,7 @@
  * including days, weeks, and month/year metadata.
  */
 
-import { DayData, WeeksData } from '@/types';
+import { DayData, WeeksData } from '../types';
 import { monthNames, shortMonthNames } from './dateConstants';
 import { getWeekRange } from './dateRangeUtils';
 

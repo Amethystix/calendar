@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CalendarApp } from '@/core';
-import { weekDays, extractHourFromDate } from '@/utils';
-import { monthNames } from '@/utils/helpers';
+import { extractHourFromDate } from '@/utils';
+import { useLocale } from '@/locale';
 import {
   Event,
   MonthEventDragState,
@@ -9,14 +9,14 @@ import {
   EventDetailContentRenderer,
   EventDetailDialogRenderer,
 } from '@/types';
-import { VirtualWeekItem } from '@/types/monthView';
 import {
   useVirtualMonthScroll,
   useResponsiveMonthConfig,
 } from '@/hooks/virtualScroll';
 import { useDragForView } from '@/plugins/dragPlugin';
-import ViewHeader, { ViewSwitcherMode } from '@/components/common/ViewHeader';
+import ViewHeader from '@/components/common/ViewHeader';
 import WeekComponent from '@/components/monthView/WeekComponent';
+import { MobileEventDrawer } from '@/components/mobileEventDrawer';
 import { temporalToDate } from '@/utils/temporal';
 import { useCalendarDrop } from '@/hooks/useCalendarDrop';
 import {
@@ -31,8 +31,7 @@ interface MonthViewProps {
   app: CalendarApp; // Required prop, provided by CalendarRenderer
   customDetailPanelContent?: EventDetailContentRenderer; // Custom event detail content
   customEventDetailDialog?: EventDetailDialogRenderer; // Custom event detail dialog
-  calendarRef: React.RefObject<HTMLDivElement | null>; // The DOM reference of the entire calendar passed from CalendarRenderer
-  switcherMode?: ViewSwitcherMode;
+  calendarRef: React.RefObject<HTMLDivElement>; // The DOM reference of the entire calendar passed from CalendarRenderer
 }
 
 const MonthView: React.FC<MonthViewProps> = ({
@@ -40,11 +39,13 @@ const MonthView: React.FC<MonthViewProps> = ({
   customDetailPanelContent,
   customEventDetailDialog,
   calendarRef,
-  switcherMode = 'buttons',
 }) => {
+  const { getWeekDaysLabels, getMonthLabels, locale } = useLocale();
   const currentDate = app.getCurrentDate();
   const rawEvents = app.getEvents();
+  const calendarSignature = app.getCalendars().map(c => c.id + c.colors.lineColor).join('-');
   const previousEventsRef = useRef<Event[] | null>(null);
+  const DEFAULT_WEEK_HEIGHT = 119;
   // Stabilize events reference so week calculations do not rerun on every scroll frame
   const events = useMemo(() => {
     const previous = previousEventsRef.current;
@@ -135,18 +136,17 @@ const MonthView: React.FC<MonthViewProps> = ({
 
   // Responsive configuration
   const { screenSize } = useResponsiveMonthConfig();
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  const MobileEventDrawerComponent = app.getCustomMobileEventRenderer() || MobileEventDrawer;
 
   // Fixed weekHeight to prevent fluctuations during scrolling
   // Initialize with estimated value based on window height to minimize initial adjustment
-  const [weekHeight, setWeekHeight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      // Estimate container height: viewport height - header/toolbar space
-      const estimatedHeaderHeight = 150;
-      const estimatedContainerHeight = window.innerHeight - estimatedHeaderHeight;
-      return Math.max(80, Math.floor(estimatedContainerHeight / 6));
-    }
-    return 119; // Fallback for SSR
-  });
+  const [weekHeight, setWeekHeight] = useState(DEFAULT_WEEK_HEIGHT);
   const [isWeekHeightInitialized, setIsWeekHeightInitialized] = useState(false);
   const previousWeekHeightRef = useRef(weekHeight);
 
@@ -157,8 +157,24 @@ const MonthView: React.FC<MonthViewProps> = ({
     null
   );
 
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [draftEvent, setDraftEvent] = useState<Event | null>(null);
+
   // Selected event ID, used for cross-week MultiDayEvent selected state synchronization
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
+  // Sync highlighted event from app state
+  const prevHighlightedEventId = useRef(app.state.highlightedEventId);
+
+  useEffect(() => {
+    if (app.state.highlightedEventId) {
+      setSelectedEventId(app.state.highlightedEventId);
+    } else if (prevHighlightedEventId.current) {
+      // Only clear if previously had a highlighted event
+      setSelectedEventId(null);
+    }
+    prevHighlightedEventId.current = app.state.highlightedEventId;
+  }, [app.state.highlightedEventId]);
 
   // Detail panel event ID, used to control displaying only one detail panel
   const [detailPanelEventId, setDetailPanelEventId] = useState<string | null>(
@@ -228,7 +244,12 @@ const MonthView: React.FC<MonthViewProps> = ({
       );
     },
     onEventCreate: (event: Event) => {
-      app.addEvent(event);
+      if (screenSize !== 'desktop') {
+        setDraftEvent(event);
+        setIsDrawerOpen(true);
+      } else {
+        app.addEvent(event);
+      }
     },
     onEventEdit: (event: Event) => {
       setNewlyCreatedEventId(event.id);
@@ -245,6 +266,10 @@ const MonthView: React.FC<MonthViewProps> = ({
     },
   });
 
+  const weekDaysLabels = useMemo(() => {
+    return getWeekDaysLabels(locale, 'short');
+  }, [locale, getWeekDaysLabels]);
+
   const {
     currentMonth,
     currentYear,
@@ -260,12 +285,17 @@ const MonthView: React.FC<MonthViewProps> = ({
     currentDate,
     weekHeight,
     onCurrentMonthChange: (monthName: string, year: number) => {
-      const monthIndex = monthNames.indexOf(monthName);
+      const isAsian = locale.startsWith('zh') || locale.startsWith('ja');
+      const localizedMonths = getMonthLabels(locale, isAsian ? 'short' : 'long');
+      const monthIndex = localizedMonths.indexOf(monthName);
+
       if (monthIndex >= 0) {
         app.setVisibleMonth(new Date(year, monthIndex, 1));
       }
     },
     initialWeeksToLoad: 156,
+    locale: locale,
+    isEnabled: isWeekHeightInitialized
   });
 
   const previousStartIndexRef = useRef(0);
@@ -373,6 +403,13 @@ const MonthView: React.FC<MonthViewProps> = ({
     };
   }, [scrollElementRef, isWeekHeightInitialized, setScrollTop]);
 
+  useEffect(() => {
+    const estimatedHeaderHeight = 150;
+    const estimatedContainerHeight = window.innerHeight - estimatedHeaderHeight;
+    const height = Math.max(80, Math.floor(estimatedContainerHeight / 6));
+    setWeekHeight(height);
+  }, []);
+
   const handleEventUpdate = (updatedEvent: Event) => {
     app.updateEvent(updatedEvent.id, updatedEvent);
   };
@@ -385,22 +422,36 @@ const MonthView: React.FC<MonthViewProps> = ({
     app.changeView(view);
   };
 
+  // TODO: remove getCustomTitle and using app.currentDate to fixed
+  const getCustomTitle = () => {
+    const isAsianLocale = locale.startsWith('zh') || locale.startsWith('ja');
+    return isAsianLocale ? `${currentYear}年${currentMonth}` : `${currentMonth} ${currentYear}`;
+  };
+
   return (
     <div className={monthViewContainer}>
       <ViewHeader
         calendar={app}
         viewType={ViewType.MONTH}
         currentDate={currentDate}
-        customTitle={`${currentMonth} ${currentYear}`}
-        onPrevious={handlePreviousMonth}
-        onNext={handleNextMonth}
-        onToday={handleToday}
-        switcherMode={switcherMode}
+        customTitle={getCustomTitle()}
+        onPrevious={() => {
+          app.goToPrevious();
+          handlePreviousMonth();
+        }}
+        onNext={() => {
+          app.goToNext();
+          handleNextMonth();
+        }}
+        onToday={() => {
+          app.goToToday();
+          handleToday();
+        }}
       />
 
       <div className={weekHeaderRow}>
         <div className={`${weekGrid} px-2`}>
-          {weekDays.map((day, i) => (
+          {weekDaysLabels.map((day, i) => (
             <div key={i} className={dayLabel}>
               {day}
             </div>
@@ -456,16 +507,34 @@ const MonthView: React.FC<MonthViewProps> = ({
               dragState={dragState as MonthEventDragState}
               newlyCreatedEventId={newlyCreatedEventId}
               onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
+              onMoreEventsClick={app.onMoreEventsClick}
               onChangeView={handleChangeView}
               onSelectDate={app.selectDate}
               selectedEventId={selectedEventId}
-              onEventSelect={setSelectedEventId}
+              onEventSelect={(eventId: string | null) => {
+                const isViewable = app.getReadOnlyConfig().viewable !== false;
+                if ((screenSize !== 'desktop' || isTouch) && eventId && isViewable) {
+                  const evt = events.find(e => e.id === eventId);
+                  if (evt) {
+                    setDraftEvent(evt);
+                    setIsDrawerOpen(true);
+                    return;
+                  }
+                }
+                setSelectedEventId(eventId);
+              }}
+              onEventLongPress={(eventId: string) => {
+                if (screenSize !== 'desktop' || isTouch) setSelectedEventId(eventId);
+              }}
               detailPanelEventId={detailPanelEventId}
               onDetailPanelToggle={setDetailPanelEventId}
               customDetailPanelContent={customDetailPanelContent}
               customEventDetailDialog={customEventDetailDialog}
               onCalendarDrop={handleDrop}
               onCalendarDragOver={handleDragOver}
+              calendarSignature={calendarSignature}
+              app={app}
+              enableTouch={isTouch}
             />
           );
         })}
@@ -475,6 +544,24 @@ const MonthView: React.FC<MonthViewProps> = ({
           }}
         />
       </div>
+      <MobileEventDrawerComponent
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setDraftEvent(null);
+        }}
+        onSave={(updatedEvent) => {
+          if (events.find(e => e.id === updatedEvent.id)) {
+            app.updateEvent(updatedEvent.id, updatedEvent);
+          } else {
+            app.addEvent(updatedEvent);
+          }
+          setIsDrawerOpen(false);
+          setDraftEvent(null);
+        }}
+        draftEvent={draftEvent}
+        app={app}
+      />
     </div>
   );
 };

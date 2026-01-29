@@ -23,6 +23,15 @@ export function InteractiveCalendar() {
   const { resolvedTheme } = useTheme();
   const currentView = ViewType.MONTH;
 
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const events = useMemo(() => generateSampleEvents(), []);
 
   const dragPlugin = createDragPlugin();
@@ -46,10 +55,14 @@ export function InteractiveCalendar() {
     events,
     calendars: calendarTypes,
     switcherMode: 'buttons',
-    useSidebar: {
-      enabled: true,
+    useSidebar: isMobile ? false : true,
+    callbacks: {
+      onMoreEventsClick: (date: Date) => {
+        calendar.selectDate(date);
+        calendar.changeView(ViewType.DAY);
+      },
     },
-    theme: { mode: themeMode }
+    theme: { mode: themeMode },
   });
 
   return (
@@ -57,6 +70,7 @@ export function InteractiveCalendar() {
       <DayFlowCalendar
         calendar={calendar}
         className="w-full"
+        style={{ height: isMobile ? 550 : 760 }}
       />
       <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
         <strong>Tip:</strong> Try dragging events across weeks, resizing them in

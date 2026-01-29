@@ -6,10 +6,10 @@ import React, {
   useCallback,
 } from 'react';
 import {
-  VirtualItem,
   UseVirtualScrollProps,
   UseVirtualScrollReturn,
-} from '@/types';
+  VirtualItem,
+} from '../../types';
 
 // Virtual scroll configuration
 export const VIRTUAL_SCROLL_CONFIG = {
@@ -235,9 +235,7 @@ export const useVirtualScroll = ({
   const [isScrolling, setIsScrolling] = useState(false);
 
   // References
-  const scrollElementRef = useRef<HTMLDivElement>(
-    document.createElement('div')
-  );
+  const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrollTime = useRef(0);
   const lastScrollTop = useRef(0);

@@ -1,18 +1,27 @@
 import React, { useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
-import { EventDetailPanelProps } from '@/types/eventDetail';
-import { isPlainDate } from '@/utils/temporal';
-import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
+import {
+  EventDetailPanelProps,
+  CalendarType,
+} from '../../types';
+import { isPlainDate } from '../../utils/temporal';
+import { getDefaultCalendarRegistry } from '../../core/calendarRegistry';
 import ColorPicker, { ColorOption } from './ColorPicker';
-import RangePicker from './RangePicker';
-import { useTheme } from '@/contexts/ThemeContext';
-import { resolveAppliedTheme } from '@/utils/themeUtils';
+import RangePicker from '../rangePicker';
+import { useTheme } from '../../contexts/ThemeContext';
+import { resolveAppliedTheme } from '../../utils/themeUtils';
+import { CalendarApp } from '@/core';
+import { useLocale } from '@/locale';
+
+interface DefaultEventDetailPanelProps extends EventDetailPanelProps {
+  app?: CalendarApp;
+}
 
 /**
  * Default event detail panel component
  */
-const DefaultEventDetailPanel: React.FC<EventDetailPanelProps> = ({
+const DefaultEventDetailPanel: React.FC<DefaultEventDetailPanelProps> = ({
   event,
   position,
   panelRef,
@@ -22,20 +31,30 @@ const DefaultEventDetailPanel: React.FC<EventDetailPanelProps> = ({
   selectedEventElementRef,
   onEventUpdate,
   onEventDelete,
+  app,
 }) => {
   const { effectiveTheme } = useTheme();
   const appliedTheme = resolveAppliedTheme(effectiveTheme);
-  const arrowBgColor = appliedTheme === 'dark' ? '#1f2937' : 'white';
-  const arrowBorderColor = appliedTheme === 'dark' ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)';
+  const { t } = useLocale();
+
+  // Check if dark mode is active (either via theme context or DOM class)
+  const isDark = appliedTheme === 'dark' || (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
+  const isEditable = !app?.state.readOnly;
+  const isViewable = app?.getReadOnlyConfig().viewable !== false;
+
+  if (!isViewable) return null;
+
+  const arrowBgColor = isDark ? '#1f2937' : 'white';
+  const arrowBorderColor = isDark ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)';
 
   // Get visible calendar type options
   const colorOptions: ColorOption[] = useMemo(() => {
-    const registry = getDefaultCalendarRegistry();
-    return registry.getVisible().map(cal => ({
+    const registry = app ? app.getCalendarRegistry() : getDefaultCalendarRegistry();
+    return registry.getVisible().map((cal: CalendarType) => ({
       label: cal.name,
       value: cal.id,
     }));
-  }, []);
+  }, [app, app?.getCalendars()]); // Depend on app.getCalendars() to update when calendars change
 
   const convertToAllDay = () => {
     const plainDate = isPlainDate(event.start)
@@ -244,54 +263,62 @@ const DefaultEventDetailPanel: React.FC<EventDetailPanelProps> = ({
       }}
     >
       <div style={arrowStyle}></div>
-      <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">Event Title</span>
+      <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('eventTitle')}</span>
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex-1">
           <input
             type="text"
             value={event.title}
+            readOnly={!isEditable}
+            disabled={!isEditable}
             onChange={e => {
               onEventUpdate({
                 ...event,
                 title: e.target.value,
               });
             }}
-            className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-blue-400 dark:focus:border-blue-500 transition"
+            className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
           />
         </div>
-        <ColorPicker
-          options={colorOptions}
-          value={event.calendarId || 'blue'}
-          onChange={value => {
-            onEventUpdate({
-              ...event,
-              calendarId: value,
-            });
-          }}
-        />
+        {isEditable && (
+          <ColorPicker
+            options={colorOptions}
+            value={event.calendarId || 'blue'}
+            onChange={value => {
+              onEventUpdate({
+                ...event,
+                calendarId: value,
+              });
+            }}
+            registry={app?.getCalendarRegistry()}
+          />
+        )}
       </div>
 
       {isAllDay ? (
         <div className="mb-3">
-          <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">Date Range</div>
+          <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">{t('dateRange')}</div>
           <RangePicker
             value={[event.start, event.end]}
             format="YYYY-MM-DD"
             showTime={false}
             timeZone={eventTimeZone}
             matchTriggerWidth
+            disabled={!isEditable}
             onChange={handleAllDayRangeChange}
             onOk={handleAllDayRangeChange}
+            locale={app?.state.locale}
           />
         </div>
       ) : (
         <div className="mb-3">
-          <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">Time Range</div>
+          <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">{t('timeRange')}</div>
           <RangePicker
             value={[event.start, event.end]}
             timeZone={
               eventTimeZone
             }
+            disabled={!isEditable}
             onChange={(nextRange) => {
               const [start, end] = nextRange;
               onEventUpdate({
@@ -308,14 +335,17 @@ const DefaultEventDetailPanel: React.FC<EventDetailPanelProps> = ({
                 end,
               });
             }}
+            locale={app?.state.locale}
           />
         </div>
       )}
 
       <div className="mb-3">
-        <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">Note</span>
+        <span className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('note')}</span>
         <textarea
           value={event.description ?? ''}
+          readOnly={!isEditable}
+          disabled={!isEditable}
           onChange={e =>
             onEventUpdate({
               ...event,
@@ -323,35 +353,37 @@ const DefaultEventDetailPanel: React.FC<EventDetailPanelProps> = ({
             })
           }
           rows={3}
-          className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-blue-400 dark:focus:border-blue-500 transition resize-none"
-          placeholder="Add a note..."
+          className="w-full border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition resize-none"
+          placeholder={t('addNotePlaceholder')}
         />
       </div>
 
-      <div className="flex space-x-2">
-        {!isAllDay ? (
-          <button
-            className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded hover:bg-blue-200 dark:hover:bg-blue-800 text-xs font-medium transition"
-            onClick={convertToAllDay}
-          >
-            Set as All-day
-          </button>
-        ) : (
-          <button
-            className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded hover:bg-blue-200 dark:hover:bg-blue-800 text-xs font-medium transition"
-            onClick={convertToRegular}
-          >
-            Set as Timed Event
-          </button>
-        )}
+      {isEditable && (
+        <div className="flex space-x-2">
+          {!isAllDay ? (
+            <button
+              className="px-2 py-1 bg-primary text-primary-foreground rounded hover:bg-primary text-xs font-medium transition"
+              onClick={convertToAllDay}
+            >
+              {t('setAsAllDay')}
+            </button>
+          ) : (
+            <button
+              className="px-2 py-1 bg-primary text-primary-foreground rounded hover:bg-primary text-xs font-medium transition"
+              onClick={convertToRegular}
+            >
+              {t('setAsTimed')}
+            </button>
+          )}
 
-        <button
-          className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded hover:bg-red-200 dark:hover:bg-red-800 text-xs font-medium transition"
-          onClick={() => onEventDelete(event.id)}
-        >
-          Delete
-        </button>
-      </div>
+          <button
+            className="px-2 py-1 bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 text-xs font-medium transition"
+            onClick={() => onEventDelete(event.id)}
+          >
+            {t('delete')}
+          </button>
+        </div>
+      )}
     </div>
   );
 

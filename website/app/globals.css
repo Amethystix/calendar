@@ -1,28 +1,24 @@
-@import 'tailwindcss';
+/* TODO: Fix @import 'tailwindcss'; issue*/
+/* @import 'tailwindcss'; */
 @import 'tw-animate-css';
 
 @layer l-base {
   :root {
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary-foreground: 333 100% 50%;
     --accent: 217 91% 60%;
   }
 }
-
-
 
 .nextra-banner-container {
   @apply bg-[linear-gradient(1deg,#383838,#212121)];
 }
 
-/* Code block container */
+/* Code block container
 .nextra-code > div:first-child {
-  background-color: hsl(var(--primary) / 0.1);
+  @apply bg-gray-200 dark:bg-zinc-900;
   border: none;
 }
 
 .nextra-code pre {
-  background-color: hsl(var(--primary) / 0.05);
+  @apply bg-gray-100 dark:bg-zinc-800;
   box-shadow: none;
-}
+} */

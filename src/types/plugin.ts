@@ -4,6 +4,7 @@ import { Event } from './event';
 import { EventLayout } from './layout';
 import { ViewType } from './core';
 import { MonthDragState, WeekDayDragState } from './dragIndicator';
+import { DragConfig } from './config';
 
 /**
  * Events service interface
@@ -46,7 +47,7 @@ export interface EventsPluginConfig {
 /**
  * Drag Hook options
  */
-export interface DragHookOptions {
+export interface DragHookOptions extends Partial<DragConfig> {
   calendarRef: React.RefObject<HTMLDivElement | null>;
   allDayRowRef?: React.RefObject<HTMLDivElement | null>;
   viewType: ViewType;
@@ -66,16 +67,17 @@ export interface DragHookOptions {
     targetStartHour: number,
     targetEndHour: number
   ) => EventLayout | null;
+  isMobile?: boolean;
 }
 
 /**
  * Drag Hook return value
  */
 export interface DragHookReturn {
-  handleMoveStart: (e: React.MouseEvent, event: Event) => void;
-  handleCreateStart: (e: React.MouseEvent, ...args: (Date | number)[]) => void;
-  handleResizeStart: (
-    e: React.MouseEvent,
+  handleMoveStart?: (e: React.MouseEvent | React.TouchEvent, event: Event) => void;
+  handleCreateStart?: (e: React.MouseEvent | React.TouchEvent, ...args: (Date | number)[]) => void;
+  handleResizeStart?: (
+    e: React.MouseEvent | React.TouchEvent,
     event: Event,
     direction: string
   ) => void;
