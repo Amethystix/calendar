@@ -15,8 +15,17 @@ interface YearRowComponentProps {
   isDragging: boolean;
   dragState: MonthEventDragState;
   onMoveStart?: (e: React.MouseEvent | React.TouchEvent, event: Event) => void;
+  onResizeStart?: (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
+    event: Event,
+    direction: string
+  ) => void;
+  onCreateStart?: (e: React.MouseEvent | React.TouchEvent, targetDate: Date) => void;
   selectedEventId: string | null;
   onEventSelect: (eventId: string | null) => void;
+  onMoreEventsClick?: (date: Date) => void;
+  newlyCreatedEventId?: string | null;
+  onDetailPanelOpen?: () => void;
   detailPanelEventId: string | null;
   onDetailPanelToggle: (eventId: string | null) => void;
   customDetailPanelContent?: EventDetailContentRenderer;
@@ -33,8 +42,13 @@ export const YearRowComponent: React.FC<YearRowComponentProps> = React.memo(({
   isDragging,
   dragState,
   onMoveStart,
+  onResizeStart,
+  onCreateStart,
   selectedEventId,
   onEventSelect,
+  onMoreEventsClick,
+  newlyCreatedEventId,
+  onDetailPanelOpen,
   detailPanelEventId,
   onDetailPanelToggle,
   customDetailPanelContent,
@@ -115,6 +129,8 @@ export const YearRowComponent: React.FC<YearRowComponentProps> = React.memo(({
             onSelectDate={(d) => {
               app.selectDate(d);
             }}
+            onCreateStart={onCreateStart}
+            onMoreEventsClick={onMoreEventsClick}
             moreCount={moreCounts[index]}
           />
         );
@@ -137,8 +153,11 @@ export const YearRowComponent: React.FC<YearRowComponentProps> = React.memo(({
                 isDragging={isDragging && dragState.eventId === segment.event.id}
                 isSelected={selectedEventId === segment.event.id}
                 onMoveStart={onMoveStart}
+                onResizeStart={onResizeStart}
                 onEventSelect={onEventSelect}
                 onDetailPanelToggle={onDetailPanelToggle}
+                newlyCreatedEventId={newlyCreatedEventId}
+                onDetailPanelOpen={onDetailPanelOpen}
                 calendarRef={calendarRef}
                 app={app}
                 detailPanelEventId={detailPanelEventId}

@@ -353,9 +353,7 @@ const DayView: React.FC<DayViewProps> = ({
         app.addEvent(event);
       }
     },
-    onEventEdit: () => {
-      // Event edit handling (add logic here if needed)
-    },
+    onEventEdit: () => { },
     currentWeekStart,
     events: currentDayEvents,
     calculateNewEventLayout,

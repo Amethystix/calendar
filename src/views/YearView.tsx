@@ -30,7 +30,7 @@ const YearView: React.FC<YearViewProps> = ({
   const currentYear = currentDate.getFullYear();
   const rawEvents = app.getEvents();
   const scrollElementRef = useRef<HTMLDivElement>(null);
-  
+
   const [columnsPerRow, setColumnsPerRow] = useState(() => {
     if (typeof window !== 'undefined') {
       return Math.max(1, Math.floor(window.innerWidth / 80));
@@ -41,6 +41,24 @@ const YearView: React.FC<YearViewProps> = ({
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [detailPanelEventId, setDetailPanelEventId] = useState<string | null>(null);
+  const [newlyCreatedEventId, setNewlyCreatedEventId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      const clickedEvent = target.closest('[data-event-id]');
+      const clickedPanel = target.closest('[data-event-detail-panel]');
+
+      if (!clickedEvent && !clickedPanel) {
+        setSelectedEventId(null);
+        setDetailPanelEventId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const container = scrollElementRef.current;
@@ -61,24 +79,30 @@ const YearView: React.FC<YearViewProps> = ({
   // Drag and Drop Hook
   const {
     handleMoveStart,
+    handleResizeStart,
+    handleCreateStart,
     dragState,
     isDragging,
   } = useDragForView(app, {
     calendarRef,
     viewType: ViewType.YEAR,
-    onEventsUpdate: (updateFunc) => {
+    onEventsUpdate: (updateFunc, isResizing) => {
       const newEvents = updateFunc(rawEvents);
       newEvents.forEach(newEvent => {
         const oldEvent = rawEvents.find(e => e.id === newEvent.id);
         if (oldEvent && (oldEvent.start !== newEvent.start || oldEvent.end !== newEvent.end)) {
-          app.updateEvent(newEvent.id, newEvent);
+          app.updateEvent(newEvent.id, newEvent, isResizing);
         }
       });
     },
     currentWeekStart: new Date(),
     events: rawEvents,
-    onEventCreate: () => { },
-    onEventEdit: () => { },
+    onEventCreate: (event) => {
+      app.addEvent(event);
+    },
+    onEventEdit: (event) => {
+      setNewlyCreatedEventId(event.id);
+    },
   });
 
   // Generate all days for the current year
@@ -148,27 +172,34 @@ const YearView: React.FC<YearViewProps> = ({
           overflow: 'hidden auto',
         }}
       >
-        <div className="w-full flex flex-col" style={{ opacity: isLayoutReady ? 1 : 0, transition: 'opacity 0.2s ease' }}>
+        <div
+          className="w-full flex flex-col border-t border-l border-gray-100 dark:border-gray-800"
+          style={{ opacity: isLayoutReady ? 1 : 0, transition: 'opacity 0.2s ease' }}
+        >
           {rows.map((rowDays, index) => (
-             <YearRowComponent
-                key={index}
-                rowDays={rowDays}
-                events={yearEvents}
-                columnsPerRow={columnsPerRow}
-                app={app}
-                calendarRef={calendarRef}
-                locale={locale}
-                isDragging={isDragging}
-                dragState={dragState as MonthEventDragState}
-                onMoveStart={handleMoveStart}
-                selectedEventId={selectedEventId}
-                onEventSelect={setSelectedEventId}
-                detailPanelEventId={detailPanelEventId}
-                onDetailPanelToggle={setDetailPanelEventId}
-                customDetailPanelContent={customDetailPanelContent}
-                customEventDetailDialog={customEventDetailDialog}
-             />
-          ))}
+            <YearRowComponent
+              key={index}
+              rowDays={rowDays}
+              events={yearEvents}
+              columnsPerRow={columnsPerRow}
+              app={app}
+              calendarRef={calendarRef}
+              locale={locale}
+              isDragging={isDragging}
+              dragState={dragState as MonthEventDragState}
+              onMoveStart={handleMoveStart}
+              onResizeStart={handleResizeStart}
+              onCreateStart={handleCreateStart}
+              selectedEventId={selectedEventId}
+              onEventSelect={setSelectedEventId}
+              onMoreEventsClick={app.onMoreEventsClick}
+              newlyCreatedEventId={newlyCreatedEventId}
+              onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
+              detailPanelEventId={detailPanelEventId}
+              onDetailPanelToggle={setDetailPanelEventId}
+              customDetailPanelContent={customDetailPanelContent}
+              customEventDetailDialog={customEventDetailDialog}
+            />))}
         </div>
       </div>
     </div>

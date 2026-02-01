@@ -6,6 +6,8 @@ interface YearDayCellProps {
   isToday: boolean;
   locale: string;
   onSelectDate: (date: Date) => void;
+  onCreateStart?: (e: React.MouseEvent | React.TouchEvent, targetDate: Date) => void;
+  onMoreEventsClick?: (date: Date) => void;
   moreCount?: number;
 }
 
@@ -14,6 +16,8 @@ export const YearDayCell: React.FC<YearDayCellProps> = React.memo(({
   isToday,
   locale,
   onSelectDate,
+  onCreateStart,
+  onMoreEventsClick,
   moreCount = 0,
 }) => {
   const { t } = useLocale();
@@ -25,13 +29,13 @@ export const YearDayCell: React.FC<YearDayCellProps> = React.memo(({
   return (
     <div
       className={`
-        relative flex flex-col border border-gray-100 dark:border-gray-800
+        relative flex flex-col border-r border-b border-gray-100 dark:border-gray-800
         ${isFirstDay ? 'border-l-2 border-l-primary dark:border-l-primary' : ''}
-        cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800
-        overflow-hidden bg-white dark:bg-gray-900
+        overflow-hidden bg-white dark:bg-gray-900 select-none
       `}
       style={{ aspectRatio: '1/1' }}
       onClick={() => onSelectDate(date)}
+      onDoubleClick={(e) => onCreateStart?.(e, date)}
       data-date={dateString}
     >
       <div className="flex items-center px-1 py-1 shrink-0 h-6">
@@ -51,8 +55,14 @@ export const YearDayCell: React.FC<YearDayCellProps> = React.memo(({
       </div>
 
       {moreCount > 0 && (
-        <div className="absolute bottom-0.5 left-1 pointer-events-none">
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+        <div className="absolute bottom-0.5 left-1 z-20">
+          <span 
+            className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer hover:underline"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoreEventsClick?.(date);
+            }}
+          >
             +{moreCount} {t('more')}
           </span>
         </div>

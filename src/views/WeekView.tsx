@@ -464,9 +464,7 @@ const WeekView: React.FC<WeekViewProps> = ({
         app.addEvent(event);
       }
     },
-    onEventEdit: () => {
-      // Event edit handling (add logic here if needed)
-    },
+    onEventEdit: () => { },
     currentWeekStart,
     events: currentWeekEvents,
     calculateNewEventLayout,

@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Event, EventDetailContentRenderer, EventDetailDialogRenderer, EventDetailPosition } from '@/types';
-import { getEventBgColor, getEventTextColor, getSelectedBgColor, getLineColor } from '@/utils';
+import { getEventBgColor, getEventTextColor, getSelectedBgColor, getLineColor, formatTime, extractHourFromDate, getEventEndHour } from '@/utils';
 import { getEventIcon } from '@/components/monthView/util';
 import { YearMultiDaySegment } from './utils';
 import DefaultEventDetailPanel from '../common/DefaultEventDetailPanel';
@@ -14,55 +14,111 @@ interface YearMultiDayEventProps {
   isDragging: boolean;
   isSelected: boolean;
   onMoveStart?: (e: React.MouseEvent | React.TouchEvent, event: Event) => void;
-  onEventSelect?: (eventId: string | null) => void;
-  detailPanelEventId?: string | null;
-  onDetailPanelToggle?: (eventId: string | null) => void;
-  customDetailPanelContent?: EventDetailContentRenderer;
-  customEventDetailDialog?: EventDetailDialogRenderer;
-  app?: CalendarApp;
-  calendarRef?: React.RefObject<HTMLDivElement>;
-}
-
-export const YearMultiDayEvent: React.FC<YearMultiDayEventProps> = ({
-  segment,
-  columnsPerRow,
-  isDragging,
-  isSelected,
-  onMoveStart,
-  onEventSelect,
-  detailPanelEventId,
-  onDetailPanelToggle,
-  customDetailPanelContent,
-  customEventDetailDialog,
-  app,
-  calendarRef,
-}) => {
-  const { event, startCellIndex, endCellIndex, visualRowIndex } = segment;
+  onResizeStart?: (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent> | React.TouchEvent<HTMLDivElement>,
+    event: Event,
+    direction: string
+  ) => void;
+    onEventSelect?: (eventId: string | null) => void;
+    detailPanelEventId?: string | null;
+    onDetailPanelToggle?: (eventId: string | null) => void;
+    newlyCreatedEventId?: string | null;
+    onDetailPanelOpen?: () => void;
+    customDetailPanelContent?: EventDetailContentRenderer;
+    customEventDetailDialog?: EventDetailDialogRenderer;
+    app?: CalendarApp;
+    calendarRef?: React.RefObject<HTMLDivElement>;
+  }
   
-  const eventRef = useRef<HTMLDivElement>(null);
-  const detailPanelRef = useRef<HTMLDivElement>(null);
-  const [detailPanelPosition, setDetailPanelPosition] = useState<EventDetailPosition | null>(null);
-
-  const showDetailPanel = detailPanelEventId === event.id;
-  
-  const startPercent = (startCellIndex / columnsPerRow) * 100;
-  const widthPercent = ((endCellIndex - startCellIndex + 1) / columnsPerRow) * 100;
-  
-  // Basic styling
-  const calendarId = event.calendarId || 'blue';
-  const bgColor = isSelected || isDragging ? getSelectedBgColor(calendarId) : getEventBgColor(calendarId);
-  const textColor = isSelected || isDragging ? '#fff' : getEventTextColor(calendarId);
-  const lineColor = getLineColor(calendarId);
-  const isAllDay = !!event.allDay;
-  const icon = isAllDay ? getEventIcon(event) : null;
-
-  const EVENT_HEIGHT = 16;
-  const ROW_SPACING = 18;
-  const TOP_OFFSET = visualRowIndex * ROW_SPACING;
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  export const YearMultiDayEvent: React.FC<YearMultiDayEventProps> = ({
+    segment,
+    columnsPerRow,
+    isDragging,
+    isSelected,
+    onMoveStart,
+    onResizeStart,
+    onEventSelect,
+    detailPanelEventId,
+    onDetailPanelToggle,
+    newlyCreatedEventId,
+    onDetailPanelOpen,
+    customDetailPanelContent,
+    customEventDetailDialog,
+    app,
+    calendarRef,
+  }) => {
+    const { event, startCellIndex, endCellIndex, visualRowIndex, isFirstSegment, isLastSegment } = segment;
     
+    const eventRef = useRef<HTMLDivElement>(null);
+    const detailPanelRef = useRef<HTMLDivElement>(null);
+    const [detailPanelPosition, setDetailPanelPosition] = useState<EventDetailPosition | null>(null);
+  
+    const showDetailPanel = detailPanelEventId === event.id;
+    const isEditable = !app?.state.readOnly;
+    
+    const startPercent = (startCellIndex / columnsPerRow) * 100;
+    const widthPercent = ((endCellIndex - startCellIndex + 1) / columnsPerRow) * 100;
+    
+    // Basic styling
+    const calendarId = event.calendarId || 'blue';
+    const bgColor = isSelected ? getSelectedBgColor(calendarId) : getEventBgColor(calendarId);
+    const textColor = isSelected ? '#fff' : getEventTextColor(calendarId);
+    const lineColor = getLineColor(calendarId);
+    const isAllDay = !!event.allDay;
+    const icon = isAllDay ? getEventIcon(event) : null;
+  
+    const EVENT_HEIGHT = 16;
+    const ROW_SPACING = 18;
+    const TOP_OFFSET = visualRowIndex * ROW_SPACING;
+    const HORIZONTAL_MARGIN = 2; // Match MultiDayEvent
+  
+    const showPanel = () => {
+      const rect = eventRef.current?.getBoundingClientRect();
+      if (rect) {
+        // Basic positioning logic - can be enhanced
+        const panelHeight = 200; // estimated
+        const panelWidth = 300; // estimated
+        let top = rect.bottom + 10;
+        let left = rect.left;
+        
+        // Adjust if off screen
+        if (top + panelHeight > window.innerHeight) {
+          top = rect.top - panelHeight - 10;
+        }
+        if (left + panelWidth > window.innerWidth) {
+          left = window.innerWidth - panelWidth - 10;
+        }
+  
+        setDetailPanelPosition({
+          top,
+          left,
+          eventHeight: rect.height,
+          eventMiddleY: rect.top + rect.height / 2,
+        });
+      }
+  
+      onDetailPanelToggle?.(event.id);
+    };
+  
+    useEffect(() => {
+      if (newlyCreatedEventId === event.id && !showDetailPanel) {
+        // Delay slightly to ensure layout is ready
+        setTimeout(() => {
+          showPanel();
+          onDetailPanelOpen?.();
+        }, 50);
+      }
+    }, [newlyCreatedEventId, event.id, showDetailPanel, onDetailPanelOpen]);
+  
+    const handleMouseDown = (e: React.MouseEvent) => {    e.stopPropagation();
+
+    if (onMoveStart) {
+      onMoveStart(e, event);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
     if (onEventSelect) {
       onEventSelect(event.id);
     }
@@ -70,46 +126,44 @@ export const YearMultiDayEvent: React.FC<YearMultiDayEventProps> = ({
       onMoveStart(e, event);
     }
   };
-  
-  const handleTouchStart = (e: React.TouchEvent) => {
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-     if (onEventSelect) {
+    if (onEventSelect) {
       onEventSelect(event.id);
-    }
-    if (onMoveStart) {
-      onMoveStart(e, event);
     }
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    const rect = eventRef.current?.getBoundingClientRect();
-    if (rect) {
-      // Basic positioning logic - can be enhanced
-      const panelHeight = 200; // estimated
-      const panelWidth = 300; // estimated
-      let top = rect.bottom + 10;
-      let left = rect.left;
-      
-      // Adjust if off screen
-      if (top + panelHeight > window.innerHeight) {
-        top = rect.top - panelHeight - 10;
-      }
-      if (left + panelWidth > window.innerWidth) {
-        left = window.innerWidth - panelWidth - 10;
-      }
+    showPanel();
+  };
 
-      setDetailPanelPosition({
-        top,
-        left,
-        eventHeight: rect.height,
-        eventMiddleY: rect.top + rect.height / 2,
-      });
-    }
+  const renderResizeHandle = (position: 'left' | 'right') => {
+    const isLeft = position === 'left';
+    const shouldShow = isLeft
+      ? isFirstSegment
+      : isLastSegment;
 
-    onDetailPanelToggle?.(event.id);
+    // Only allow resizing for all-day events in Year View
+    if (!event.allDay || !shouldShow || !onResizeStart || !isEditable) return null;
+
+    return (
+      <div
+        className={`resize-handle absolute ${isLeft ? 'left-0' : 'right-0'} top-0 bottom-0 w-1 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity z-20`}
+        onMouseDown={e => {
+          e.preventDefault();
+          e.stopPropagation();
+          onResizeStart(e, event, isLeft ? 'left' : 'right');
+        }}
+        onClick={e => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      />
+    );
   };
 
   const renderDetailPanel = () => {
@@ -179,48 +233,121 @@ export const YearMultiDayEvent: React.FC<YearMultiDayEventProps> = ({
     );
   };
 
+  // Calculate border radius based on segment position
+  const getBorderRadius = () => {
+    if (isFirstSegment && isLastSegment) return '0.25rem';
+    if (isFirstSegment) return '0.25rem 0 0 0.25rem';
+    if (isLastSegment) return '0 0.25rem 0.25rem 0';
+    return '0';
+  };
+
+  const segmentDays = endCellIndex - startCellIndex + 1;
+
+  const renderEventContent = () => {
+    const isAllDayEvent = event.allDay;
+
+    // Logic adapted from MultiDayEvent
+    if (isAllDayEvent) {
+      const getDisplayText = () => {
+        if (segment.isFirstSegment) return event.title;
+        return '···';
+      };
+
+      return (
+        <div className="flex items-center min-w-0 w-full pointer-events-auto h-full">
+          {segment.isFirstSegment && getEventIcon(event) && (
+            <div className="shrink-0 mr-1">
+              <div
+                className="rounded-full p-0.5 text-white flex items-center justify-center"
+                style={{
+                  backgroundColor: getLineColor(calendarId),
+                  width: '12px',
+                  height: '12px',
+                }}
+              >
+                {getEventIcon(event)}
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0">
+            <div
+              className="font-medium text-xs leading-none whitespace-nowrap overflow-hidden"
+              style={{
+                maskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+              }}
+            >
+              {getDisplayText()}
+            </div>
+          </div>
+
+          {/* Add small indicator for continuation if needed, similar to MultiDayEvent */}
+          {segment.isLastSegment && !segment.isFirstSegment && (
+            <div className="shrink-0 ml-1 text-white/80 dark:text-white/90">
+              <div className="w-1.5 h-1.5 rounded-full bg-white/60 dark:bg-white/80"></div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // For non-all-day events treated as bars in Year View
+    const titleText = segment.isFirstSegment ? event.title : '';
+
+    return (
+      <div className="w-full h-full flex items-center overflow-hidden gap-1 pointer-events-auto">
+        {!isAllDay && (
+          <span
+            style={{ backgroundColor: lineColor }}
+            className="inline-block w-0.75 h-3 shrink-0 rounded-full"
+          ></span>
+        )}
+        {isAllDay && icon && (
+          <div className="shrink-0 flex items-center justify-center opacity-80 scale-75">
+            {icon}
+          </div>
+        )}
+        <span
+          className="w-full block font-medium whitespace-nowrap overflow-hidden leading-none"
+          style={{
+            maskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+          }}
+        >
+          {titleText}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <>
       <div
         ref={eventRef}
-        className="absolute z-10 rounded text-xs px-1 overflow-hidden whitespace-nowrap cursor-pointer transition-colors"
+        className="absolute z-10 text-xs px-1 overflow-hidden whitespace-nowrap cursor-pointer transition-colors group"
         style={{
-          left: `${startPercent}%`,
+          left: `calc(${startPercent}% + ${HORIZONTAL_MARGIN}px)`,
           top: `${TOP_OFFSET}px`,
           height: `${EVENT_HEIGHT}px`,
           backgroundColor: bgColor,
           color: textColor,
-          marginLeft: '2px', // Slight gap
-          width: `calc(${widthPercent}% - 4px)`, // Compensate for margins
+          opacity: isDragging ? 0.6 : 1,
+          width: `calc(${widthPercent}% - ${HORIZONTAL_MARGIN * 2}px)`,
           pointerEvents: isDragging ? 'none' : 'auto',
+          borderRadius: getBorderRadius(),
         }}
+        data-segment-days={segmentDays}
+        data-event-id={event.id}
         onMouseDown={handleMouseDown}
+        onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onTouchStart={handleTouchStart}
         title={event.title}
       >
-        <div className="w-full h-full flex items-center overflow-hidden gap-1">
-          {!isAllDay && (
-            <span
-              style={{ backgroundColor: lineColor }}
-              className="inline-block w-0.75 h-3 shrink-0 rounded-full"
-            ></span>
-          )}
-          {isAllDay && icon && (
-            <div className="shrink-0 flex items-center justify-center opacity-80 scale-75">
-              {icon}
-            </div>
-          )}
-          <span 
-            className="w-full block font-medium"
-            style={{
-               maskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
-               WebkitMaskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
-            }}
-          >
-            {event.title}
-          </span>
-        </div>
+        {renderResizeHandle('left')}
+        {renderEventContent()}
+        {renderResizeHandle('right')}
       </div>
       {renderDetailPanel()}
     </>
