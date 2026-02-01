@@ -80,7 +80,7 @@ export const useDragHandlers = (
     getTargetDateFromPosition,
   } = common;
 
-  const isMonthView = viewType === ViewType.MONTH;
+  const isDateGridView = viewType === ViewType.MONTH || viewType === ViewType.YEAR;
   const isDayView = viewType === ViewType.DAY;
 
   const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -431,7 +431,7 @@ export const useDragHandlers = (
 
       // Set cursor based on drag mode and direction
       if (drag.mode === 'resize') {
-        if (isMonthView || drag.allDay) {
+        if (isDateGridView || drag.allDay) {
           // MonthView or AllDay event resize (horizontal)
           document.body.style.cursor = 'ew-resize';
         } else {
@@ -443,7 +443,7 @@ export const useDragHandlers = (
         document.body.style.cursor = 'grabbing';
       }
 
-      if (isMonthView) {
+      if (isDateGridView) {
         // Month view drag logic
         if (drag.mode !== 'resize') {
           if (drag.mode === 'move') {
@@ -554,8 +554,12 @@ export const useDragHandlers = (
         } else if (drag.mode === 'move') {
           // Move logic
           if (drag.originalStartDate && drag.originalEndDate) {
+            // Normalize original start date to midnight to ensure consistent day difference calculation
+            const normalizedOriginalStart = new Date(drag.originalStartDate);
+            normalizedOriginalStart.setHours(0, 0, 0, 0);
+
             const dragOffsetDays = daysDifference(
-              drag.originalStartDate,
+              normalizedOriginalStart,
               targetDate
             );
             const newStartDate = addDaysToDate(
@@ -869,7 +873,7 @@ export const useDragHandlers = (
       }
     },
     [
-      isMonthView,
+      isDateGridView,
       isDayView,
       updateDragIndicator,
       getTargetDateFromPosition,
@@ -904,11 +908,21 @@ export const useDragHandlers = (
 
       document.body.style.cursor = 'default';
 
+      // If dragging but threshold not met (indicator not visible), treat as click/cancel
+      if (drag.mode === 'move' && !drag.indicatorVisible) {
+        document.removeEventListener('mousemove', handleDragMove);
+        document.removeEventListener('mouseup', handleDragEnd);
+        document.removeEventListener('touchmove', handleDragMove, { capture: true });
+        document.removeEventListener('touchend', handleDragEnd);
+        resetDragState();
+        return;
+      }
+
       const { clientX, clientY } = getClientCoordinates(e);
 
       if (!drag || !drag.active) return;
 
-      if (isMonthView) {
+      if (isDateGridView) {
         // Month view drag end logic
         if (
           drag.mode === 'resize' &&
@@ -1136,7 +1150,7 @@ export const useDragHandlers = (
       resetDragState();
     },
     [
-      isMonthView,
+      isDateGridView,
       handleDragMove,
       removeDragIndicator,
       resetDragState,
@@ -1165,7 +1179,7 @@ export const useDragHandlers = (
 
       const { clientX, clientY } = getClientCoordinates(e);
 
-      if (isMonthView) {
+      if (isDateGridView) {
         // Month view create event
         const [targetDate] = args as [Date];
         // Set default time to 9:00-10:00
@@ -1247,7 +1261,7 @@ export const useDragHandlers = (
       }
     },
     [
-      isMonthView,
+      isDateGridView,
       onEventCreate,
       onEventEdit,
       currentWeekStart,
@@ -1278,7 +1292,7 @@ export const useDragHandlers = (
       if (!drag) return;
       const sourceElement = e.currentTarget as HTMLElement;
 
-      if (isMonthView) {
+      if (isDateGridView) {
         // Month view move start
         currentDragRef.current = {
           x: clientX - sourceElement.getBoundingClientRect().left,
@@ -1429,7 +1443,7 @@ export const useDragHandlers = (
       }
     },
     [
-      isMonthView,
+      isDateGridView,
       createDragIndicator,
       handleDragEnd,
       handleDragMove,
@@ -1459,7 +1473,7 @@ export const useDragHandlers = (
       const drag = dragRef.current;
       if (!drag) return;
 
-      if (isMonthView) {
+      if (isDateGridView) {
         // Month view resize start
         const originalDate = temporalToDate(event.start);
         const initialStartDate = temporalToDate(event.start);
@@ -1571,7 +1585,7 @@ export const useDragHandlers = (
       document.addEventListener('touchend', handleDragEnd);
     },
     [
-      isMonthView,
+      isDateGridView,
       handleDragMove,
       handleDragEnd,
       pixelYToHour,

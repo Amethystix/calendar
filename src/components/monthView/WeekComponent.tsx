@@ -84,34 +84,6 @@ const ROW_SPACING = 17;
 const MULTI_DAY_TOP_OFFSET = 33;
 const MORE_TEXT_HEIGHT = 20; // Height reserved for the "+ x more" indicator
 
-/**
- * Calculate how many single-day events can be shown inside a cell.
- * Ideal case: show 4 events plus the "+ x more" indicator.
- * When the height is limited, gradually reduce the number of events.
- */
-const calculateMaxEventsToShow = (weekHeight: number): number => {
-  // Reserve the top portion for the date label/multi-day layer offset
-  const availableHeight = weekHeight - MULTI_DAY_TOP_OFFSET;
-
-  if (availableHeight <= 0) {
-    return 0;
-  }
-
-  const eventHeight = ROW_SPACING;
-  const maxEventsWithoutCap = Math.floor(availableHeight / eventHeight);
-  const cappedEvents = Math.max(0, Math.min(4, maxEventsWithoutCap));
-
-  // If we're not limited by the hard cap of 4 events, ensure there's space for the "+ x more" line
-  if (
-    cappedEvents === maxEventsWithoutCap &&
-    availableHeight - cappedEvents * eventHeight < MORE_TEXT_HEIGHT
-  ) {
-    return Math.max(0, cappedEvents - 1);
-  }
-
-  return cappedEvents;
-};
-
 // Organize multi-day event segments
 const organizeMultiDaySegments = (multiDaySegments: MultiDayEventSegment[]) => {
   const sortedSegments = [...multiDaySegments].sort((a, b) => {

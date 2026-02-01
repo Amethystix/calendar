@@ -110,7 +110,11 @@ export const useDragCommon = (options: useDragProps): UseDragCommonReturn => {
 
   const getTargetDateFromPosition = useCallback(
     (clientX: number, clientY: number): Date | null => {
-      if (viewType !== ViewType.MONTH || !calendarRef.current) return null;
+      if (
+        (viewType !== ViewType.MONTH && viewType !== ViewType.YEAR) ||
+        !calendarRef.current
+      )
+        return null;
 
       const element = document.elementFromPoint(clientX, clientY);
       if (!element) return null;
