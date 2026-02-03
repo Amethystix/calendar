@@ -282,7 +282,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
       const topOffset = segmentIndex * allDayHeight;
       Object.assign(styles, { top: `${topOffset}px` });
       if (isDayView) {
-        Object.assign(styles, { width: '100%', left: '0px', right: '2px' });
+        Object.assign(styles, { width: '100%', left: '0px', right: '2px', position: 'absolute' });
       } else if (isMultiDay && segment) {
         const spanDays = segment.endDayIndex - segment.startDayIndex + 1;
         const widthPercent = (spanDays / 7) * 100;

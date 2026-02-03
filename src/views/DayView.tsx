@@ -199,12 +199,34 @@ const DayView: React.FC<DayViewProps> = ({
 
   // Events for the current date
   const currentDayEvents = useMemo(() => {
+    // Current Date Range (00:00 - 23:59:59.999)
+    const dayStart = new Date(currentDate);
+    dayStart.setHours(0, 0, 0, 0);
+
+    const dayEnd = new Date(currentDate);
+    dayEnd.setHours(23, 59, 59, 999);
+
     const filtered = events.filter(event => {
-      const eventDate = temporalToDate(event.start);
-      eventDate.setHours(0, 0, 0, 0);
-      const targetDate = new Date(currentDate);
-      targetDate.setHours(0, 0, 0, 0);
-      return eventDate.getTime() === targetDate.getTime();
+      const eventStart = temporalToDate(event.start);
+      const eventEnd = temporalToDate(event.end);
+
+      // Handle All-Day events
+      if (event.allDay) {
+        // Normalize to date only
+        const s = new Date(eventStart);
+        s.setHours(0, 0, 0, 0);
+
+        const e = new Date(eventEnd);
+        e.setHours(0, 0, 0, 0);
+
+        // Check intersection: [s, e] overlaps with [dayStart, dayEnd]
+        // Since dayStart/End are within a single day, we just check if current day is within event range
+        return s <= dayEnd && e >= dayStart;
+      }
+
+      // Handle Regular events
+      // Check intersection: [eventStart, eventEnd) overlaps with [dayStart, dayEnd]
+      return eventStart < dayEnd && eventEnd > dayStart;
     });
 
     // Recalculate the day field to fit the current week start time
@@ -223,12 +245,113 @@ const DayView: React.FC<DayViewProps> = ({
     });
   }, [events, currentDate, currentWeekStart]);
 
+  // Prepare events for layout calculation:
+  // 1. Filter out all-day events
+  // 2. Clamp start/end times to the current day (00:00 - 24:00)
+  // 3. Normalize 'day' property to ensure they are treated as the same group
+  const layoutEvents = useMemo(() => {
+    const dayStart = new Date(currentDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const nextDay = new Date(dayStart);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    return currentDayEvents
+      .filter(e => !e.allDay)
+      .map(event => {
+        const eventStart = temporalToDate(event.start);
+        const eventEnd = temporalToDate(event.end);
+        let newStart = event.start;
+        let newEnd = event.end;
+        let modified = false;
+
+        // Clamp start
+        if (eventStart < dayStart) {
+          newStart = dateToZonedDateTime(dayStart);
+          modified = true;
+        }
+
+        // Clamp end
+        if (eventEnd > nextDay) {
+          newEnd = dateToZonedDateTime(nextDay);
+          modified = true;
+        }
+
+        return {
+          ...event,
+          start: modified ? newStart : event.start,
+          end: modified ? newEnd : event.end,
+          day: 0 // Force all events to same day index for collision detection
+        };
+      });
+  }, [currentDayEvents, currentDate]);
+
   // Calculate event layouts
   const eventLayouts = useMemo(() => {
-    return EventLayoutCalculator.calculateDayEventLayouts(currentDayEvents, {
+    return EventLayoutCalculator.calculateDayEventLayouts(layoutEvents, {
       viewType: 'day',
     });
+  }, [layoutEvents]);
+
+  // Organize all-day events into rows to avoid overlap
+  const organizedAllDayEvents = useMemo(() => {
+    const allDayEvents = currentDayEvents.filter(e => e.allDay);
+    
+    // Sort all-day events: multi-day first, then by title
+    allDayEvents.sort((a, b) => {
+      const aStart = temporalToDate(a.start);
+      const bStart = temporalToDate(b.start);
+      if (aStart.getTime() !== bStart.getTime()) {
+        return aStart.getTime() - bStart.getTime();
+      }
+      const aEnd = temporalToDate(a.end);
+      const bEnd = temporalToDate(b.end);
+      return bEnd.getTime() - aEnd.getTime(); // Longer first
+    });
+
+    const rows: Event[][] = [];
+    const eventsWithRow: Array<Event & { row: number }> = [];
+
+    allDayEvents.forEach(event => {
+      let rowIndex = 0;
+      let placed = false;
+
+      while (!placed) {
+        if (!rows[rowIndex]) {
+          rows[rowIndex] = [event];
+          eventsWithRow.push({ ...event, row: rowIndex });
+          placed = true;
+        } else {
+          // Check for collision in this row
+          // In DayView, if two all-day events both overlap today, they collide.
+          // However, we should check their actual date ranges to be safe, 
+          // though for DayView they usually all occupy the full slot.
+          const hasCollision = rows[rowIndex].some(existing => {
+            const aStart = temporalToDate(event.start);
+            const aEnd = temporalToDate(event.end);
+            const bStart = temporalToDate(existing.start);
+            const bEnd = temporalToDate(existing.end);
+            return aStart <= bEnd && bStart <= aEnd;
+          });
+
+          if (!hasCollision) {
+            rows[rowIndex].push(event);
+            eventsWithRow.push({ ...event, row: rowIndex });
+            placed = true;
+          } else {
+            rowIndex++;
+          }
+        }
+      }
+    });
+
+    return eventsWithRow;
   }, [currentDayEvents]);
+
+  const allDayAreaHeight = useMemo(() => {
+    if (organizedAllDayEvents.length === 0) return ALL_DAY_HEIGHT;
+    const maxRow = Math.max(...organizedAllDayEvents.map(e => e.row));
+    return (maxRow + 1) * ALL_DAY_HEIGHT;
+  }, [organizedAllDayEvents, ALL_DAY_HEIGHT]);
 
   // Calculate layout for newly created events
   const calculateNewEventLayout = (
@@ -244,14 +367,14 @@ const DayView: React.FC<DayViewProps> = ({
     const tempEvent: Event = {
       id: '-1',
       title: 'Temp',
-      day: targetDay,
+      day: 0, // Force to 0 to match layoutEvents
       start: dateToZonedDateTime(startDate),
       end: dateToZonedDateTime(endDate),
       calendarId: 'blue',
       allDay: false,
     };
 
-    const dayEvents = [...currentDayEvents.filter(e => !e.allDay), tempEvent];
+    const dayEvents = [...layoutEvents, tempEvent];
     const tempLayouts = EventLayoutCalculator.calculateDayEventLayouts(
       dayEvents,
       { viewType: 'day' }
@@ -266,25 +389,23 @@ const DayView: React.FC<DayViewProps> = ({
     targetEndHour: number
   ): EventLayout | null => {
     // Create temporary event list, including the dragged event in the new position
-    const tempEvents = currentDayEvents.map(e => {
-      if (e.id !== draggedEvent.id) return e;
+    const otherEvents = layoutEvents.filter(e => e.id !== draggedEvent.id);
 
-      const eventDateForCalc = temporalToDate(e.start);
-      const newStartDate = createDateWithHour(
-        eventDateForCalc,
-        targetStartHour
-      ) as Date;
-      const newEndDate = createDateWithHour(
-        eventDateForCalc,
-        targetEndHour
-      ) as Date;
-      const newStart = dateToZonedDateTime(newStartDate);
-      const newEnd = dateToZonedDateTime(newEndDate);
+    // Calculate new start/end based on current view date and drag hours
+    const viewDate = new Date(currentDate);
+    const startD = new Date(viewDate);
+    startD.setHours(Math.floor(targetStartHour), (targetStartHour % 1) * 60, 0, 0);
+    const endD = new Date(viewDate);
+    endD.setHours(Math.floor(targetEndHour), (targetEndHour % 1) * 60, 0, 0);
 
-      return { ...e, day: targetDay, start: newStart, end: newEnd };
-    });
+    const modifiedDraggedEvent = {
+      ...draggedEvent,
+      start: dateToZonedDateTime(startD),
+      end: dateToZonedDateTime(endD),
+      day: 0 // Force to 0
+    };
 
-    const dayEvents = tempEvents.filter(e => !e.allDay);
+    const dayEvents = [...otherEvents, modifiedDraggedEvent];
 
     if (dayEvents.length === 0) return null;
 
@@ -482,7 +603,7 @@ const DayView: React.FC<DayViewProps> = ({
             <div className="flex flex-1 relative">
               <div
                 className="w-full relative"
-                style={{ minHeight: `${ALL_DAY_HEIGHT}px` }}
+                style={{ minHeight: `${allDayAreaHeight}px` }}
                 onDoubleClick={e => {
                   const currentDayIndex = Math.floor(
                     (currentDate.getTime() - currentWeekStart.getTime()) /
@@ -495,14 +616,14 @@ const DayView: React.FC<DayViewProps> = ({
                   handleDrop(e, currentDate, undefined, true);
                 }}
               >
-                {currentDayEvents
-                  .filter(event => event.allDay)
+                {organizedAllDayEvents
                   .map(event => (
                     <CalendarEvent
                       key={event.id}
                       event={event}
                       isAllDay={true}
                       isDayView={true}
+                      segmentIndex={event.row}
                       allDayHeight={ALL_DAY_HEIGHT}
                       calendarRef={calendarRef}
                       isBeingDragged={

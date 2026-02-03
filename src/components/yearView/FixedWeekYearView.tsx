@@ -175,6 +175,11 @@ export const FixedWeekYearView: React.FC<FixedWeekYearViewProps> = ({
   // Refs for synchronized scrolling
   const weekLabelsRef = useRef<HTMLDivElement>(null);
   const monthLabelsRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // State for scrollbar dimensions (to sync padding)
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+  const [scrollbarHeight, setScrollbarHeight] = useState(0);
 
   // State for event selection and detail panel
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -388,6 +393,26 @@ export const FixedWeekYearView: React.FC<FixedWeekYearViewProps> = ({
     []
   );
 
+  // Measure scrollbar dimensions to sync the sidebar/header padding
+  useEffect(() => {
+    const measureScrollbars = () => {
+      if (contentRef.current) {
+        const el = contentRef.current;
+        // Horizontal scrollbar height = offsetHeight - clientHeight
+        const hScrollbar = el.offsetHeight - el.clientHeight;
+        // Vertical scrollbar width = offsetWidth - clientWidth
+        const vScrollbar = el.offsetWidth - el.clientWidth;
+        setScrollbarHeight(hScrollbar);
+        setScrollbarWidth(vScrollbar);
+      }
+    };
+
+    measureScrollbars();
+    // Re-measure on resize
+    window.addEventListener('resize', measureScrollbars);
+    return () => window.removeEventListener('resize', measureScrollbars);
+  }, [monthsData]); // Re-measure when content changes
+
   return (
     <div
       className="h-full bg-white dark:bg-gray-900 overflow-hidden border-t border-gray-200 dark:border-gray-700 select-none"
@@ -406,27 +431,39 @@ export const FixedWeekYearView: React.FC<FixedWeekYearViewProps> = ({
         className="overflow-hidden bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800"
       >
         <div
-          className="grid"
-          style={{
-            gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
-            minWidth: '1352px',
-          }}
+          className="flex"
+          style={{ minWidth: `calc(1352px + ${scrollbarWidth}px)` }}
         >
-          {weekLabels.map((label, i) => {
-            const dayIndex = i % 7;
-            const isWeekend = dayIndex === 0 || dayIndex === 6;
-            return (
-              <div
-                key={i}
-                className={`text-center py-2 text-[10px] font-semibold tracking-wider border-r border-gray-200 dark:border-gray-700 ${isWeekend
-                  ? 'text-primary bg-primary/5'
-                  : 'text-gray-400 dark:text-gray-500'
-                  }`}
-              >
-                {label}
-              </div>
-            );
-          })}
+          <div
+            className="grid flex-1"
+            style={{
+              gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
+              minWidth: '1352px',
+            }}
+          >
+            {weekLabels.map((label, i) => {
+              const dayIndex = i % 7;
+              const isWeekend = dayIndex === 0 || dayIndex === 6;
+              return (
+                <div
+                  key={i}
+                  className={`text-center py-2 text-[10px] font-semibold tracking-wider border-r border-gray-200 dark:border-gray-700 ${isWeekend
+                    ? 'text-primary bg-primary/5'
+                    : 'text-gray-400 dark:text-gray-500'
+                    }`}
+                >
+                  {label}
+                </div>
+              );
+            })}
+          </div>
+          {/* Spacer to compensate for vertical scrollbar in content area */}
+          {scrollbarWidth > 0 && (
+            <div
+              className="shrink-0 bg-gray-50 dark:bg-gray-900"
+              style={{ width: `${scrollbarWidth}px` }}
+            />
+          )}
         </div>
       </div>
 
@@ -445,11 +482,18 @@ export const FixedWeekYearView: React.FC<FixedWeekYearViewProps> = ({
               {month.monthName}
             </div>
           ))}
+          {/* Spacer to compensate for horizontal scrollbar in content area */}
+          {scrollbarHeight > 0 && (
+            <div
+              className="shrink-0 bg-white dark:bg-gray-900"
+              style={{ height: `${scrollbarHeight}px` }}
+            />
+          )}
         </div>
       </div>
 
       {/* Days Grid Content - Scrollable */}
-      <div className="overflow-auto" onScroll={handleContentScroll}>
+      <div ref={contentRef} className="overflow-auto" onScroll={handleContentScroll}>
         <div className="flex flex-col" style={{ minWidth: '1352px' }}>
           {monthsData.map(month => (
             <div
