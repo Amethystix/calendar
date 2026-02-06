@@ -29,7 +29,7 @@ interface AllDayRowProps {
     isToday: boolean;
   }>;
   currentWeekStart: Date;
-  timeGridWidth: number;
+  gridWidth: string;
   allDayAreaHeight: number;
   organizedAllDaySegments: any[]; // Replace 'any' with specific type if possible
   allDayLabelText: string;
@@ -69,7 +69,7 @@ export const AllDayRow: React.FC<AllDayRowProps> = ({
   mobileWeekDaysLabels,
   weekDates,
   currentWeekStart,
-  timeGridWidth,
+  gridWidth,
   allDayAreaHeight,
   organizedAllDaySegments,
   allDayLabelText,
@@ -118,11 +118,16 @@ export const AllDayRow: React.FC<AllDayRowProps> = ({
       </div>
 
       {/* Top Frozen Content - overflow hidden, content positioned via transform */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-x-hidden overflow-y-auto relative" style={{ scrollbarGutter: 'stable' }}>
         <div ref={topFrozenContentRef} className="flex flex-col"
-          style={{ width: timeGridWidth || undefined, minWidth: '100%' }}>
+          style={{ width: gridWidth, minWidth: '100%' }}>
           {/* Weekday titles row */}
-          <div className={weekDayHeader}>
+          {/* 
+          - marginRight: -50px — the weekDayHeader extends 50px beyond its parent's content edge, carrying its border-b into the gutter area
+          - paddingRight: 50px — compensates so the flex-1 cells still distribute across the original content width (cells stay aligned)
+          - The wrapper's overflow-x-hidden clips any excess beyond the gutter
+           */}
+          <div className={weekDayHeader} style={{ marginRight: '-50px', paddingRight: '50px' }}>
             {weekDaysLabels.map((day, i) => (
               <div
                 key={i}
