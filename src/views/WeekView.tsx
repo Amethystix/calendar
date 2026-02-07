@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CalendarApp } from '@/core';
 import {
   formatTime,
@@ -52,29 +52,11 @@ const WeekView: React.FC<WeekViewProps> = ({
   const { screenSize } = useResponsiveMonthConfig();
   const isMobile = screenSize !== 'desktop';
   const sidebarWidth = screenSize === 'mobile' ? 48 : 80;
-  const [timeGridWidth, setTimeGridWidth] = useState(0);
   const timeGridRef = React.useRef<HTMLDivElement>(null);
   const [isTouch, setIsTouch] = useState(false);
 
   useEffect(() => {
     setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  }, []);
-
-  useLayoutEffect(() => {
-    const timeGrid = timeGridRef.current;
-    if (!timeGrid) return;
-
-    const updateWidth = () => {
-      setTimeGridWidth(timeGrid.offsetWidth);
-    };
-
-    // Initial measurement before paint
-    updateWidth();
-
-    const observer = new ResizeObserver(updateWidth);
-    observer.observe(timeGrid);
-
-    return () => observer.disconnect();
   }, []);
 
   const MobileEventDrawerComponent = app.getCustomMobileEventRenderer() || MobileEventDrawer;
@@ -393,7 +375,7 @@ const WeekView: React.FC<WeekViewProps> = ({
         mobileWeekDaysLabels={mobileWeekDaysLabels}
         weekDates={weekDates}
         currentWeekStart={currentWeekStart}
-        timeGridWidth={timeGridWidth}
+        gridWidth={gridWidth}
         allDayAreaHeight={allDayAreaHeight}
         organizedAllDaySegments={organizedAllDaySegments}
         allDayLabelText={allDayLabelText}
