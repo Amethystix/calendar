@@ -26,6 +26,9 @@ export const useKeyboardShortcuts = ({
 }: UseKeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isTyping = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || (activeElement as HTMLElement).isContentEditable);
+
       // 1. Search (Cmd/Ctrl + F)
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
         e.preventDefault();
@@ -36,7 +39,24 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // 2. Dismiss (Esc)
+      // 2. Today (Cmd/Ctrl + T)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        app.goToToday();
+        return;
+      }
+
+      // 3. Quick Create (Cmd/Ctrl + N)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        const addBtn = document.getElementById('dayflow-add-event-btn');
+        if (addBtn) {
+          addBtn.click();
+        }
+        return;
+      }
+
+      // 4. Dismiss (Esc)
       if (e.key === 'Escape') {
         if (detailPanelEventId) {
           setDetailPanelEventId(null);
@@ -47,14 +67,28 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
-      // 3. Tab Navigation
+      // Navigation (Left/Right) - only if not typing
+      if (!isTyping) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          app.goToPrevious();
+          return;
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          app.goToNext();
+          return;
+        }
+      }
+
+      // 5. Tab Navigation
       if (e.key === 'Tab') {
         e.preventDefault();
         handleTabNavigation(e.shiftKey);
         return;
       }
 
-      // 4. Clipboard Operations (Cmd/Ctrl + C/X/V)
+      // 6. Clipboard Operations (Cmd/Ctrl + C/X/V)
       if (e.metaKey || e.ctrlKey) {
         switch (e.key.toLowerCase()) {
           case 'c': // Copy
@@ -92,11 +126,10 @@ export const useKeyboardShortcuts = ({
         }
       }
       
-      // 5. Delete (Backspace/Delete)
+      // 7. Delete (Backspace/Delete)
       if (e.key === 'Backspace' || e.key === 'Delete') {
          // Only delete if not editing text
-         const activeElement = document.activeElement;
-         if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+         if (isTyping) {
            return;
          }
          

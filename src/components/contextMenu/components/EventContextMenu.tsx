@@ -84,7 +84,7 @@ const EventContextMenu: React.FC<EventContextMenuProps> = ({
                 onClick={() => handleMoveToCalendar(cal.id)}
               >
                 <div className="flex items-center w-full">
-                  <div className="w-4 flex-shrink-0">
+                  <div className="w-4 shrink-0">
                     {isSelected && <Check className="w-3 h-3 text-primary" />}
                   </div>
                   <div className="flex items-center gap-1.5 min-w-0">

@@ -48,6 +48,13 @@ export const ContextMenu = React.forwardRef<HTMLDivElement, ContextMenuProps>(
       // Also capture right-clicks outside
       document.body.addEventListener('contextmenu', handleClickOutside, { capture: true });
 
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
       // Also close on scroll or window resize
       const handleScrollOrResize = () => onClose();
       window.addEventListener('scroll', handleScrollOrResize, true);
@@ -57,6 +64,7 @@ export const ContextMenu = React.forwardRef<HTMLDivElement, ContextMenuProps>(
         window.removeEventListener('dayflow-close-all-menus', handleCloseAll);
         document.body.removeEventListener('mousedown', handleClickOutside, { capture: true });
         document.body.removeEventListener('contextmenu', handleClickOutside, { capture: true });
+        window.removeEventListener('keydown', handleKeyDown);
         window.removeEventListener('scroll', handleScrollOrResize, true);
         window.removeEventListener('resize', handleScrollOrResize);
       };

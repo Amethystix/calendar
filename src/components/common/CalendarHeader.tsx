@@ -42,6 +42,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       <div className="flex flex-1 items-center mb-1">
         {onAddCalendar && isEditable && (
           <button
+            id="dayflow-add-event-btn"
             onClick={onAddCalendar}
             className={iconButton}
             title={isMobile ? (t('newEvent') || 'New Event') : (t('createCalendar') || 'Add Calendar')}
