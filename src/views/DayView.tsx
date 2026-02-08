@@ -47,9 +47,17 @@ const DayView: React.FC<DayViewProps> = ({
   const { screenSize } = useResponsiveMonthConfig();
   const isMobile = screenSize !== 'desktop';
   const [isTouch, setIsTouch] = useState(false);
-  const appViewConfig = app.getViewConfig(ViewType.DAY) as { showAllDay?: boolean };
-  const showAllDay = (config as { showAllDay?: boolean } | undefined)?.showAllDay
+  const appViewConfig = app.getViewConfig(ViewType.DAY) as {
+    showAllDay?: boolean;
+    viewConfig?: { showAllDay?: boolean };
+  };
+  const inputConfig = config as
+    | { showAllDay?: boolean; viewConfig?: { showAllDay?: boolean } }
+    | undefined;
+  const showAllDay = inputConfig?.showAllDay
+    ?? inputConfig?.viewConfig?.showAllDay
     ?? appViewConfig?.showAllDay
+    ?? appViewConfig?.viewConfig?.showAllDay
     ?? true;
   const showStartOfDayLabel = !showAllDay;
 

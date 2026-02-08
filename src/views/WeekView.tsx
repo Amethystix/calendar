@@ -50,9 +50,17 @@ const WeekView: React.FC<WeekViewProps> = ({
   const sidebarWidth = screenSize === 'mobile' ? 48 : 80;
   const timeGridRef = React.useRef<HTMLDivElement>(null);
   const [isTouch, setIsTouch] = useState(false);
-  const appViewConfig = app.getViewConfig(ViewType.WEEK) as { showAllDay?: boolean };
-  const showAllDay = (config as { showAllDay?: boolean } | undefined)?.showAllDay
+  const appViewConfig = app.getViewConfig(ViewType.WEEK) as {
+    showAllDay?: boolean;
+    viewConfig?: { showAllDay?: boolean };
+  };
+  const inputConfig = config as
+    | { showAllDay?: boolean; viewConfig?: { showAllDay?: boolean } }
+    | undefined;
+  const showAllDay = inputConfig?.showAllDay
+    ?? inputConfig?.viewConfig?.showAllDay
     ?? appViewConfig?.showAllDay
+    ?? appViewConfig?.viewConfig?.showAllDay
     ?? true;
   const showStartOfDayLabel = !showAllDay;
 
