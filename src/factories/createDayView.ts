@@ -8,6 +8,7 @@ import {
   ViewFactory,
   ViewType,
 } from '../types';
+import { buildFactoryViewConfig } from './viewConfigUtils';
 
 // Default Day view configuration
 const defaultDayViewConfig: DayViewConfig = {
@@ -36,31 +37,15 @@ const defaultDayViewConfig: DayViewConfig = {
     enableAutoRecalculate: true,
     enableValidation: true,
   },
-
-  // View specific configuration
-  viewConfig: {
-    showMiniCalendar: true,
-    showAllDay: true,
-    scrollToCurrentTime: true,
-  },
 };
 
 // Day view factory function
 export const createDayView: ViewFactory<DayViewConfig> = (config = {}) => {
-  const finalViewConfig = {
-    ...defaultDayViewConfig.viewConfig,
-    ...(config.viewConfig ?? {}),
-  };
-
-  if (config.showMiniCalendar !== undefined) {
-    finalViewConfig.showMiniCalendar = config.showMiniCalendar;
-  }
-  if (config.showAllDay !== undefined) {
-    finalViewConfig.showAllDay = config.showAllDay;
-  }
-  if (config.scrollToCurrentTime !== undefined) {
-    finalViewConfig.scrollToCurrentTime = config.scrollToCurrentTime;
-  }
+  const finalViewConfig = buildFactoryViewConfig(defaultDayViewConfig, config, [
+    'showMiniCalendar',
+    'showAllDay',
+    'scrollToCurrentTime',
+  ]);
 
   // Merge configuration
   const finalConfig = {
