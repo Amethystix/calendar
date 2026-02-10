@@ -119,7 +119,7 @@ export const monthDayCell =
  * Month date number container
  */
 export const monthDateNumberContainer =
-  'df-month-date-number-container flex items-center justify-between px-2 h-[33px] relative z-20';
+  'df-month-date-number-container text-right px-2 h-[33px] relative z-20';
 
 /**
  * Month date number
@@ -164,13 +164,13 @@ export const timeSlot = 'df-time-slot relative h-[4.5rem] flex';
 /**
  * Time label
  */
-export const timeLabel = 'df-time-label absolute -top-2.5 right-2 text-[12px] text-gray-500 dark:text-gray-400 select-none';
+export const timeLabel = 'df-time-label absolute -top-3.5 right-2 text-[12px] text-gray-500 dark:text-gray-400 select-none';
 
 /**
  * Time grid row
  */
 export const timeGridRow =
-  'df-time-grid-row h-[4.5rem] border-t first:border-none border-gray-200 dark:border-gray-700 flex';
+  'df-time-grid-row h-[4.5rem] border-t border-gray-200 dark:border-gray-700 flex';
 
 /**
  * Time grid cell
@@ -419,7 +419,7 @@ export const calendarPickerDropdown =
  * Time grid bottom boundary (midnight line)
  * Used in TimeGrid.tsx and DayContent.tsx
  */
-export const timeGridBoundary = 'h-3 border-t border-gray-200 dark:border-gray-700 relative';
+export const timeGridBoundary = 'h-1.5 border-t border-gray-200 dark:border-gray-700 relative';
 
 /**
  * Midnight time label

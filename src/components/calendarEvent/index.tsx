@@ -321,7 +321,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
         });
       } else {
         Object.assign(styles, {
-          width: 'calc(100% - 3px)',
+          width: '100%',
           left: '0px',
           position: 'relative',
         });
@@ -430,7 +430,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
 
     if (layout && !isAllDay) {
       const widthStyle = isDayView
-        ? `calc(${layout.width}% - 3px)`
+        ? `${layout.width}%`
         : `${layout.width - 1}%`;
 
       return {
@@ -444,7 +444,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({
     return {
       ...baseStyle,
       left: '0px',
-      right: '3px',
+      right: isDayView ? '0px' : '3px',
     };
   };
 

@@ -683,29 +683,26 @@ const WeekComponent = React.memo<WeekComponentProps>(
         >
           {/* Date number area */}
           <div className={monthDateNumberContainer}>
-            <div className="flex-1" />
-            <div className="flex items-center">
-              {(
-                <span
-                  className={`
+            {(
+              <span
+                className={`
                     ${monthDateNumber}
                     ${day.isToday
-                      ? 'bg-primary text-primary-foreground'
-                      : belongsToCurrentMonth
-                        ? 'text-gray-900 dark:text-gray-100'
-                        : 'text-gray-400 dark:text-gray-600'
-                    }
-                  `}
-                >
-                  {
-                    day.day === 1 && screenSize === 'desktop' ? (day.date.toLocaleDateString(locale, {
-                      month: 'short',
-                      day: 'numeric',
-                    })) : day.day
+                    ? 'bg-primary text-primary-foreground'
+                    : belongsToCurrentMonth
+                      ? 'text-gray-900 dark:text-gray-100'
+                      : 'text-gray-400 dark:text-gray-600'
                   }
-                </span>
-              )}
-            </div>
+                  `}
+              >
+                {
+                  day.day === 1 && screenSize === 'desktop' ? (day.date.toLocaleDateString(locale, {
+                    month: 'short',
+                    day: 'numeric',
+                  })) : day.day
+                }
+              </span>
+            )}
           </div>
 
           {/* Event display area */}

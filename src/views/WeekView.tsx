@@ -60,9 +60,6 @@ const WeekView: React.FC<WeekViewProps> = ({
     showAllDay = true,
   } = config;
 
-  console.log('config', config);
-
-
   const showStartOfDayLabel = !showAllDay;
 
   useEffect(() => {
@@ -389,47 +386,46 @@ const WeekView: React.FC<WeekViewProps> = ({
         onToday={() => app.goToToday()}
       />
 
-      {showAllDay && (
-        <AllDayRow
-          app={app}
-          weekDaysLabels={weekDaysLabels}
-          mobileWeekDaysLabels={mobileWeekDaysLabels}
-          weekDates={weekDates}
-          currentWeekStart={currentWeekStart}
-          gridWidth={gridWidth}
-          allDayAreaHeight={allDayAreaHeight}
-          organizedAllDaySegments={organizedAllDaySegments}
-          allDayLabelText={allDayLabelText}
-          isMobile={isMobile}
-          isTouch={isTouch}
-          calendarRef={calendarRef}
-          allDayRowRef={allDayRowRef}
-          topFrozenContentRef={topFrozenContentRef}
-          ALL_DAY_HEIGHT={ALL_DAY_HEIGHT}
-          HOUR_HEIGHT={HOUR_HEIGHT}
-          FIRST_HOUR={FIRST_HOUR}
-          dragState={dragState}
-          isDragging={isDragging}
-          handleMoveStart={handleMoveStart}
-          handleResizeStart={handleResizeStart}
-          handleEventUpdate={handleEventUpdate}
-          handleEventDelete={handleEventDelete}
-          newlyCreatedEventId={newlyCreatedEventId}
-          setNewlyCreatedEventId={setNewlyCreatedEventId}
-          selectedEventId={selectedEventId}
-          setSelectedEventId={setSelectedEventId}
-          detailPanelEventId={detailPanelEventId}
-          setDetailPanelEventId={setDetailPanelEventId}
-          handleCreateAllDayEvent={handleCreateAllDayEvent}
-          handleDragOver={handleDragOver}
-          handleDrop={handleDrop}
-          customDetailPanelContent={customDetailPanelContent}
-          customEventDetailDialog={customEventDetailDialog}
-          events={events}
-          setDraftEvent={setDraftEvent}
-          setIsDrawerOpen={setIsDrawerOpen}
-        />
-      )}
+      <AllDayRow
+        app={app}
+        weekDaysLabels={weekDaysLabels}
+        mobileWeekDaysLabels={mobileWeekDaysLabels}
+        weekDates={weekDates}
+        currentWeekStart={currentWeekStart}
+        gridWidth={gridWidth}
+        allDayAreaHeight={allDayAreaHeight}
+        organizedAllDaySegments={organizedAllDaySegments}
+        allDayLabelText={allDayLabelText}
+        isMobile={isMobile}
+        isTouch={isTouch}
+        showAllDay={showAllDay}
+        calendarRef={calendarRef}
+        allDayRowRef={allDayRowRef}
+        topFrozenContentRef={topFrozenContentRef}
+        ALL_DAY_HEIGHT={ALL_DAY_HEIGHT}
+        HOUR_HEIGHT={HOUR_HEIGHT}
+        FIRST_HOUR={FIRST_HOUR}
+        dragState={dragState}
+        isDragging={isDragging}
+        handleMoveStart={handleMoveStart}
+        handleResizeStart={handleResizeStart}
+        handleEventUpdate={handleEventUpdate}
+        handleEventDelete={handleEventDelete}
+        newlyCreatedEventId={newlyCreatedEventId}
+        setNewlyCreatedEventId={setNewlyCreatedEventId}
+        selectedEventId={selectedEventId}
+        setSelectedEventId={setSelectedEventId}
+        detailPanelEventId={detailPanelEventId}
+        setDetailPanelEventId={setDetailPanelEventId}
+        handleCreateAllDayEvent={handleCreateAllDayEvent}
+        handleDragOver={handleDragOver}
+        handleDrop={handleDrop}
+        customDetailPanelContent={customDetailPanelContent}
+        customEventDetailDialog={customEventDetailDialog}
+        events={events}
+        setDraftEvent={setDraftEvent}
+        setIsDrawerOpen={setIsDrawerOpen}
+      />
 
       <TimeGrid
         app={app}
