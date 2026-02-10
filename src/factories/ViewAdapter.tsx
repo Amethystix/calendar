@@ -83,15 +83,24 @@ export const ViewAdapter: React.FC<ViewAdapterProps> = ({
 
   // Merge configuration
   const mergedConfig = useMemo(() => {
-    const baseConfig = config.viewConfig || {};
+    const {
+      dragConfig,
+      eventsConfig,
+      virtualScrollConfig,
+      ...rest
+    } = config;
+
+    const baseConfig = {
+      ...rest,
+    };
 
     // Add plugin configuration
     if (dragService) {
-      Object.assign(baseConfig, config.dragConfig || {});
+      Object.assign(baseConfig, dragConfig || {});
     }
 
     if (eventsService) {
-      Object.assign(baseConfig, config.eventsConfig || {});
+      Object.assign(baseConfig, eventsConfig || {});
     }
 
     return baseConfig;

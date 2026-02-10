@@ -29,9 +29,13 @@ export const useDragCommon = (options: useDragProps): UseDragCommonReturn => {
 
       const contentRect = calendarContent.getBoundingClientRect();
       const scrollTop = calendarContent.scrollTop;
-      const computedStyle = window.getComputedStyle(calendarContent);
-      const paddingTop = parseInt(computedStyle.paddingTop, 10) || 0;
-      const relativeY = y - contentRect.top + scrollTop - paddingTop;
+      // Measure the actual offset from .calendar-content top to the first time grid row,
+      // accounting for any boundary elements (top boundary) above the grid
+      const firstGridRow = calendarContent.querySelector('.df-time-grid-row');
+      const gridOffset = firstGridRow
+        ? firstGridRow.getBoundingClientRect().top - contentRect.top + scrollTop
+        : 0;
+      const relativeY = y - contentRect.top + scrollTop - gridOffset;
       const hour = relativeY / HOUR_HEIGHT + FIRST_HOUR;
       return Math.max(FIRST_HOUR, Math.min(LAST_HOUR, hour));
     },

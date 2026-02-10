@@ -37,14 +37,6 @@ const defaultWeekViewConfig: WeekViewConfig = {
     enableAutoRecalculate: true,
     enableValidation: true,
   },
-
-  // View specific configuration
-  viewConfig: {
-    showWeekends: true,
-    showAllDay: true,
-    startOfWeek: 1,
-    scrollToCurrentTime: true,
-  },
 };
 
 // Week view factory function

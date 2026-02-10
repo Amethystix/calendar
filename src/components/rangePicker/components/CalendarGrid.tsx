@@ -59,7 +59,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   return (
     <>
-      <div className="grid grid-cols-7 gap-1 px-3 pb-3 pt-2 text-center text-[11px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+      <div className="grid grid-cols-7 gap-1 px-3 pb-3 pt-2 text-center text-[12px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
         {weekDayLabels.map((day, index) => (
           <span key={index}>{day}</span>
         ))}

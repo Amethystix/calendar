@@ -36,13 +36,6 @@ const defaultDayViewConfig: DayViewConfig = {
     enableAutoRecalculate: true,
     enableValidation: true,
   },
-
-  // View specific configuration
-  viewConfig: {
-    showMiniCalendar: true,
-    showAllDay: true,
-    scrollToCurrentTime: true,
-  },
 };
 
 // Day view factory function

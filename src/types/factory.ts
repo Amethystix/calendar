@@ -1,20 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // View factory type definitions
-import React from 'react';
-import { CalendarView, ViewType, CalendarApp } from './core';
-import { Event } from './event';
-import { EventLayout } from './layout';
+import React from "react";
+import { CalendarView, ViewType, CalendarApp } from "./core";
+import { Event } from "./event";
+import { EventLayout } from "./layout";
 import {
   EventDetailContentRenderer,
   EventDetailDialogRenderer,
-} from './eventDetail';
-import { ViewSwitcherMode } from '../components/common/ViewHeader';
+} from "./eventDetail";
+import { ViewSwitcherMode } from "../components/common/ViewHeader";
 
 /**
  * Common Props interface for view components
  * Base properties for all view components
  */
-export interface BaseViewProps {
+export interface BaseViewProps<TConfig = any> {
   // Core application instance
   app: CalendarApp;
 
@@ -33,8 +32,7 @@ export interface BaseViewProps {
   onViewChange?: (view: ViewType) => void;
 
   // View-specific configuration
-  config?: Record<string, any>;
-  
+  config: TConfig;
   // Selection control
   selectedEventId?: string | null;
   onEventSelect?: (eventId: string | null) => void;
@@ -52,33 +50,29 @@ export interface BaseViewProps {
 /**
  * Day view specific Props
  */
-export interface DayViewProps extends BaseViewProps {
+export interface DayViewProps extends BaseViewProps<DayViewConfig> {
   // Day view specific properties
-  showMiniCalendar?: boolean;
-  showAllDay?: boolean;
-  scrollToCurrentTime?: boolean;
 }
 
 /**
  * Week view specific Props
  */
-export interface WeekViewProps extends BaseViewProps {
+export interface WeekViewProps extends BaseViewProps<WeekViewConfig> {
   // Week view specific properties
-  showWeekends?: boolean;
-  showAllDay?: boolean;
-  startOfWeek?: number;
-  scrollToCurrentTime?: boolean;
 }
 
 /**
  * Month view specific Props
  */
-export interface MonthViewProps extends BaseViewProps {
+export interface MonthViewProps extends BaseViewProps<MonthViewConfig> {
   // Month view specific properties
-  showOtherMonth?: boolean;
-  weekHeight?: number;
-  showWeekNumbers?: boolean;
-  enableVirtualScroll?: boolean;
+}
+
+/**
+ * Year view specific Props
+ */
+export interface YearViewProps extends BaseViewProps<YearViewConfig> {
+  // Year view specific properties
 }
 
 /**
@@ -110,6 +104,11 @@ export interface DayViewConfig extends ViewFactoryConfig {
   hourHeight?: number;
   firstHour?: number;
   lastHour?: number;
+  // Flattened layout properties
+  HOUR_HEIGHT?: number;
+  FIRST_HOUR?: number;
+  LAST_HOUR?: number;
+  ALL_DAY_HEIGHT?: number;
 }
 
 /**
@@ -123,6 +122,11 @@ export interface WeekViewConfig extends ViewFactoryConfig {
   hourHeight?: number;
   firstHour?: number;
   lastHour?: number;
+  // Flattened layout properties
+  HOUR_HEIGHT?: number;
+  FIRST_HOUR?: number;
+  LAST_HOUR?: number;
+  ALL_DAY_HEIGHT?: number;
 }
 
 /**
@@ -142,7 +146,7 @@ export interface MonthViewConfig extends ViewFactoryConfig {
 export interface YearViewConfig extends ViewFactoryConfig {
   enableVirtualScroll?: boolean;
   showDebugInfo?: boolean;
-  mode?: 'year-canvas' | 'fixed-week';
+  mode?: "year-canvas" | "fixed-week";
   showTimedEventsInYearView?: boolean;
 }
 

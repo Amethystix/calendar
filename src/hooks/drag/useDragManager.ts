@@ -39,6 +39,16 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
   const isDateGridView = viewType === ViewType.MONTH || viewType === ViewType.YEAR;
   const isDayView = viewType === ViewType.DAY;
 
+  // Measure offset from .calendar-content top to the first time grid row,
+  // accounting for boundary elements (e.g. top boundary) above the grid
+  const getGridOffset = useCallback(() => {
+    const containerEl = calendarRef.current?.querySelector('.calendar-content');
+    if (!containerEl) return 0;
+    const firstGridRow = containerEl.querySelector('.df-time-grid-row');
+    if (!firstGridRow) return 0;
+    return firstGridRow.getBoundingClientRect().top - containerEl.getBoundingClientRect().top + containerEl.scrollTop;
+  }, [calendarRef]);
+
   const dragIndicatorRef = useRef<HTMLDivElement | null>(null);
   const reactRootRef = useRef<Root | null>(null);
   const dragPropsRef = useRef<{
@@ -165,9 +175,10 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
               const top = (drag.startHour - FIRST_HOUR) * HOUR_HEIGHT;
               const containerEl = calendarRef.current?.querySelector('.calendar-content');
               const scrollLeft = containerEl?.scrollLeft || 0;
+              const gridOffset = getGridOffset();
 
               indicator.style.left = `${sourceRect.left - containerRect.left + scrollLeft}px`;
-              indicator.style.top = `${top + 3}px`;
+              indicator.style.top = `${top + 3 + gridOffset}px`;
               indicator.style.width = `${sourceRect.width}px`;
               indicator.style.height = `${sourceRect.height}px`;
             }
@@ -194,9 +205,10 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
               indicator.style.width = `calc(${dayColumnWidth} - 2px)`;
             }
           } else {
+            const gridOffset = getGridOffset();
             const top = (drag.startHour - FIRST_HOUR) * HOUR_HEIGHT;
             const height = (drag.endHour - drag.startHour) * HOUR_HEIGHT;
-            indicator.style.top = `${top + 3}px`;
+            indicator.style.top = `${top + 3 + gridOffset}px`;
             indicator.style.height = `${height - 4}px`;
             indicator.style.color = '#fff';
             indicator.className = 'rounded-sm shadow-sm';
@@ -281,6 +293,7 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
       ALL_DAY_HEIGHT,
       FIRST_HOUR,
       HOUR_HEIGHT,
+      getGridOffset,
     ]
   );
 
@@ -334,9 +347,10 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
             'rounded-xl'
           );
         } else {
+          const gridOffset = getGridOffset();
           const top = (startHour - FIRST_HOUR) * HOUR_HEIGHT;
           const height = (endHour - startHour) * HOUR_HEIGHT;
-          indicator.style.top = `${top + 3}px`;
+          indicator.style.top = `${top + 3 + gridOffset}px`;
           indicator.style.height = `${height - 4}px`;
           indicator.style.marginBottom = '0';
           indicator.className = indicator.className.replace(
@@ -412,6 +426,7 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
       getLineColor,
       getDynamicPadding,
       renderer,
+      getGridOffset,
     ]
   );
 

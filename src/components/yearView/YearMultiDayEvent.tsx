@@ -397,7 +397,7 @@ export const YearMultiDayEvent: React.FC<YearMultiDayEventProps> = ({
 
           <div className="flex-1 min-w-0">
             <div
-              className="df-year-event-title font-medium text-[11px] leading-none whitespace-nowrap overflow-hidden"
+              className="df-year-event-title font-medium text-[12px] leading-none whitespace-nowrap overflow-hidden"
               style={{
                 maskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
                 WebkitMaskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
@@ -450,7 +450,7 @@ export const YearMultiDayEvent: React.FC<YearMultiDayEventProps> = ({
     <>
       <div
         ref={eventRef}
-        className="df-year-event absolute z-30 text-[11px] px-1 overflow-hidden whitespace-nowrap cursor-pointer transition-colors group"
+        className="df-year-event absolute z-30 text-[12px] px-1 overflow-hidden whitespace-nowrap cursor-pointer transition-colors group"
         style={{
           left: `calc(${startPercent}% + ${HORIZONTAL_MARGIN}px)`,
           top: `${TOP_OFFSET}px`,

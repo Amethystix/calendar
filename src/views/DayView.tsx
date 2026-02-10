@@ -7,6 +7,7 @@ import { useLocale } from '@/locale';
 import {
   Event,
   DayViewProps,
+  ViewType,
 } from '@/types';
 import { EventLayoutCalculator } from '@/components/eventLayout';
 import { useDragForView } from '@/plugins/dragPlugin';
@@ -32,6 +33,7 @@ import {
 
 const DayView: React.FC<DayViewProps> = ({
   app,
+  config,
   customDetailPanelContent,
   customEventDetailDialog,
   calendarRef,
@@ -45,6 +47,17 @@ const DayView: React.FC<DayViewProps> = ({
   const { screenSize } = useResponsiveMonthConfig();
   const isMobile = screenSize !== 'desktop';
   const [isTouch, setIsTouch] = useState(false);
+
+  // Configuration from the typed config object
+  const {
+    HOUR_HEIGHT = defaultDragConfig.HOUR_HEIGHT,
+    FIRST_HOUR = defaultDragConfig.FIRST_HOUR,
+    LAST_HOUR = defaultDragConfig.LAST_HOUR,
+    ALL_DAY_HEIGHT = defaultDragConfig.ALL_DAY_HEIGHT,
+    showAllDay = true,
+  } = config;
+  
+  const showStartOfDayLabel = !showAllDay;
 
   useEffect(() => {
     setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -113,14 +126,6 @@ const DayView: React.FC<DayViewProps> = ({
     },
     [app]
   );
-
-  // Get configuration constants
-  const {
-    HOUR_HEIGHT,
-    FIRST_HOUR,
-    LAST_HOUR,
-    ALL_DAY_HEIGHT,
-  } = defaultDragConfig;
 
   // Sync highlighted event from app state
   const prevHighlightedEventId = React.useRef(app.state.highlightedEventId);
@@ -212,7 +217,7 @@ const DayView: React.FC<DayViewProps> = ({
     isDragging,
   } = useDragForView(app, {
     calendarRef,
-    allDayRowRef,
+    allDayRowRef: showAllDay ? allDayRowRef : undefined,
     viewType: DragViewType.DAY,
     onEventsUpdate: (updateFunc: (events: Event[]) => Event[]) => {
       const newEvents = updateFunc(currentDayEvents);
@@ -415,6 +420,8 @@ const DayView: React.FC<DayViewProps> = ({
         HOUR_HEIGHT={HOUR_HEIGHT}
         FIRST_HOUR={FIRST_HOUR}
         LAST_HOUR={LAST_HOUR}
+        showAllDay={showAllDay}
+        showStartOfDayLabel={showStartOfDayLabel}
       />
       <RightPanel
         app={app}

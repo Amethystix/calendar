@@ -27,6 +27,10 @@ export class EventLayoutCalculator {
     }
   }
 
+  private static getEdgeMarginPercent(viewType?: 'week' | 'day'): number {
+    return viewType === 'day' ? 0 : LAYOUT_CONFIG.EDGE_MARGIN_PERCENT;
+  }
+
   /**
    * Calculate layout for all events in a day
    * @param dayEvents Array of events for the day
@@ -55,7 +59,7 @@ export class EventLayoutCalculator {
       const group = overlappingGroups[i];
 
       if (group.length === 1) {
-        this.setSingleEventLayout(group[0], layoutMap);
+        this.setSingleEventLayout(group[0], layoutMap, params);
       } else {
         this.calculateComplexGroupLayout(group, layoutMap, params);
       }
@@ -143,12 +147,13 @@ export class EventLayoutCalculator {
    */
   private static setSingleEventLayout(
     event: LayoutWeekEvent,
-    layoutMap: Map<string, EventLayout>
+    layoutMap: Map<string, EventLayout>,
+    params: LayoutCalculationParams = {}
   ): void {
     layoutMap.set(event.id, {
       id: event.id,
       left: 0,
-      width: 100 - LAYOUT_CONFIG.EDGE_MARGIN_PERCENT,
+      width: 100 - this.getEdgeMarginPercent(params.viewType),
       zIndex: 0,
       level: 0,
       isPrimary: true,
@@ -836,7 +841,7 @@ export class EventLayoutCalculator {
     layoutMap: Map<string, EventLayout>,
     params: LayoutCalculationParams = {}
   ): void {
-    const totalWidth = 100 - LAYOUT_CONFIG.EDGE_MARGIN_PERCENT;
+    const totalWidth = 100 - this.getEdgeMarginPercent(params.viewType);
 
     if (rootNodes.length === 1) {
       this.calculateNodeLayoutWithVirtualParallel(

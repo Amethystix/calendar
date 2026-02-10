@@ -33,6 +33,7 @@ import {
 
 const WeekView: React.FC<WeekViewProps> = ({
   app,
+  config,
   customDetailPanelContent,
   customEventDetailDialog,
   calendarRef,
@@ -49,6 +50,17 @@ const WeekView: React.FC<WeekViewProps> = ({
   const sidebarWidth = screenSize === 'mobile' ? 48 : 80;
   const timeGridRef = React.useRef<HTMLDivElement>(null);
   const [isTouch, setIsTouch] = useState(false);
+
+  // Configuration from the typed config object
+  const {
+    HOUR_HEIGHT = defaultDragConfig.HOUR_HEIGHT,
+    FIRST_HOUR = defaultDragConfig.FIRST_HOUR,
+    LAST_HOUR = defaultDragConfig.LAST_HOUR,
+    ALL_DAY_HEIGHT = defaultDragConfig.ALL_DAY_HEIGHT,
+    showAllDay = true,
+  } = config;
+
+  const showStartOfDayLabel = !showAllDay;
 
   useEffect(() => {
     setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -92,14 +104,6 @@ const WeekView: React.FC<WeekViewProps> = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [draftEvent, setDraftEvent] = useState<Event | null>(null);
   const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  // Get configuration constants
-  const {
-    HOUR_HEIGHT,
-    FIRST_HOUR,
-    LAST_HOUR,
-    ALL_DAY_HEIGHT,
-  } = defaultDragConfig;
 
   // References
   const allDayRowRef = React.useRef<HTMLDivElement>(null);
@@ -189,7 +193,7 @@ const WeekView: React.FC<WeekViewProps> = ({
     isDragging,
   } = useDragForView(app, {
     calendarRef,
-    allDayRowRef,
+    allDayRowRef: showAllDay ? allDayRowRef : undefined,
     viewType: DragViewType.WEEK,
     onEventsUpdate: (
       updateFunc: (events: Event[]) => Event[],
@@ -394,6 +398,7 @@ const WeekView: React.FC<WeekViewProps> = ({
         allDayLabelText={allDayLabelText}
         isMobile={isMobile}
         isTouch={isTouch}
+        showAllDay={showAllDay}
         calendarRef={calendarRef}
         allDayRowRef={allDayRowRef}
         topFrozenContentRef={topFrozenContentRef}
@@ -465,6 +470,7 @@ const WeekView: React.FC<WeekViewProps> = ({
         HOUR_HEIGHT={HOUR_HEIGHT}
         FIRST_HOUR={FIRST_HOUR}
         LAST_HOUR={LAST_HOUR}
+        showStartOfDayLabel={showStartOfDayLabel}
       />
 
       <MobileEventDrawerComponent
