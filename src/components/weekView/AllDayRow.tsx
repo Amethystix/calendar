@@ -153,7 +153,7 @@ export const AllDayRow: React.FC<AllDayRowProps> = ({
               >
                 {isMobile ? (
                   <>
-                    <div className="text-[11px] leading-tight text-gray-500 font-medium">
+                    <div className="text-[12px] leading-tight text-gray-500 font-medium">
                       {mobileWeekDaysLabels[i]}
                     </div>
                     <div className={`${dateNumber} w-7 h-7 text-base font-medium ${weekDates[i].isToday ? miniCalendarToday : ''}`}>

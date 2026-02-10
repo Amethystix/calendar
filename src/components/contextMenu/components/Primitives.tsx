@@ -102,7 +102,7 @@ export const ContextMenuItem: React.FC<{
 }> = ({ onClick, children, icon, danger, disabled }) => {
   return (
     <div
-      className={`relative flex cursor-default select-none items-center rounded-sm px-3 py-0.5 text-[11px] outline-none transition-colors group
+      className={`relative flex cursor-default select-none items-center rounded-sm px-3 py-0.5 text-[12px] outline-none transition-colors group
         ${disabled
           ? 'pointer-events-none opacity-50'
           : 'focus:bg-primary focus:text-white hover:bg-primary hover:text-white dark:focus:bg-primary dark:focus:text-white dark:hover:bg-primary dark:hover:text-white'}
@@ -127,7 +127,7 @@ export const ContextMenuSeparator: React.FC = () => (
 );
 
 export const ContextMenuLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="px-3 py-0.5 text-[11px] font-semibold text-slate-950 dark:text-slate-50">
+  <div className="px-3 py-0.5 text-[12px] font-semibold text-slate-950 dark:text-slate-50">
     {children}
   </div>
 );
@@ -190,7 +190,7 @@ interface ContextMenuSubTriggerProps {
 export const ContextMenuSubTrigger: React.FC<ContextMenuSubTriggerProps> = ({ children, icon, isOpen }) => {
   return (
     <div
-      className={`relative flex cursor-default select-none items-center rounded-sm px-3 py-0.5 text-[11px] outline-none transition-colors focus:bg-primary focus:text-white hover:bg-primary hover:text-white dark:focus:bg-primary dark:focus:text-white dark:hover:bg-primary dark:hover:text-white ${isOpen ? 'bg-primary text-white' : ''}`}
+      className={`relative flex cursor-default select-none items-center rounded-sm px-3 py-0.5 text-[12px] outline-none transition-colors focus:bg-primary focus:text-white hover:bg-primary hover:text-white dark:focus:bg-primary dark:focus:text-white dark:hover:bg-primary dark:hover:text-white ${isOpen ? 'bg-primary text-white' : ''}`}
     >
       {icon && <span className="mr-2 h-4 w-4">{icon}</span>}
       <span className="grow text-left">{children}</span>
@@ -260,8 +260,8 @@ export const ContextMenuColorPicker: React.FC<{
 }> = ({ selectedColor, onSelect, onCustomColor }) => {
   const { t } = useLocale();
   return (
-    <div className="p-2">
-      <div className="grid grid-cols-7 gap-2 p-1">
+    <div >
+      <div className="grid grid-cols-7 gap-2 p-1 px-3">
         {COLORS.map((color) => (
           <button
             key={color}
@@ -279,7 +279,7 @@ export const ContextMenuColorPicker: React.FC<{
       </div>
       {onCustomColor && (
         <div
-          className="mt-1 flex cursor-pointer items-center rounded-sm px-3 py-1.5 text-[11px] text-slate-700 hover:bg-primary hover:text-white dark:text-slate-200 dark:hover:bg-primary dark:hover:text-white transition-colors"
+          className="mt-1 flex cursor-pointer items-center rounded-sm px-3 py-0.5 text-[12px] text-slate-700 hover:bg-primary hover:text-white dark:text-slate-200 dark:hover:bg-primary dark:hover:text-white transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             onCustomColor();

@@ -56,7 +56,7 @@ export const MergeMenuItem: React.FC<MergeMenuItemProps> = ({
     <>
       <div
         ref={itemRef}
-        className="relative flex cursor-default select-none items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-50"
+        className="relative flex cursor-default select-none items-center justify-between rounded-sm px-3 py-0.5 text-[12px] outline-none hover:bg-primary hover:text-white dark:text-slate-200 dark:hover:bg-primary dark:hover:text-white transition-colors"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -75,7 +75,7 @@ export const MergeMenuItem: React.FC<MergeMenuItemProps> = ({
           {availableCalendars.map(calendar => (
             <div
               key={calendar.id}
-              className="flex items-center cursor-pointer rounded-sm px-2 py-1.5 text-sm text-slate-900 hover:bg-slate-100 dark:text-slate-50 dark:hover:bg-slate-800"
+              className="flex items-center cursor-pointer rounded-sm px-3 py-1 text-[12px] text-slate-900 hover:bg-primary hover:text-white dark:text-slate-50 dark:hover:bg-primary dark:hover:text-white transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onMergeSelect(calendar.id);

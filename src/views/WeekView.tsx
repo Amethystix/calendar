@@ -33,10 +33,10 @@ import {
 
 const WeekView: React.FC<WeekViewProps> = ({
   app,
+  config,
   customDetailPanelContent,
   customEventDetailDialog,
   calendarRef,
-  config,
   selectedEventId: propSelectedEventId,
   onEventSelect: propOnEventSelect,
   detailPanelEventId: propDetailPanelEventId,
@@ -50,18 +50,19 @@ const WeekView: React.FC<WeekViewProps> = ({
   const sidebarWidth = screenSize === 'mobile' ? 48 : 80;
   const timeGridRef = React.useRef<HTMLDivElement>(null);
   const [isTouch, setIsTouch] = useState(false);
-  const appViewConfig = app.getViewConfig(ViewType.WEEK) as {
-    showAllDay?: boolean;
-    viewConfig?: { showAllDay?: boolean };
-  };
-  const inputConfig = config as
-    | { showAllDay?: boolean; viewConfig?: { showAllDay?: boolean } }
-    | undefined;
-  const showAllDay = inputConfig?.showAllDay
-    ?? inputConfig?.viewConfig?.showAllDay
-    ?? appViewConfig?.showAllDay
-    ?? appViewConfig?.viewConfig?.showAllDay
-    ?? true;
+
+  // Configuration from the typed config object
+  const {
+    HOUR_HEIGHT = defaultDragConfig.HOUR_HEIGHT,
+    FIRST_HOUR = defaultDragConfig.FIRST_HOUR,
+    LAST_HOUR = defaultDragConfig.LAST_HOUR,
+    ALL_DAY_HEIGHT = defaultDragConfig.ALL_DAY_HEIGHT,
+    showAllDay = true,
+  } = config;
+
+  console.log('config', config);
+
+
   const showStartOfDayLabel = !showAllDay;
 
   useEffect(() => {
@@ -106,14 +107,6 @@ const WeekView: React.FC<WeekViewProps> = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [draftEvent, setDraftEvent] = useState<Event | null>(null);
   const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  // Get configuration constants
-  const {
-    HOUR_HEIGHT,
-    FIRST_HOUR,
-    LAST_HOUR,
-    ALL_DAY_HEIGHT,
-  } = defaultDragConfig;
 
   // References
   const allDayRowRef = React.useRef<HTMLDivElement>(null);

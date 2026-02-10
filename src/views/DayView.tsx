@@ -33,11 +33,11 @@ import {
 
 const DayView: React.FC<DayViewProps> = ({
   app,
+  config,
   customDetailPanelContent,
   customEventDetailDialog,
   calendarRef,
   switcherMode = 'buttons',
-  config,
   selectedEventId: propSelectedEventId,
   onEventSelect: propOnEventSelect,
   detailPanelEventId: propDetailPanelEventId,
@@ -47,18 +47,16 @@ const DayView: React.FC<DayViewProps> = ({
   const { screenSize } = useResponsiveMonthConfig();
   const isMobile = screenSize !== 'desktop';
   const [isTouch, setIsTouch] = useState(false);
-  const appViewConfig = app.getViewConfig(ViewType.DAY) as {
-    showAllDay?: boolean;
-    viewConfig?: { showAllDay?: boolean };
-  };
-  const inputConfig = config as
-    | { showAllDay?: boolean; viewConfig?: { showAllDay?: boolean } }
-    | undefined;
-  const showAllDay = inputConfig?.showAllDay
-    ?? inputConfig?.viewConfig?.showAllDay
-    ?? appViewConfig?.showAllDay
-    ?? appViewConfig?.viewConfig?.showAllDay
-    ?? true;
+
+  // Configuration from the typed config object
+  const {
+    HOUR_HEIGHT = defaultDragConfig.HOUR_HEIGHT,
+    FIRST_HOUR = defaultDragConfig.FIRST_HOUR,
+    LAST_HOUR = defaultDragConfig.LAST_HOUR,
+    ALL_DAY_HEIGHT = defaultDragConfig.ALL_DAY_HEIGHT,
+    showAllDay = true,
+  } = config;
+  
   const showStartOfDayLabel = !showAllDay;
 
   useEffect(() => {
@@ -128,14 +126,6 @@ const DayView: React.FC<DayViewProps> = ({
     },
     [app]
   );
-
-  // Get configuration constants
-  const {
-    HOUR_HEIGHT,
-    FIRST_HOUR,
-    LAST_HOUR,
-    ALL_DAY_HEIGHT,
-  } = defaultDragConfig;
 
   // Sync highlighted event from app state
   const prevHighlightedEventId = React.useRef(app.state.highlightedEventId);
